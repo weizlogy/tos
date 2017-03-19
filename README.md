@@ -1,77 +1,9 @@
-# create tree of savior addons.
+# tree of savior addons developpment.
 
-## addons.
+## available addons description.
 
-### console
-
-#### usage.
-
-#### settings.
-
-### customcompanion
-
-### console
-
-#### usage.
-
-### distance
-
-### console
-
-#### usage.
-
-### fly
-
-### console
-
-#### usage.
-
-### hidename
-
-### console
-
-#### usage.
-
-### marketselltimechanger
-
-### console
-
-#### usage.
-
-### megaphon-ecount
-
-### console
-
-#### usage.
-
-### monsterstatus
-
-### console
-
-#### usage.
-
-### repairendur
-
-### console
-
-#### usage.
-
-### staminagauge
-
-### console
-
-#### usage.
-
-### warehousepicker
-
-### console
-
-#### usage.
+[http://www.weizlogy.gq/categories/tos-addon/](http://www.weizlogy.gq/categories/tos-addon/)
 
 ## common installation.
 
-## License
-
-[MIT](http://b4b4r07.mit-license.org)
-
-[EOF]
+ファイル名の先頭に📖を付けて、Nexon\TreeofSaviorJP\patchフォルダにおきます。
