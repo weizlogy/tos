@@ -1,4 +1,4 @@
-# tree of savior addons developpment.
+# tree of savior addons development.
 
 ## available addons description.
 
