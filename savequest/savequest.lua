@@ -136,7 +136,6 @@ function SAVEQUEST_ON_INIT(addon, frame)
     -- call original.
     SaveQuest.UPDATE_QUESTINFOSET_2(frame, msg, check, updateQuestID);
     -- call my custom logics.
-    saqu:SaveQuest();
     saqu:LoadQuest();
     saqu:UpdateQuestUI();
     addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
