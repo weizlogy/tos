@@ -1,0 +1,28 @@
+-- repairendur.ipf settings.
+
+-- L:Low, M:Middle, H:High.
+-- p:Parcent, c:Color.
+
+-- === START === --
+
+-- for weapon endurarance parcentage.
+reen.Weapon = {
+  Lp = 30,
+  Mp = 5,
+  Hp = 1
+};
+-- for armour endurarance parcentage.
+reen.Armor = {
+  Lp = 35,
+  Mp = 10,
+  Hp = 5
+};
+
+-- text color by endurarance parcentage.
+reen.EndurColor = {
+  Lc = "FFFF00",
+  Mc = "FF0000",
+  Hc = "000000"
+};
+
+-- === END === --
