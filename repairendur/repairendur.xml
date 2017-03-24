@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="repairendur" x="10" y="10" width="100" height="100">
+  <frame title="RepairEndur" snapclient="true" snapframe="true"/>
+  <option closebutton="false" hideable="false"/>
+  <input hittest="true"/>
+  <layer layerlevel="31" />
+  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <controls>
+    <richtext name="dummy" />
+  </controls>
+</uiframe>
