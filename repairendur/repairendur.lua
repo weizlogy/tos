@@ -14,6 +14,7 @@ function RepairEndur.new(self)
     Mp = 10,
     Hp = 5
   };
+  members.SubWeapon = members.Weapon;
   members.EndurColor = {
     Lc = "FFFF00",
     Mc = "FF0000",
@@ -54,9 +55,16 @@ function RepairEndur.new(self)
     local threshold = self.Weapon;
     -- check item group.
     local group = itemobj.GroupName;
+    local equipGroup = itemobj.EquipGroup;
     if (group == "Armor") then
       threshold = self.Armor;
     end
+    if (equipGroup == "SubWeapon") then
+      -- exists combination in item.ies =>
+      --  (GroupName x EquipGroup) Armor x SW, SW x SW, Weapon x SW
+      threshold = self.SubWeapon;
+    end
+    -- select color.
     if (durPc <= threshold.Hp) then
       durByColor = self.EndurColor.Hc;
     elseif (durPc <= threshold.Mp) then

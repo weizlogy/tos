@@ -17,6 +17,8 @@ reen.Armor = {
   Mp = 10,
   Hp = 5
 };
+-- for subweapon endurarance parcentage.
+reen.SubWeapon = reen.Weapon;
 
 -- text color by endurarance parcentage.
 reen.EndurColor = {
