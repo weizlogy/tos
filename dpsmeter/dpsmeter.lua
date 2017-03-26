@@ -12,13 +12,10 @@ function DPSMeter.new(self)
   members.hpElapsed = 0;
   members.maxdps = 0;
   members.name = "";
+  members.counting = 0;
   -- start count.
   members.Start = function(self, handle)
-		local stat = info.GetStat(handle);
-    self.timeBased = imcTime.GetAppTimeMS();
-    self.hpBased = stat.HP;
-    self.name = info.GetName(handle);
-
+    -- show UI.
     local frameName = "dpsmeter_" .. handle;
     local frame = ui.GetFrame(frameName);
     if (frame == nil) then
@@ -29,7 +26,7 @@ function DPSMeter.new(self)
     frame:ShowWindow(1);
 
     local dpstext = frame:CreateOrGetControl('richtext', "dpstext", 0, 0, 200, 20);
-    dpstext:ShowWindow(1);
+    dpstext:ShowWindow(0);
 
     local w, h = 0;
     FRAME_AUTO_POS_TO_OBJ(frame, handle, w, h, 1, 1, 1);
@@ -38,26 +35,32 @@ function DPSMeter.new(self)
   -- update count.
   members.Update = function(self, frame, handle)
 		local stat = info.GetStat(handle);
-    local dpstext = GET_CHILD(frame, "dpstext", "ui::CRichText");		
-
-    local distFromActor = info.GetTargetInfo(handle).distance;
-    if (distFromActor > 130) then
-      self.timeBased = imcTime.GetAppTimeMS();
-      self.hpBased = stat.HP;
-      dpstext:SetColorTone("99FFFFFF");
+    -- when first attack, dps count start.
+    if (self.counting == 0 and stat.HP == stat.maxHP) then
       return 1;
     end
+    if (self.counting == 0) then
+      -- first attack = damage / 1sec.
+      self.counting = 1;
+      self.timeBased = imcTime.GetAppTimeMS() - 1000;
+      self.hpBased = stat.maxHP;
+      self.name = info.GetName(handle);
+    end
+    -- calculate dps.
+    local dpstext = GET_CHILD(frame, "dpstext", "ui::CRichText");		
+    dpstext:ShowWindow(1);
     self.timeElapsed = self.timeElapsed + (imcTime.GetAppTimeMS() - self.timeBased);
     self.hpElapsed = self.hpElapsed + (self.hpBased - stat.HP);
     local dps = self.hpElapsed / (self.timeElapsed / 1000);
-
+    -- save max dps.
     self.maxdps = math.max(self.maxdps, dps);
+    -- show dps.
     dpstext:SetColorTone("FFFFFFFF");
     dpstext:SetText(string.format("{ol}%.2f(%.2f) dps", dps, self.maxdps));
-
+    -- target dead -> show max dps to chat.
     local isDead = world.GetActor(handle):IsDead();
     if (isDead == 1) then
-      CHAT_SYSTEM(string.format("max %.2f dps on %s", self.maxdps, self.name));
+      CHAT_SYSTEM(string.format("[dpsmeter] max %5.2f dps - %s", self.maxdps, self.name));
       --ui.DestroyFrame(frame:GetName());
       local score = DPSMeter.Scores[handle];
       DPSMeter.Scores[handle] = nil;
@@ -72,6 +75,7 @@ setmetatable(DPSMeter, {__call = DPSMeter.new});
 -- frame initialize.
 function DPSMETER_ON_INIT(addon, frame)
   addon:RegisterMsg('MAP_CHARACTER_UPDATE', 'DPSMETER_START');
+  addon:RegisterMsg('FPS_UPDATE', 'DPSMETER_START');
 end
 function DPSMETER_START(frame, msg, str, myhandle)
   if (DPSMeter.IsLock == 1) then
@@ -88,7 +92,7 @@ function DPSMETER_START(frame, msg, str, myhandle)
     if (myhandle ~= handle) then
       local objType = actor:GetObjType();
       local faction = actor:GetFactionStr();
-      if (objType == GT_MONSTER and faction == "Monster") then
+      if (objType == GT_MONSTER and faction ~= "Pet") then
         local score = DPSMeter.Scores[handle];
         if (score == nil) then
           score = DPSMeter();
