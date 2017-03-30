@@ -3,20 +3,23 @@ ObjectDetector = {};
 function ObjectDetector.new(self)
   -- initialize members.
   local members = {};
-  members.Range = 500;
+  members.Range = 700;
   members.Lock = 0;
+  members.ObjectList = {};
   -- search all objects and output it.
   members.Update = function(self, frame, msg, str, myhandle)
     if (self.Lock == 1) then
       return;
     end
     self.Lock = 1;
+    ObjectList = {};
     local list, count = SelectBaseObject(GetMyPCObject(), self.Range, "ALL");
     for i = 1 , count do
       local obj = list[i];
       local iesObj = GetBaseObjectIES(obj);
       local actor = tolua.cast(obj, "CFSMActor");
       local handle = actor:GetHandleVal();
+      ObjectList[handle] = 1;
       -- do nothing for my pc.
       if (myhandle ~= handle) then
         self:ShowDetectorObject(ui.GetFrame('map'), actor, iesObj);
@@ -36,6 +39,10 @@ function ObjectDetector.new(self)
     local pos = actor:GetPos();
     -- create icon on maps.
     local picName = "icon_"..handle;
+    if (frame:GetChild(picName) ~= nil) then
+      frame:GetChild(picName):ShowWindow(1);
+      return;
+    end
     local pic = frame:CreateOrGetControl('picture', picName, 0, 0, 7, 7);
     tolua.cast(pic, "ui::CPicture");
     pic:SetImage("fullblack");
@@ -133,7 +140,7 @@ function ObjectDetector.new(self)
 			for i = 0, buffCount - 1 do
 				local buff = info.GetBuffIndexed(handle, i);
         local cls = GetClassByType("Buff", buff.buffID);
-        if (cls.ClassName == "FeverTime" or cls.ClassName == "SuperDrop") then
+        if (cls.Icon == "clover") then
           --CHAT_SYSTEM(string.format("!!! clover !!! %d", buff.buffID));
           oi.IsBlink = 1;
         end
@@ -160,11 +167,10 @@ function ObjectDetector.new(self)
   members.UpdateObjectState = function(self, frame, parent, calculateAxis)
     local handle = frame:GetUserIValue("HANDLE");
     local actor = world.GetActor(handle);
-    if actor == nil then
+    if (ObjectList[handle] == nil or actor:IsDead() == 1) then
       frame:ShowWindow(0);
-      ui.DestroyFrame(frame:GetName());
-      --CHAT_SYSTEM(string.format("[%d] DESTROYED.", handle));
-      return 0;
+      --ui.DestroyFrame(frame:GetName());
+      return 1;
     end
     local axis = calculateAxis(self, parent, actor);
     axis.x = axis.x - frame:GetWidth() / 2;
@@ -216,10 +222,11 @@ setmetatable(ObjectDetector, {__call = ObjectDetector.new});
 function OBJECTDETECTOR_ON_INIT(addon, frame)
   -- clear objects.
   obde:Clear();
-  -- regist character move handler.
+  -- regist check object handler.
   addon:RegisterMsg('MAP_CHARACTER_UPDATE', 'DETECTOR_UPDATE');
+  addon:RegisterMsg('FPS_UPDATE', 'DETECTOR_UPDATE');
 end
--- character move handler.
+-- check object handler.
 function DETECTOR_UPDATE(frame, msg, str, handle)
   obde:Update(frame, msg, str, handle);
 end
