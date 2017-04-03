@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="distance" x="0" y="0" width="130" height="70">
+  <frame title="Distance" snapclient="false" snapframe="false" layout_gravity="center center"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" autoopen="false" hideable="true"/>
+  <input hittest="false" movable="false" moveintitlebar="false" hittestframe="false"/>
+  <layer layerlevel="0"/>
+  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <controls>
+    <richtext name="disttext" rect="0 20 200 20" layout_gravity="left top" caption="0000" fixheight="true" fixwidth="false" hittest="false" resizebytext="false" textalign="left center"/>
+  </controls>
+</uiframe>
