@@ -6,6 +6,7 @@ function MonsterStatus.new(self)
   local members = {};
   members.X = -1;
   members.Y = -1;
+  -- 
   members.LoadSettings = function(self)
     if (self.X ~= -1 and self.Y ~= -1) then
       return;
@@ -16,14 +17,17 @@ function MonsterStatus.new(self)
     self.X = frame:GetX() - msframe:GetWidth() - 5;
     self.Y = frame:GetY();
   end
+  -- 
   members.SaveSettings = function(self)
     local frame = ui.GetFrame("monsterstatus");
     self.X = frame:GetX();
     self.Y = frame:GetY();
   end
+  -- 
   members.Clear = function(self)
     ui.GetFrame("monsterstatus"):ShowWindow(0);
   end
+  -- 
   members.Update = function(self, handle)
     local monster = GetClass("Monster", info.GetMonsterClassName(handle));
     -- customize moster class.
@@ -49,31 +53,45 @@ function MonsterStatus.new(self)
     local catk = SCR_Get_MON_CRTATK(monster);
     local cdef = SCR_Get_MON_CRTDEF(monster);
     -- set monster status.
+    local ctrlHeight = 20;
+    local bufHeight = 5;
+    local curHeight = bufHeight;
     local format = "{s14}{ol}%s - %s / %s - %s";
-    local atkCtrl = frame:CreateOrGetControl("richtext", "atk", 0, 5, frame:GetWidth(), 20);
+    local atkCtrl = frame:CreateOrGetControl("richtext", "atk", 0, curHeight, frame:GetWidth(), ctrlHeight);
     atkCtrl:SetText(string.format(format, 
       " ATK", self:LimitStatusValue(minatk), "MATK", self:LimitStatusValue(maxatk))
     );
-    local defCtrl = frame:CreateOrGetControl("richtext", "def", 0, 25, frame:GetWidth(), 20);
+    curHeight = curHeight + atkCtrl:GetHeight();
+    local defCtrl = frame:CreateOrGetControl("richtext", "def", 0, curHeight, frame:GetWidth(), ctrlHeight);
     defCtrl:SetText(string.format(format, 
       " DEF", self:LimitStatusValue(def), "MDEF", self:LimitStatusValue(mdef))
     );
+    curHeight = curHeight + atkCtrl:GetHeight();
+    local typeCtrl = frame:CreateOrGetControl("richtext", "type", 0, curHeight, frame:GetWidth(), ctrlHeight);
+    typeCtrl:SetText(string.format("{s14}{ol}%s   %s / %s", " TYPE", ClMsg(monster.RaceType), monster.Attribute));
+
+    curHeight = curHeight + bufHeight;
     local journals = self:GetJournals(monster);
-    local kills = frame:CreateOrGetControl("richtext", "kills", 0, 50, frame:GetWidth(), 20);
+    curHeight = curHeight + atkCtrl:GetHeight();
+    local kills = frame:CreateOrGetControl("richtext", "kills", 0, curHeight, frame:GetWidth(), ctrlHeight);
     kills:SetText(string.format(
       "{s14}{ol} KILL %4d / %4d", journals.kills.count, journals.kills.max));
-    local droptitle = frame:CreateOrGetControl("richtext", "droptitle", 0, 70, frame:GetWidth(), 20);
+
+    curHeight = curHeight + atkCtrl:GetHeight();
+    local droptitle = frame:CreateOrGetControl("richtext", "droptitle", 0, curHeight, frame:GetWidth(), ctrlHeight);
     droptitle:SetText("{s14}{ol} DROP -> ");
     DESTROY_CHILD_BYNAME(frame, "drop_");
     frame:Resize(frame:GetWidth(), droptitle:GetY() + droptitle:GetHeight() + 5);
     for i, item in ipairs(journals.drops) do
-      local drop = frame:CreateOrGetControl("richtext", "drop_"..i, 10, 70 + (20 * i), frame:GetWidth(), 20);
+      local drop = frame:CreateOrGetControl(
+        "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * i), frame:GetWidth(), ctrlHeight);
       drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
 			drop:SetTooltipType('wholeitem');
 			drop:SetTooltipArg('', item[1].ClassID, 0);
       frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
     end
   end
+  -- 
   members.GetJournals = function(self, monster)
     local value = {
       kills = {
@@ -112,12 +130,14 @@ function MonsterStatus.new(self)
     end
     return value;
   end
+  -- 
   members.LimitStatusValue = function(self, value)
     if (value > 999) then
       return "999↑"
     end
     return string.format("%4d", value);
   end
+  -- 
   members.Destroy = function(self)
     self.X = -1;
     self.Y = -1;
