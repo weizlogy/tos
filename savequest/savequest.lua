@@ -4,11 +4,12 @@ SaveQuest = {};
 function SaveQuest.new(self)
   -- initialize members.
   local members = {};
-  members.path = "../addons/savequest/quests.txt";
+  members.path = "../addons/savequest/quests_%s.txt";
   members.questInfo = {};
   -- save questInfo contents to local.
   members.SaveQuest = function(self)
-    local f, e = io.open(self.path, "w");
+    local cid = info.GetCID(session.GetMyHandle());
+    local f, e = io.open(string.format(self.path, cid), "w");
     if (f == nil) then
       return;
     end
@@ -23,9 +24,10 @@ function SaveQuest.new(self)
   -- load local to questInfo.
   members.LoadQuest = function(self)
     self.questInfo = {};
-    local f, e = io.open(self.path, "r");
+    local cid = info.GetCID(session.GetMyHandle());
+    local f, e = io.open(string.format(self.path, cid), "r");
     if (f == nil) then
-      f, e = io.open(self.path, "w");
+      f, e = io.open(string.format(self.path, cid), "w");
       f:close();
       return;
     end
