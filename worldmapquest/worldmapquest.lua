@@ -67,9 +67,22 @@ function WORLDMAPQUEST_ON_INIT(addon, frame)
   if (woqu.OPEN_WORLDMAP == nil) then
     woqu.OPEN_WORLDMAP = OPEN_WORLDMAP;
   end
-  OPEN_WORLDMAP = function(addon, frame)
-    woqu:CreatePossibleQuests();
-    woqu.OPEN_WORLDMAP(addon, frame);
+  OPEN_WORLDMAP = function(frame)
+    -- clear old state.
+    local pic = frame:GetChild("pic");
+    local worldMapBox = pic:GetChild("GBOX_WorldMap");
+    if (worldMapBox ~= nil) then
+      DESTROY_CHILD_BYNAME(worldMapBox, "questText_");
+    end
+    -- Key "N" => None - None
+    -- Statue  => None - NPC
+    -- Scroll  => Scroll_Warp_quest - None
+    local warp = frame:GetUserValue("SCROLL_WARP");
+    local type = frame:GetUserValue('Type');
+    if (warp == "None" and type == "None") then
+      woqu:CreatePossibleQuests();
+    end
+    woqu.OPEN_WORLDMAP(frame);
   end
   -- override create worldmap map control function.
   if (woqu.CREATE_WORLDMAP_MAP_CONTROLS == nil) then
@@ -84,10 +97,10 @@ function WORLDMAPQUEST_ON_INIT(addon, frame)
       parentGBox, makeWorldMapImage, changeDirection, nowMapIES, 
       mapCls, questPossible, nowMapWorldPos, gBoxName, 
       x, spaceX, startX, y, spaceY, startY, pictureStartY);
-    -- create params.
-    local gbox = GET_CHILD(parentGBox, gBoxName, "ui::CGroupBox");
-    -- call interrupt function.
-    woqu:InsertPossibleQuestCount(mapCls, gbox, parentGBox);
+      -- create params.
+      local gbox = GET_CHILD(parentGBox, gBoxName, "ui::CGroupBox");
+      -- call interrupt function.
+      woqu:InsertPossibleQuestCount(mapCls, gbox, parentGBox);
   end
 end
 --
