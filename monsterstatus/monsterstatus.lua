@@ -39,7 +39,6 @@ function MonsterStatus.new(self)
     monster.DEX = monster.DEX_Rate;
     -- open my frame.
     local frame = ui.GetFrame("monsterstatus");
-    frame:SetOffset(self.X, self.Y);
     frame:SetSkinName("downbox");
     frame:SetEventScript(ui.LBUTTONUP, "MONSTERSTATUS_END_DRAG");
     frame:ShowWindow(1);
@@ -68,7 +67,8 @@ function MonsterStatus.new(self)
     );
     curHeight = curHeight + atkCtrl:GetHeight();
     local typeCtrl = frame:CreateOrGetControl("richtext", "type", 0, curHeight, frame:GetWidth(), ctrlHeight);
-    typeCtrl:SetText(string.format("{s14}{ol}%s   %s / %s", " TYPE", ClMsg(monster.RaceType), monster.Attribute));
+    typeCtrl:SetText(string.format(
+      "{s14}{ol}%s   %s - %s - %s", " TYPE", ClMsg(monster.RaceType), monster.Attribute, monster.MoveType));
 
     curHeight = curHeight + bufHeight;
     local journals = self:GetJournals(monster);
@@ -90,6 +90,7 @@ function MonsterStatus.new(self)
 			drop:SetTooltipArg('', item[1].ClassID, 0);
       frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
     end
+    frame:SetOffset(self.X, self.Y);
   end
   -- 
   members.GetJournals = function(self, monster)
