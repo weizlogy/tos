@@ -5,6 +5,7 @@ function SaveQuest.new(self)
   -- initialize members.
   local members = {};
   members.path = "../addons/savequest/quests_%s.txt";
+  members.savemark = "{ol}saved."
   members.questInfo = {};
   -- save questInfo contents to local.
   members.SaveQuest = function(self)
@@ -55,27 +56,30 @@ function SaveQuest.new(self)
       end
       local ctrlset = gbox:GetChild(ctrlname);
       tolua.cast(ctrlset, 'ui::CControlSet');
-      -- remove old state.
-      DESTROY_CHILD_BYNAME(ctrlset, "savemark");
-      -- get quest result, use warp.
-      local result = ctrlset:GetSValue();
-      local canWarp = questIES.SUCC_WARP;
-      --CHAT_SYSTEM(ctrlname.."/"..result.." - "..canWarp);
-      -- create right click menu on success and warp-able quest.
-      local content = GET_CHILD(ctrlset, 'groupQuest_title', "ui::CRichText");
-      content:EnableHitTest(0);
-      if (result == "SUCCESS" and canWarp == "YES") then
-        content:EnableHitTest(1);
-        content:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU');
-        content:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
-        content:SetEventScriptArgNumber(ui.RBUTTONUP, questIES.ClassID);
-        -- show text for already saved.
-        local saveQuest = self.questInfo[""..questIES.ClassID];
-        if (saveQuest == 1) then
-          local savemark = ctrlset:CreateOrGetControl('richtext', "savemark", 0, 0, 20, 10);
-          tolua.cast(savemark, "ui::CRichText");
-          savemark:SetText("{ol}saved.");
-          savemark:SetOffset(36, 35);
+      if (ctrlset ~= nil) then
+        --CHAT_SYSTEM(ctrlset:GetChild("statepicture"):GetUserValue("PC_FID"))
+        -- remove old state.
+        DESTROY_CHILD_BYNAME(ctrlset, "savemark");
+        -- get quest result, use warp.
+        local result = ctrlset:GetSValue();
+        local canWarp = questIES.SUCC_WARP;
+        --CHAT_SYSTEM(ctrlname.."/"..result.." - "..canWarp);
+        -- create right click menu on success and warp-able quest.
+        local content = GET_CHILD(ctrlset, 'groupQuest_title', "ui::CRichText");
+        content:EnableHitTest(0);
+        if (result == "SUCCESS" and canWarp == "YES") then
+          content:EnableHitTest(1);
+          content:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU');
+          content:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
+          content:SetEventScriptArgNumber(ui.RBUTTONUP, questIES.ClassID);
+          -- show text for already saved.
+          local saveQuest = self.questInfo[""..questIES.ClassID];
+          if (saveQuest == 1) then
+            local savemark = ctrlset:CreateOrGetControl('richtext', "savemark", 0, 0, 20, 10);
+            tolua.cast(savemark, "ui::CRichText");
+            savemark:SetText(self.savemark);
+            savemark:SetOffset(36, 35);
+          end
         end
       end
     end
@@ -118,11 +122,45 @@ function SaveQuest.new(self)
       end
     end
   end
+  --
+  members.UpdateQuestListUI = function(self, questCtrl, classID)
+    DESTROY_CHILD_BYNAME(questCtrl, "savemark");
+    local saveQuest = self.questInfo[""..classID];
+    --CHAT_SYSTEM(""..classID.." - "..saveQuest);
+    if (saveQuest == 1) then
+      -- show saved mark.
+      local savemark = questCtrl:CreateOrGetControl('richtext', "savemark", 0, 0, 20, 10);
+      tolua.cast(savemark, "ui::CRichText");
+      savemark:SetText(self.savemark);
+      savemark:SetOffset(20, 0);
+    end
+    local questIES = GetClassByType("QuestProgressCheck", classID);
+    if (SCR_QUEST_CHECK_C(GetMyPCObject(), questIES.ClassName) == "SUCCESS" and questIES.SUCC_WARP == "YES") then
+      -- create menu.
+      questCtrl:EnableHitTest(1);
+      questCtrl:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU');
+      questCtrl:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
+      questCtrl:SetEventScriptArgNumber(ui.RBUTTONUP, questIES.ClassID);
+      --CHAT_SYSTEM(questCtrl:GetName().." - "..questIES.ClassID)
+      -- create warp icon.
+      local picture = questCtrl:CreateOrGetControl('picture', "statepicture", 0, 0, 20, 20);
+      tolua.cast(picture, "ui::CPicture");
+      picture:SetEnableStretch(1);
+      picture:SetImage("questinfo_return");
+      picture:SetAngleLoop(-3);
+      picture:SetUserValue("PC_FID", GET_QUESTINFO_PC_FID());
+      picture:SetUserValue("RETURN_QUEST_NAME", questIES.ClassName);
+      picture:EnableHitTest(1);
+      picture:SetEventScript(ui.LBUTTONUP, "QUESTION_QUEST_WARP");
+      picture:SetEventScriptArgNumber(ui.LBUTTONUP, questIES.ClassID);
+    end
+  end
   -- recover addon state.
   members.Destroy = function(self)
-    if (SaveQuest.UPDATE_QUESTINFOSET_2 ~= nil) then
-      UPDATE_QUESTINFOSET_2 = SaveQuest.UPDATE_QUESTINFOSET_2;
-    end
+    UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
+    saqu.UPDATE_QUESTINFOSET_2 = nil;
+    Q_CTRL_BASIC_SET = saqu.Q_CTRL_BASIC_SET;
+    saqu.Q_CTRL_BASIC_SET = nil;
   end
   return setmetatable(members, {__index = self});
 end
@@ -131,17 +169,26 @@ setmetatable(SaveQuest, {__call = SaveQuest.new});
 -- frame initialize.
 function SAVEQUEST_ON_INIT(addon, frame)
   -- override quest update event.
-  if (SaveQuest.UPDATE_QUESTINFOSET_2 == nil) then
-    SaveQuest.UPDATE_QUESTINFOSET_2 = UPDATE_QUESTINFOSET_2;
+  if (saqu.UPDATE_QUESTINFOSET_2 == nil) then
+    saqu.UPDATE_QUESTINFOSET_2 = UPDATE_QUESTINFOSET_2;
   end
   UPDATE_QUESTINFOSET_2 = function(frame, msg, check, updateQuestID)
     -- call original.
-    SaveQuest.UPDATE_QUESTINFOSET_2(frame, msg, check, updateQuestID);
+    saqu.UPDATE_QUESTINFOSET_2(frame, msg, check, updateQuestID);
     -- call my custom logics.
     saqu:LoadQuest();
     saqu:UpdateQuestUI();
     addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
   end
+  -- override open quest list savemark.
+  if (saqu.Q_CTRL_BASIC_SET == nil) then
+    saqu.Q_CTRL_BASIC_SET = Q_CTRL_BASIC_SET;
+  end
+  Q_CTRL_BASIC_SET = function(Quest_Ctrl, classID, isNew)
+    saqu.Q_CTRL_BASIC_SET(Quest_Ctrl, classID, isNew);
+    saqu:UpdateQuestListUI(Quest_Ctrl, classID);
+  end
+  saqu:LoadQuest();
 end
 -- remove npc event handler.
 function SAVEQUEST_REMOVE_NPC(frame, msg, argStr, argNum)
@@ -156,12 +203,22 @@ function SAVEQUEST_SAVE(questID)
   saqu:Save(questID);
   saqu:SaveQuest();
   saqu:UpdateQuestUI();
+  local questList = ui.GetFrame("quest");
+  if (questList:IsVisible() == 1) then
+    local questBasicSet = GET_CHILD_RECURSIVELY(questList, "_Q_"..questID, "ui::CControlSet");
+    saqu:UpdateQuestListUI(questBasicSet, questID, 0);
+  end
 end
 -- release menu selected event.
 function SAVEQUEST_RELEASE(questID)
   saqu:Release(questID);
   saqu:SaveQuest();
   saqu:UpdateQuestUI();
+  local questList = ui.GetFrame("quest");
+  if (questList:IsVisible() == 1) then
+    local questBasicSet = GET_CHILD_RECURSIVELY(questList, "_Q_"..questID, "ui::CControlSet");
+    saqu:UpdateQuestListUI(questBasicSet, questID, 0);
+  end
 end
 
 -- remove old state.
