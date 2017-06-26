@@ -32,12 +32,14 @@ function SlotMac.new(self)
       act = function() end
     };
     -- extract emoticon.
+    -- <emoticon_nnnn>
     local extra = string.gsub(input, "<(emoticon\_.-)>", "{img %1 0 0}{/}");
     if (input ~= extra) then
       --CHAT_SYSTEM("extracted => ".."["..extra.."]")
       input = extra;
     end
     -- chat alias.
+    -- /xxx
     if (string.find(input, "/", 1, true) == 1) then
       cmds.act = function(frame, slot, argStr, argNum)
         local temp = string.gsub(input, "^\/s ", "");  -- for normal chat.
@@ -45,12 +47,13 @@ function SlotMac.new(self)
       end
       return cmds;
     end
-    -- custom commands.
+    -- analyze custom commands.
     local id, cc = string.match(input, "^#(.-)# (.+)");
     cmds.id = id;
     cmds.cc = cc;
     --CHAT_SYSTEM(id.." - "..cc);
     -- slot skill.
+    -- #skill# nnn
     if (id == "skill") then
       cmds.act = function(frame, slot, argStr, argNum)
         if (cmds.cc ~= "0") then
@@ -63,6 +66,7 @@ function SlotMac.new(self)
       return cmds;
     end
     -- system msg.
+    -- #system# xxx
     if (id == "system") then
       cmds.act = function(frame, slot, argStr, argNum)
         CHAT_SYSTEM(cmds.cc);
@@ -70,6 +74,7 @@ function SlotMac.new(self)
       return cmds;
     end
     -- pose.
+    -- #pose# xxx
     if (id == "pose") then
       cmds.act = function(frame, slot, argStr, argNum)
         control.Pose(cmds.cc);
@@ -77,6 +82,7 @@ function SlotMac.new(self)
       return cmds;
     end
     -- timer.
+    -- #timer# nnn xxx
     if (id == "timer") then
       cmds.act = function(frame, slot, argStr, argNum)
         local time, timedcmd = string.match(cmds.cc, "^(%d+) (.+)$");
@@ -90,6 +96,62 @@ function SlotMac.new(self)
       end
       return cmds;
     end
+    -- equip.
+    -- #equip# xxx yyy
+    if (id == "equip") then
+      -- convert item name to className.
+      local tempSlotName, tempItemName = string.match(cmds.cc, "^(.-) (.-)$");
+      tempItemName = string.lower(tempItemName);
+      local converted = 0;
+      -- from equiping.
+      local equiplist = session.GetEquipItemList();
+      for i = 0, equiplist:Count() - 1 do
+        local equipItem = equiplist:Element(i);
+        local itemCls = GetIES(equipItem:GetObject());
+        --CHAT_SYSTEM(item.GetEquipSpotName(equipItem.equipSpot).." - "..itemCls.ClassName);
+        local name = string.lower(dictionary.ReplaceDicIDInCompStr(itemCls.Name));		
+        local index = string.find(name, tempItemName);
+        if (index == 1) then
+          cmds.cc = tempSlotName.." "..itemCls.ClassName;
+          converted = 1;
+        end
+      end
+      -- from inventory.
+      if (converted == 0) then
+        session.BuildInvItemSortedList();
+        local sortedList = session.GetInvItemSortedList();
+        for i = 0, sortedList:size() - 1 do
+          local invItem = sortedList:at(i);
+          local itemCls = GetIES(invItem:GetObject());	
+          if (itemCls.ItemType == "Equip") then
+            local name = string.lower(dictionary.ReplaceDicIDInCompStr(itemCls.Name));		
+            local index = string.find(name, tempItemName);
+            if (index == 1) then
+              cmds.cc = tempSlotName.." "..itemCls.ClassName;
+              converted = 1;
+            end
+          end
+        end
+      end
+      cmds.act = function(frame, slot, argStr, argNum)
+        --CHAT_SYSTEM(cmds.cc)
+        local slotName, className = string.match(cmds.cc, "^(.-) (.-)$");
+        local invItem = session.GetInvItemByName(className);
+        item.Equip(slotName, invItem.invIndex);
+      end
+      return cmds;
+    end
+    -- unequip.
+    -- #unequip# xxx
+    if (id == "unequip") then
+      cmds.act = function(frame, slot, argStr, argNum)
+        item.UnEquip(item.GetEquipSpotNum(cmds.cc));
+      end
+      return cmds;
+    end
+
+    -- chaim.
+
     return cmds;
   end
 
