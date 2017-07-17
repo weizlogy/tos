@@ -1,0 +1,57 @@
+-- for monster and npcs.
+obde.config.mon = {
+  color = "FF000000",
+  isVisible = 1
+};
+obde.config.mon.Monster = {
+  color = "FF660000",
+  isVisible = 1
+};
+obde.config.mon.Monster_Chaos1 = obde.config.mon.Monster;
+obde.config.mon.Monster_Chaos2 = obde.config.mon.Monster;
+
+obde.config.mon.Pet = {
+  isVisible = 0
+};
+obde.config.mon.RootCrystal = {
+  color = "FF330033",
+  isVisible = 1
+};
+obde.config.mon.Neutral = {
+  color = "FFFF9900",
+  isVisible = 1,
+};
+obde.config.mon.Peaceful = obde.config.mon.Neutral;
+obde.config.mon.Our_Forces = obde.config.mon.Neutral;
+obde.config.mon.Hidden_tgt = obde.config.mon.Neutral;
+
+-- for players.
+obde.config.pc = {
+  color = "FF0000FF",
+  isVisible = 1
+};
+
+-- for dropitems.
+obde.config.item = {
+  color = "FF999999",
+  isVisible = 1
+};
+
+-- for treasures.
+obde.config.treasure = {
+  color = "FFFF9900",
+  isVisible = 1,
+  isBlink = 1
+};
+
+-- for clover buffs.
+obde.config.clover = {
+  color = "FF330000",
+  isVisible = 1,
+  isBlink = 1
+};
+
+obde.config.clover.EliteMonsterBuff = {
+  color = "FFFF3333",
+  isVisible = 1
+};
