@@ -30,13 +30,8 @@ function SlotMac.new(self)
   members.AnalyzeMacro = function(self, input)
     local cmds = MacroCommand();
     cmds.act = cmds.NoOp;
-    -- extract emoticon.
-    -- <emoticon_nnnn>
-    local extra = string.gsub(input, "<(emoticon\_.-)>", "{img %1 0 0}{/}");
-    if (input ~= extra) then
-      --CHAT_SYSTEM("extracted => ".."["..extra.."]")
-      input = extra;
-    end
+    -- extract macro shortcuts.
+    input = cmds:PreExtractEmoticon(input);
     -- chat alias.
     -- /xxx
     if (string.find(input, "/", 1, true) == 1) then
@@ -130,6 +125,10 @@ function SlotMac.new(self)
     end
 
     -- chaim.
+    -- jump.
+    -- moveto.
+    -- create / delete pt.
+    -- ride / unride.
 
     return cmds;
   end
@@ -152,6 +151,7 @@ function SlotMac.new(self)
     end
   end
 
+  -- skill has over heat is 1, otherwise 0.
   members.HasSkillOverHeat = function(self, slot)
     local obj = GET_SLOT_SKILL_OBJ(slot);
     if (obj == nil or obj.OverHeatGroup == "None") then
@@ -160,6 +160,7 @@ function SlotMac.new(self)
     return 1;
   end
 
+  -- skill over heat remain count, or 0.
   members.WillSkillOverHeat = function(self, slot)
     local obj = GET_SLOT_SKILL_OBJ(slot);
     if (obj == nil or obj.OverHeatGroup == "None") then
@@ -174,6 +175,7 @@ function SlotMac.new(self)
     return maxOverHeat - curHeat;
   end
 
+  -- destroy.
   members.Destroy = function(self)
     QUICKSLOTNEXPBAR_SLOT_USE = slmc.QUICKSLOTNEXPBAR_SLOT_USE;
     slmc.QUICKSLOTNEXPBAR_SLOT_USE = nil;
@@ -251,15 +253,98 @@ slmc = SlotMac();
 
 
 -- sub classes.
+-- one macro command.
 MacroCommand = {}
 function MacroCommand.new(self)
   local members = {};
+  -- macro identifier.
   members.id = "";
+  -- macro parameter.
   members.cc = "";
 
+  members.PreExtractEmoticon = function(self, input)
+    -- <emoticon_nnnn>
+    return string.gsub(input, "<(emoticon\_.-)>", "{img %1 0 0}{/}");
+  end
+
+  members.ExtractTarget = function(self, input)
+    local handle = session.GetTargetHandle();
+    if (handle == 0) then
+      return input;
+    end
+    local extract = input;
+    -- <t> => target name.
+    extract = string.gsub(extract, "<t>", info.GetName(handle));
+    -- <thp> => target hp.
+    local stat = info.GetStat(handle);
+    extract = string.gsub(extract, "<thp>", stat.HP);
+    -- <thpp> => target hp %.
+    extract = string.gsub(extract, "<thpp>",
+      string.format("%d%%%%", (stat.HP / stat.maxHP) * 100));
+    return extract;
+  end
+
+  members.ExtractSelf = function(self, input)
+    local handle = session.GetMyHandle();
+    local extract = input;
+    -- <me> => my full name.
+    extract = string.gsub(extract, "<me>", "<mec> <met>");
+    -- <met> => my team name.
+    extract = string.gsub(extract, "<met>", info.GetFamilyName(handle));
+    -- <mec> => my char name.
+    extract = string.gsub(extract, "<mec>", info.GetName(handle));
+    -- <hp> => hp.
+    local stat = info.GetStat(handle);
+    extract = string.gsub(extract, "<hp>", stat.HP);
+    -- <hpp> => hp %.
+    extract = string.gsub(extract, "<hpp>",
+      string.format("%d%%%%", (stat.HP / stat.maxHP) * 100));
+    -- <sp> => sp.
+    extract = string.gsub(extract, "<sp>", stat.SP);
+    -- <spp> => sp %.
+    extract = string.gsub(extract, "<spp>",
+      string.format("%d%%%%", (stat.SP / stat.maxSP) * 100));
+    -- <pos> => position.
+    local pos = world.GetActorPos(handle);
+    extract = string.gsub(extract, "<pos>", string.format("%d,%d,%d", pos.x, pos.y, pos.z));
+    return extract;
+  end
+
+  members.ExtractSlot = function(self, input, slot)
+    local extract = input;
+    local icon = slot:GetIcon();
+    if (icon == nil) then
+      return input;
+    end
+    local info = icon:GetInfo();
+    -- CHAT_SYSTEM(info.category.." - "..info:GetIESID());
+    local name = "";
+    local cdt = -1;
+    if (info.category == "Skill") then
+      local skillIES = GetIES(session.GetSkillByGuid(info:GetIESID()):GetObject());
+      name = skillIES.Name;
+      cdt = math.floor(session.GetSklCoolDown(skillIES.ClassID) / 1000);
+    elseif (info.category == "Item") then
+      local itemIES = GetIES(session.GetInvItemByGuid(info:GetIESID()):GetObject());
+      name = itemIES.Name;
+      cdt = math.floor(item.GetCoolDown(itemIES.ClassID) / 1000);
+    end
+    -- <sn> => slot name.
+    if (name ~= "") then
+      extract = string.gsub(extract, "<sn>", name);
+    end
+    -- <scdt> => slot cool down time.
+    if (cdt ~= -1) then
+      extract = string.gsub(extract, "<scdt>", tostring(cdt));
+    end
+    return extract;
+  end
+
+  -- no operation.
   members.NoOp = function(self, frame, slot, argStr, argNum)
   end
 
+  -- call skill.
   members.Skill = function(self, frame, slot, argStr, argNum)
     if (self.cc ~= "0") then
       -- use other slot skill.
@@ -269,19 +354,30 @@ function MacroCommand.new(self)
     slmc.QUICKSLOTNEXPBAR_SLOT_USE(frame, slot, argStr, argNum);
   end
 
+  -- chat alias.
   members.ChatAlias = function(self, frame, slot, argStr, argNum)
     local temp = string.gsub(self.cc, "^\/s ", "");  -- for normal chat.
+    temp = self:ExtractTarget(temp);
+    temp = self:ExtractSelf(temp);
+    temp = self:ExtractSlot(temp, slot);
     ui.Chat(temp);
   end
 
+  -- chat system.
   members.System = function(self, frame, slot, argStr, argNum)
+    local temp = self.cc;
+    temp = self:ExtractTarget(temp);
+    temp = self:ExtractSelf(temp);
+    temp = self:ExtractSlot(temp, slot);
     CHAT_SYSTEM(self.cc);
   end
 
+  -- pose.
   members.Pose = function(self, frame, slot, argStr, argNum)
     control.Pose(self.cc);
   end
 
+  -- timer.
   members.Timer = function(self, frame, slot, argStr, argNum)
     local timeHandleName = "SLOTMAC_TIMER_"..IMCRandom(1, 100000);
     _G[timeHandleName] = function()
@@ -291,17 +387,20 @@ function MacroCommand.new(self)
     DebounceScript(timeHandleName, self.dd);
   end
 
+  -- equip.
   members.Equip = function(self, frame, slot, argStr, argNum)
     local slotName, className = string.match(self.cc, "^(.-) (.-)$");
     local invItem = session.GetInvItemByName(className);
     item.Equip(slotName, invItem.invIndex);
   end
 
+  -- unequip.
   members.UnEquip = function(self, frame, slot, argStr, argNum)
     item.UnEquip(item.GetEquipSpotNum(self.cc));
   end
 
   return setmetatable(members, {__index = self});
 end
+
 -- set call.
 setmetatable(MacroCommand, {__call = MacroCommand.new});
