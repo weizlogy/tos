@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="console" x="0" y="0" width="130" height="70">
+  <frame title="Console" snapclient="true" snapframe="true" layout_gravity="center center"/>
+  <option visible="true" alwaysVisible="false" closebutton="false" autoopen="true" hideable="false"/>
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
+  <layer layerlevel="31"/>
+  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <controls>
+  </controls>
+</uiframe>
