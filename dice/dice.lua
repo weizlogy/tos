@@ -6,7 +6,13 @@ function Dice.new(self)
   local members = {};
   -- throw dice.
   members.Throw = function(self)
-    return string.format("ダイス！%sは、%dを出した！", GETMYFAMILYNAME(), IMCRandom(1, 999));
+    local server = GetServerNation();
+    local name = GETMYFAMILYNAME();
+    local dice = IMCRandom(0, 999);
+    if (server ~= "JP") then
+      return string.format("Dice!%s got %d on it!", name, dice);
+    end
+    return string.format("ダイス！%sは、%dを出した！", name, dice);
   end
   -- destroy.
   members.Destroy = function(self)
