@@ -7,7 +7,8 @@ function STAMINIGAUGE_UPDATE(frame, msg, argStr, argNum)
   -- update.
   local baseFrame = ui.GetFrame("charbaseinfo1_my");
   local staGauge = GET_CHILD(baseFrame, "pcStaGauge", "ui::CGauge");
-  if (staGauge == nil) then
+  -- msg == nil => for test call.
+  if (staGauge == nil or msg == nil) then
     -- create stamina gauge.
     local staGaugeObject = baseFrame:CreateOrGetControl("gauge", "pcStaGauge", 0, 0, 104, 15);
     staGauge = tolua.cast(staGaugeObject, "ui::CGauge");
@@ -27,13 +28,13 @@ function STAMINIGAUGE_UPDATE(frame, msg, argStr, argNum)
     bgL:SetEnableStretch(1);
     bgL:Resize(20, 36);
     local bgLm = bgL:GetMargin();
-    bgL:SetMargin(-63, -39, bgLm.right, bgLm.bottom);
+    bgL:SetMargin(-62, -44, bgLm.right, bgLm.bottom);
     -- adjust right side image.
     local bgR = GET_CHILD(baseFrame, "pcinfo_bg_R", "ui::CPicture");
     bgR:SetEnableStretch(1);
     bgR:Resize(20, 36);
     local bgRm = bgR:GetMargin();
-    bgR:SetMargin(63, -39, bgRm.right, bgRm.bottom);
+    bgR:SetMargin(62, -44, bgRm.right, bgRm.bottom);
     -- adjust shield gauge.
     local shieldGauge = GET_CHILD(baseFrame, "pcShieldGauge", "ui::CGauge");
     shieldGauge:SetOffset(0, 0);
