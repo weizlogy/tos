@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="monsterstatus" x="0" y="0" width="250" height="200">
+  <frame title="MonsterStatus" snapclient="false" snapframe="false" layout_gravity="center center"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" autoopen="false" hideable="true"/>
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
+  <layer layerlevel="10"/>
+  <draw blend="100" drawtitlebar="false" drawframe="true"/>
+  <controls>
+  </controls>
+</uiframe>

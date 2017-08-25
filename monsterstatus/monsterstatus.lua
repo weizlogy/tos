@@ -90,7 +90,7 @@ function MonsterStatus.new(self)
   members.Update = function(self, handle)
     local monster = GetClass("Monster", info.GetMonsterClassName(handle));
     -- customize moster class.
-    monster.Lv = monster.Level;
+    monster.Lv = info.GetLevel(handle);
     monster.STR = GET_MON_STAT(monster, monster.Lv, "STR");
     monster.CON = GET_MON_STAT(monster, monster.Lv, "CON");
     monster.INT = GET_MON_STAT(monster, monster.Lv, "INT");
@@ -100,7 +100,6 @@ function MonsterStatus.new(self)
     local frame = ui.GetFrame("monsterstatus");
     frame:SetSkinName("downbox");
     frame:SetEventScript(ui.LBUTTONUP, "MONSTERSTATUS_END_DRAG");
-    frame:ShowWindow(1);
     frame:SetAlpha(50);
     -- get monster status.
     local minatk = SCR_Get_MON_MAXPATK(monster);
@@ -251,6 +250,7 @@ function MonsterStatus.new(self)
     end
 
     frame:SetOffset(self.X, self.Y);
+    frame:ShowWindow(1);
   end
   -- 
   members.GetJournals = function(self, monster)
