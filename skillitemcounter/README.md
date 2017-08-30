@@ -1,0 +1,1 @@
+see [http://www.weizlogy.gq/tos/addon/skillitemcounter/](http://www.weizlogy.gq/tos/addon/skillitemcounter/) 

@@ -1,0 +1,1 @@
+see [http://www.weizlogy.gq/tos/addon/fixbookread/](http://www.weizlogy.gq/tos/addon/fixbookread/) 
