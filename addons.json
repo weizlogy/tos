@@ -30,7 +30,7 @@
     "name" : "dice",
     "file" : "dice",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.1",
+    "fileVersion" : "v1.1.0",
     "releaseTag" : "dice",
     "unicode" : "📖",
     "description" : "一般チャットでダイスロールができます。",
