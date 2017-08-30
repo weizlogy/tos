@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<uiframe name="summoncounter" x="10" y="10" width="100" height="100">
-  <frame title="SummonCounter" snapclient="true" snapframe="true"/>
-  <option closebutton="false" hideable="false"/>
-  <input hittest="true"/>
-  <layer layerlevel="31" />
-  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+<uiframe name="summoncounter" x="10" y="10" width="310" height="50">
+  <frame title="SummonCounter" outside="true" useothercountryframe="false" fasthide="true"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" autoopen="false" hideable="true"/>
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
+  <layer layerlevel="1"/>
+  <draw blend="100" drawtitlebar="false" drawframe="true"/>
   <controls>
   </controls>
 </uiframe>

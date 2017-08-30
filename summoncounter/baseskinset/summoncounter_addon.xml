@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<skinset name="Base">
+	<imagelist category="icon">
+	  <!-- imgrect=x,y,w,h -->
+		<image name="summoncounter_necro_skull" file="\skin\necro-icon-rev0.01.tga" imgrect="4 11 25 25"/>
+	</imagelist>
+</skinset>
