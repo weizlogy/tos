@@ -1,1 +1,1 @@
-see [http://www.weizlogy.gq/tos/addon/dice/](http://www.weizlogy.gq/tos/addon/dice/)
+see [http://www.weizlogy.gq/tos/addon/dice/](http://www.weizlogy.gq/tos/addon/dice/) 
