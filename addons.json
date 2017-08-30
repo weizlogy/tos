@@ -5,7 +5,7 @@
     "file" : "console",
     "extension" : "ipf",
     "fileVersion" : "v1.2.0",
-    "releaseTag" : "console-v1.2.0",
+    "releaseTag" : "console",
     "unicode" : "📖",
     "description" : "開発者用。[_G]配下をテキストアウトします。",
     "tags" : [
@@ -18,7 +18,7 @@
     "file" : "distance",
     "extension" : "ipf",
     "fileVersion" : "v1.1.1",
-    "releaseTag" : "distance-v1.1.1",
+    "releaseTag" : "distance",
     "unicode" : "📖",
     "description" : "開発者用。自キャラから近隣モンスターまでの距離を表示します。",
     "tags" : [
@@ -31,7 +31,7 @@
     "file" : "dice",
     "extension" : "ipf",
     "fileVersion" : "v1.0.1",
-    "releaseTag" : "dice-v1.0.1",
+    "releaseTag" : "dice",
     "unicode" : "📖",
     "description" : "一般チャットでダイスロールができます。",
     "tags" : [
@@ -44,7 +44,7 @@
     "file" : "dpsmeter",
     "extension" : "ipf",
     "fileVersion" : "v1.3.0",
-    "releaseTag" : "dpsmeter-v1.3.0",
+    "releaseTag" : "dpsmeter",
     "unicode" : "📖",
     "description" : "DPS計測します。",
     "tags" : [
@@ -57,7 +57,7 @@
     "file" : "fixbookread",
     "extension" : "ipf",
     "fileVersion" : "v1.0.0",
-    "releaseTag" : "fixbookread-v1.0.0",
+    "releaseTag" : "fixbookread",
     "unicode" : "📖",
     "description" : "本アイテムの改行崩れを正常化します。",
     "tags" : [
@@ -69,7 +69,7 @@
     "file" : "hidename",
     "extension" : "ipf",
     "fileVersion" : "v1.0.1",
-    "releaseTag" : "hidename-v1.0.1",
+    "releaseTag" : "hidename",
     "unicode" : "📖",
     "description" : "画面にある自キャラ名を消します。",
     "tags" : [
@@ -82,7 +82,7 @@
     "file" : "monsterstatus",
     "extension" : "ipf",
     "fileVersion" : "v3.0.0",
-    "releaseTag" : "monsterstatus-v3.0.0",
+    "releaseTag" : "monsterstatus",
     "unicode" : "📖",
     "description" : "ターゲット中のモンスターのステータスを表示します。シンプルなv2系もあります。",
     "tags" : [
@@ -95,7 +95,7 @@
     "file" : "pickiteminfo",
     "extension" : "ipf",
     "fileVersion" : "v1.0.1",
-    "releaseTag" : "pickiteminfo-v1.0.1",
+    "releaseTag" : "pickiteminfo",
     "unicode" : "📖",
     "description" : "ドロップアイテム名を常時表示します。",
     "tags" : [
@@ -107,7 +107,7 @@
     "file" : "repairendur",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
-    "releaseTag" : "repairendur-v1.1.0",
+    "releaseTag" : "repairendur",
     "unicode" : "📖",
     "description" : "装備修理時、装備アイコンに耐久度（％）を色分け表示します。",
     "tags" : [
@@ -119,7 +119,7 @@
     "file" : "savequest",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
-    "releaseTag" : "savequest-v1.1.0",
+    "releaseTag" : "savequest",
     "unicode" : "📖",
     "description" : "ワープ用クエストの誤完了を防止します。",
     "tags" : [
@@ -131,7 +131,7 @@
     "file" : "skillitemcounter",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
-    "releaseTag" : "skillitemcounter-v1.1.0",
+    "releaseTag" : "skillitemcounter",
     "unicode" : "📖",
     "description" : "消費アイテムありスキルの使用回数を表示します。",
     "tags" : [
@@ -144,7 +144,7 @@
     "file" : "slotmac",
     "extension" : "ipf",
     "fileVersion" : "v1.3.0",
-    "releaseTag" : "slotmac-v1.3.0",
+    "releaseTag" : "slotmac",
     "unicode" : "📖",
     "description" : "クイックスロットスキル/アイテムをマクロ化します。",
     "tags" : [
@@ -157,7 +157,7 @@
     "file" : "staminigauge",
     "extension" : "ipf",
     "fileVersion" : "v1.0.2",
-    "releaseTag" : "staminigauge-v1.0.2",
+    "releaseTag" : "staminigauge",
     "unicode" : "📖",
     "description" : "キャラの足元にスタミナゲージを追加します。",
     "tags" : [
@@ -169,7 +169,7 @@
     "file" : "worldmapquest",
     "extension" : "ipf",
     "fileVersion" : "v1.2.0",
-    "releaseTag" : "worldmapquest-v1.2.0",
+    "releaseTag" : "worldmapquest",
     "unicode" : "📖",
     "description" : "ワールドマップ上に各エリアの受注可能なクエスト数を表示します。",
     "tags" : [
