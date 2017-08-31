@@ -1,0 +1,1 @@
+see [http://www.weizlogy.gq/tos/addon/rmnewcollectionmark/](http://www.weizlogy.gq/tos/addon/rmnewcollectionmark/) 

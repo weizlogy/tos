@@ -1,7 +1,7 @@
 [
 
   {
-    "name" : "console",
+    "name" : "Console",
     "file" : "console",
     "extension" : "ipf",
     "fileVersion" : "v1.2.0",
@@ -14,7 +14,7 @@
     ]
   },
   {
-    "name" : "distance",
+    "name" : "Distance",
     "file" : "distance",
     "extension" : "ipf",
     "fileVersion" : "v1.1.1",
@@ -27,7 +27,7 @@
     ]
   },
   {
-    "name" : "dice",
+    "name" : "Dice",
     "file" : "dice",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
@@ -40,7 +40,7 @@
     ]
   },
   {
-    "name" : "dpsmeter",
+    "name" : "DPS Meter",
     "file" : "dpsmeter",
     "extension" : "ipf",
     "fileVersion" : "v1.3.0",
@@ -53,7 +53,7 @@
     ]
   },
   {
-    "name" : "fixbookread",
+    "name" : "Fix Book Read",
     "file" : "fixbookread",
     "extension" : "ipf",
     "fileVersion" : "v1.0.0",
@@ -65,7 +65,7 @@
     ]
   },
   {
-    "name" : "hidename",
+    "name" : "Hide Name",
     "file" : "hidename",
     "extension" : "ipf",
     "fileVersion" : "v1.0.1",
@@ -78,7 +78,7 @@
     ]
   },
   {
-    "name" : "monsterstatus",
+    "name" : "Monster Status",
     "file" : "monsterstatus",
     "extension" : "ipf",
     "fileVersion" : "v3.0.0",
@@ -91,7 +91,7 @@
     ]
   },
   {
-    "name" : "pickiteminfo",
+    "name" : "Pick-Item Info",
     "file" : "pickiteminfo",
     "extension" : "ipf",
     "fileVersion" : "v1.0.1",
@@ -103,7 +103,7 @@
     ]
   },
   {
-    "name" : "repairendur",
+    "name" : "Repair Endurance",
     "file" : "repairendur",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
@@ -115,7 +115,7 @@
     ]
   },
   {
-    "name" : "savequest",
+    "name" : "Save Quest",
     "file" : "savequest",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
@@ -127,7 +127,7 @@
     ]
   },
   {
-    "name" : "skillitemcounter",
+    "name" : "Skill-Item Counter",
     "file" : "skillitemcounter",
     "extension" : "ipf",
     "fileVersion" : "v1.1.0",
@@ -140,7 +140,7 @@
     ]
   },
   {
-    "name" : "slotmac",
+    "name" : "Slot Macro",
     "file" : "slotmac",
     "extension" : "ipf",
     "fileVersion" : "v1.3.0",
@@ -153,7 +153,7 @@
     ]
   },
   {
-    "name" : "staminigauge",
+    "name" : "Stamina Gauge",
     "file" : "staminigauge",
     "extension" : "ipf",
     "fileVersion" : "v1.0.2",
@@ -165,7 +165,7 @@
     ]
   },
   {
-    "name" : "worldmapquest",
+    "name" : "Worldmap Quest",
     "file" : "worldmapquest",
     "extension" : "ipf",
     "fileVersion" : "v1.2.0",
@@ -175,6 +175,18 @@
     "tags" : [
       "quest",
       "worldmap"
+    ]
+  },
+  {
+    "name" : "Remove New Collection Mark",
+    "file" : "rmnewcollectionmark",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "rmnewcollectionmark",
+    "unicode" : "📖",
+    "description" : "コレクション画面に表示される[N]マークを消します。サブキャラ育成時にどうぞ。",
+    "tags" : [
+      "collection"
     ]
   }
 
