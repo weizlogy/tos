@@ -62,12 +62,12 @@ function SaveQuest.new(self)
         DESTROY_CHILD_BYNAME(ctrlset, "savemark");
         -- get quest result, use warp.
         local result = ctrlset:GetSValue();
-        local canWarp = questIES.SUCC_WARP;
-        --CHAT_SYSTEM(ctrlname.."/"..result.." - "..canWarp);
+
         -- create right click menu on success and warp-able quest.
         local content = GET_CHILD(ctrlset, 'groupQuest_title', "ui::CRichText");
         content:EnableHitTest(0);
-        if (result == "SUCCESS" and canWarp == "YES") then
+
+        if (self:IsWarpableQuest(questIES) == 1) then
           content:EnableHitTest(1);
           content:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU');
           content:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
@@ -135,7 +135,7 @@ function SaveQuest.new(self)
       savemark:SetOffset(20, 0);
     end
     local questIES = GetClassByType("QuestProgressCheck", classID);
-    if (SCR_QUEST_CHECK_C(GetMyPCObject(), questIES.ClassName) == "SUCCESS" and questIES.SUCC_WARP == "YES") then
+    if (self:IsWarpableQuest(questIES) == 1) then
       -- create menu.
       questCtrl:EnableHitTest(1);
       questCtrl:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU');
@@ -155,6 +155,22 @@ function SaveQuest.new(self)
       picture:SetEventScriptArgNumber(ui.LBUTTONUP, questIES.ClassID);
     end
   end
+
+  -- 1 : warpable quest, 0 : otherwise.
+  -- logic refs questinfoset_2.lua MAKE_QUEST_INFO_COMMON
+  members.IsWarpableQuest = function(self, questIES)
+    local result = SCR_QUEST_CHECK_C(GetMyPCObject(), questIES.ClassName);
+    if (GET_QUEST_NPC_STATE(questIES, result) == nil) then
+      return 0;
+    end
+    if (result == 'POSSIBLE' and questIES.POSSI_WARP == 'YES')
+      or (result == 'PROGRESS' and questIES.PROG_WARP == 'YES')
+      or (result == 'SUCCESS' and questIES.SUCC_WARP == 'YES') then
+      return 1;
+    end
+    return 0;
+  end
+
   -- recover addon state.
   members.Destroy = function(self)
     UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
