@@ -1,0 +1,30 @@
+suco.config = {
+  Bokor_Zombify = {
+    mode = "hpbar",
+    loc_frame = { x = 450, y = 80 },
+    loc_bar = { x = 0, y = 0 }
+  },
+  Necromancer_RaiseDead = {
+    mode = "icon1",
+    loc  = "left",
+    loc1 = { x = 0, y = 30 },
+    loc2 = { x = 0, y = 70 },
+    loc3 = { x = 0, y = 110 },
+    loc4 = { x = -40, y = 50 },
+    loc5 = { x = -40, y = 90 }
+  },
+  Necromancer_RaiseSkullarcher = {
+    mode = "icon1",
+    loc  = "right",
+    loc1 = { x = 0, y = 30 },
+    loc2 = { x = 0, y = 70 },
+    loc3 = { x = 0, y = 110 },
+    loc4 = { x = 40, y = 50 },
+    loc5 = { x = 40, y = 90 }
+  },
+  Necromancer_CreateShoggoth = {
+    mode = "icon2",
+    loc  = "down",
+    loc1 = { x = 0, y = 0 }
+  }
+};

@@ -36,21 +36,6 @@ function SummonCounter.new(self)
     io.output();
   end
 
---[[
-  members.LoadSettings = function(self)
-    dofile(self.path.."/uipos.txt");
-
-    if (self.x ~= -1 and self.y ~= -1) then
-      return;
-    end
-
-    local clientW = option.GetClientWidth();
-    local clientH = option.GetClientHeight();
-    self.x = clientW / 2;
-    self.y = clientH / 2 + 300;
-  end
-]]
-
   members.LoadSettings = function(self)
     dofile(self.path.."/settings.txt");
 
@@ -82,6 +67,10 @@ function SummonCounter.new(self)
   members.Necromancer_CorpseTower = function(name)
     return name == "pcskill_skullsoldier";
   end
+  -- check logic for necro.
+  members.Necromancer_CreateShoggoth = function(name)
+    return name == "pcskill_shogogoth";
+  end
 
   -- logic for owner handle.
   members.Common_MySession = function()
@@ -102,74 +91,6 @@ function SummonCounter.new(self)
     end
     return handle;
   end
-
---[[
-  -- show ui.
-  members.Show = function(self)
-    local heightbuf = 0;
-    for key, value in pairs(self.Handles) do
-      --CHAT_SYSTEM(key.." - "..#value);
-      -- calc summons total hp.
-      local totalHP = 0;
-      local totalMHP = 0;
-      for i, handle in ipairs(value) do
-     	  local stat = info.GetStat(handle);
-         totalHP = totalHP + stat.HP;
-         totalMHP = totalMHP + stat.maxHP;
-      end
-      -- for create empty gauge.
-      if (totalMHP == 0) then
-        totalHP = -1;
-        totalMHP = 1;
-      end
-      -- create ui.
-      local frame = ui.GetFrame("summoncounter");
-      frame:SetSkinName("downbox");
-      frame:SetAlpha(50);
-      frame:Resize(220, 50 + heightbuf);
-      frame:SetOffset(suco.x, suco.y);
-      frame:SetEventScript(ui.LBUTTONUP, "SUMMONCOUNTER_END_DRAG");
-
-      local summonsHPGauge = frame:CreateOrGetControl(
-        "gauge", "summonsHPGauge_"..key, 0, 0, 188 - 10, 0);
-      tolua.cast(summonsHPGauge, "ui::CGauge");
-      summonsHPGauge:SetMargin(20, 20, 20, 20);
-      summonsHPGauge:Resize(summonsHPGauge:GetWidth(), 30);
-      summonsHPGauge:SetOffset(summonsHPGauge:GetX(), summonsHPGauge:GetY() + heightbuf);
-      summonsHPGauge:SetPoint(totalHP, totalMHP);
-
-      --summonsHPGauge:SetSkinName("jour_info_gauge");
-      --summonsHPGauge:SetSkinName("pcinfo_gauge_hp");
-      --summonsHPGauge:SetSkinName("gauge_barrack_attack");
-      summonsHPGauge:SetSkinName("necronomicon_amount");
-      summonsHPGauge:SetColorTone("FFCCCCCC");
-
-      if summonsHPGauge:GetStat() == 0 then
-        summonsHPGauge:AddStat("%v / %m");
-        summonsHPGauge:SetStatFont(0, 'white_14_ol');
-        summonsHPGauge:SetStatOffset(0, 0, -3);
-        summonsHPGauge:SetStatAlign(0, 'center', 'center');
-      end
-
-      local name = frame:CreateOrGetControl(
-        "richtext", "name_"..key, 0, 0, frame:GetWidth(), 0);
-      name:SetMargin(10, 5, 5, 5);
-      name:SetGravity(ui.LEFT, ui.TOP);
-      name:Resize(frame:GetWidth(), 30);
-      name:SetOffset(name:GetX(), name:GetY() + heightbuf);
-      local text = "{s14}{ol}"..key;
-      if (totalHP ~= -1) then
-        text = text..string.format("(%.2f%%)", (totalHP / totalMHP) * 100);
-      end
-      name:SetText(text);
-
-      summonsHPGauge:ShowWindow(1);
-      frame:ShowWindow(1);
-
-      heightbuf = heightbuf + name:GetHeight() + summonsHPGauge:GetHeight() - 5;
-    end
-  end
-  ]]
 
   -- show ui v2.
   members.Show = function(self)
@@ -208,13 +129,11 @@ function SummonCounter.new(self)
 
   members.ClearHandle = function(self, findfn)
     self.Handles[findfn] = {};
-    --self.Handles[findfn.."1"] = {};
   end
 
   -- put handle to member.
   members.PutHandle = function(self, handle, findfn)
     table.insert(self.Handles[findfn], handle);
-    --table.insert(self.Handles[findfn.."1"], handle);
   end
 
   -- destroy.
@@ -256,6 +175,8 @@ function SUMMONCOUNTER_REFRESH()
         suco:Start(slot, obj.Level, obj.ClassName);
       elseif (obj.ClassName == "Necromancer_CorpseTower") then
         -- suco:Start(slot, obj.Level, obj.ClassName, obj.ClassName.."_FindHandle");
+      elseif (obj.ClassName == "Necromancer_CreateShoggoth") then
+        suco:Start(slot, obj.Level, obj.ClassName);
       end
     end
   end
@@ -291,12 +212,6 @@ function SUMMONCOUNTER_UPDATE(slot)
   return 1;
 end
 
---[[
-function SUMMONCOUNTER_END_DRAG()
-  suco:SaveSettings();
-end
-]]
-
 --
 if (suco ~= nil) then
   suco:Destroy();
@@ -305,6 +220,8 @@ end
 suco = SummonCounter();
 
 
+-- sub classes.
+-- mode hpbar for zombie.
 ModeHPBar = {};
 function ModeHPBar.new(self)
   -- initialize members.
@@ -314,12 +231,63 @@ function ModeHPBar.new(self)
   members.Handles = {};
 
   members.Execute = function(self, frame, config)
+    local totalHP, totalMHP = self:CalculateHP();
+    if (totalHP <= 0) then
+      DESTROY_CHILD_BYNAME(frame, "summonsHPGauge_"..self.Key);
+      DESTROY_CHILD_BYNAME(frame, "summonsHPGaugeName_"..self.Key);
+      return;
+    end
+
+    local locframe = config["loc_frame"];
+    frame:SetOffset(locframe.x, locframe.y);
+
+    local locbar = config["loc_bar"];
+
+    local summonsHPGauge = frame:CreateOrGetControl(
+      "gauge", "summonsHPGauge_"..self.Key, 0, 0, 188 - 10, 0);
+    tolua.cast(summonsHPGauge, "ui::CGauge");
+    summonsHPGauge:SetMargin(20, 20, 20, 20);
+    summonsHPGauge:Resize(summonsHPGauge:GetWidth(), 30);
+    summonsHPGauge:SetOffset(locbar.x, locbar.y);
+    summonsHPGauge:SetPoint(totalHP, totalMHP);
+
+    summonsHPGauge:SetSkinName("necronomicon_amount");
+    summonsHPGauge:SetColorTone("FFCCCCCC");
+
+    if summonsHPGauge:GetStat() == 0 then
+      summonsHPGauge:AddStat("%v / %m");
+      summonsHPGauge:SetStatFont(0, 'white_14_ol');
+      summonsHPGauge:SetStatOffset(0, 0, -3);
+      summonsHPGauge:SetStatAlign(0, 'center', 'center');
+    end
+
+    summonsHPGauge:ShowWindow(1);
+    frame:ShowWindow(1);
   end
+
+  -- calc total hp and mhp.
+  members.CalculateHP = function(self)
+    local totalHP = 0;
+    local totalMHP = 0;
+    for i, handle in ipairs(self.Handles) do
+      local stat = info.GetStat(handle);
+        totalHP = totalHP + stat.HP;
+        totalMHP = totalMHP + stat.maxHP;
+    end
+    -- for create empty gauge.
+    if (totalMHP == 0) then
+      totalHP = -1;
+      totalMHP = 1;
+    end
+    return totalHP, totalMHP;
+  end
+
   return setmetatable(members, {__index = self});
 end
 -- set call.
 setmetatable(ModeHPBar, {__call = ModeHPBar.new});
 
+-- mode icon1 for skulls.
 ModeIcon1 = {};
 function ModeIcon1.new(self)
   -- initialize members.
@@ -359,11 +327,13 @@ function ModeIcon1.new(self)
     pic:SetEnableStretch(1);
     pic:SetOffset(x, y);
   end
+
   return setmetatable(members, {__index = self});
 end
 -- set call.
 setmetatable(ModeIcon1, {__call = ModeIcon1.new});
 
+-- mode icon2 for shogoth.
 ModeIcon2 = {};
 function ModeIcon2.new(self)
   -- initialize members.
@@ -373,7 +343,38 @@ function ModeIcon2.new(self)
   members.Handles = {};
 
   members.Execute = function(self, frame, config)
+    -- loop handle unit by skill.
+    for i, handle in ipairs(self.Handles) do
+      self:CreateSummonIcon(frame, handle, config, i);
+    end
   end
+
+  members.CreateSummonIcon = function(self, frame, handle, config, index)
+    local iconName = "vw_"..self.Key.."_"..handle;
+
+    local iconSize = 60;
+    local iconPos = config.loc;
+    local iconYBase = 0;
+    local iconCenterMarginX = -27;
+
+    if (iconPos == "up") then
+      iconYBase = 0.4;
+    elseif (iconPos == "down") then
+      iconYBase = 3.6;
+    end
+
+    local pic = frame:CreateOrGetControl('picture', iconName, 0, 0, iconSize, iconSize);
+    tolua.cast(pic, "ui::CPicture");
+
+    local loc = config["loc"..index];
+    local x = (frame:GetWidth() / 2) + loc.x + iconCenterMarginX;
+    local y = (90 + loc.y) * iconYBase;
+
+    pic:SetImage("summoncounter_necro_circle");
+    pic:SetEnableStretch(1);
+    pic:SetOffset(x, y);
+  end
+
   return setmetatable(members, {__index = self});
 end
 -- set call.
