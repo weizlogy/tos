@@ -74,6 +74,11 @@ function SaveQuest.new(self)
     dofile(string.format(self.pathShortCutLoc, cid));
     -- recreate.
     for k, v in pairs(self.questShortCutInfo) do
+      -- for v1.2.0 up to v1.2.1.
+      if (v.ls == nil) then
+        v.ls = 0;
+        self:SaveShortCutPos("dummy", 0, 0);
+      end
       self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y, v.ls);
     end
   end
@@ -229,11 +234,9 @@ function SaveQuest.new(self)
     -- check exists.
     local frameName = self:GetFrameNameFromQuestID(questID);
     local frame = ui.GetFrame(frameName);
-    if (frame ~= nil) then
-      CHAT_SYSTEM("[savequest] This shortcut is already created.");
-      return;
+    if (frame == nil) then
+      frame = ui.CreateNewFrame("savequest", frameName);
     end
-    frame = ui.CreateNewFrame("savequest", frameName);
     -- get ies.
     local questIES = GetClassByType("QuestProgressCheck", questID);
     -- get map info.

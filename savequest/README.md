@@ -1,10 +1,9 @@
 ## Latest Release Note.
 
-### v1.2.0
+### v1.2.1
 
-#### クエストワープショートカット作成機能追加
+#### クエストワープショートカット位置固定機能追加
 
-右クリックメニューにshortcutが追加されました。
-本機能によりクエストワープのショートカットフレームを任意の場所に追加、削除できます。
+クエストワープのショートカットフレームを位置固定できるようにしました。
 
 see details -> [http://www.weizlogy.gq/tos/addon/savequest/](http://www.weizlogy.gq/tos/addon/savequest/) 
