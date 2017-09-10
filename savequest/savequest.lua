@@ -45,13 +45,13 @@ function SaveQuest.new(self)
   end
 
   -- save shortcut ui location.
-  members.SaveShortCutLoc = function(self, name, remove)
+  members.SaveShortCutPos = function(self, name, remove, locked)
     -- save memory.
     local frame = ui.GetFrame(name);
     if (frame == nil or remove == 1) then
       self.questShortCutInfo[name] = nil;
     else
-      self.questShortCutInfo[name] = { x = frame:GetX(), y = frame:GetY() };
+      self.questShortCutInfo[name] = { x = frame:GetX(), y = frame:GetY(), ls = locked };
     end
     -- persistence.
     local cid = info.GetCID(session.GetMyHandle());
@@ -60,7 +60,7 @@ function SaveQuest.new(self)
       return;
     end
     for k, v in pairs(self.questShortCutInfo) do
-      f:write(string.format("saqu.questShortCutInfo.%s = { x = %d, y = %d };\n", k, v.x, v.y));
+      f:write(string.format("saqu.questShortCutInfo.%s = { x = %d, y = %d, ls = %d };\n", k, v.x, v.y, v.ls));
     end
     f:flush();
     f:close();
@@ -74,7 +74,7 @@ function SaveQuest.new(self)
     dofile(string.format(self.pathShortCutLoc, cid));
     -- recreate.
     for k, v in pairs(self.questShortCutInfo) do
-      self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y);
+      self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y, v.ls);
     end
   end
 
@@ -134,6 +134,22 @@ function SaveQuest.new(self)
     ui.AddContextMenuItem(context, "Save", string.format("SAVEQUEST_SAVE(%d)", questID));	
     ui.AddContextMenuItem(context, "Release", string.format("SAVEQUEST_RELEASE(%d)", questID));	
     ui.AddContextMenuItem(context, "ShortCut", string.format("SAVEQUEST_SHORTCUT(%d)", questID));	
+    ui.AddContextMenuItem(context, "Cancel", "None");
+    ui.OpenContextMenu(context);
+  end
+
+  -- shortcut menu.
+  members.ShortcutMenu = function(self, questID, locked)
+    local questIES = GetClassByType("QuestProgressCheck", questID);
+    local menuTitle = string.format("[%d] %s", questID, questIES.Name);
+    local context = ui.CreateContextMenu(
+      "CONTEXT_SAVE_QUEST_SHORTCUT", menuTitle, 0, 0, string.len(menuTitle) * 6, 100);
+    if (locked == "0") then
+      ui.AddContextMenuItem(context, "Lock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 1)", questID));	
+    else
+      ui.AddContextMenuItem(context, "UnLock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 0)", questID));	
+    end
+    ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));	
     ui.AddContextMenuItem(context, "Cancel", "None");
     ui.OpenContextMenu(context);
   end
@@ -209,13 +225,15 @@ function SaveQuest.new(self)
   end
 
   -- create quest warp shortcut.
-  members.CreateShortCut = function(self, questID, x, y)
+  members.CreateShortCut = function(self, questID, x, y, locked)
     -- check exists.
-    local frameName = self.framePrefix..questID;
+    local frameName = self:GetFrameNameFromQuestID(questID);
     local frame = ui.GetFrame(frameName);
-    if (frame == nil) then
-      frame = ui.CreateNewFrame("savequest", frameName);
+    if (frame ~= nil) then
+      CHAT_SYSTEM("[savequest] This shortcut is already created.");
+      return;
     end
+    frame = ui.CreateNewFrame("savequest", frameName);
     -- get ies.
     local questIES = GetClassByType("QuestProgressCheck", questID);
     -- get map info.
@@ -229,10 +247,13 @@ function SaveQuest.new(self)
     frame:SetAlpha(50);
     frame:SetEventScript(ui.LBUTTONUP, "SAVEQUEST_END_DRAG");
 
+    frame:SetUserValue("SAVEQUEST_QUESTID", questID);
+    self:LockOrUnlockShortCut(frameName, locked);
+
     local picture = self:CreateStatePicture(frame, questIES);
     picture:SetTooltipType('texthelp');
     picture:SetTooltipArg(questIES.Name);
-    picture:SetEventScript(ui.RBUTTONUP, "SAVEQUEST_REMOVE_SHORTCUT");
+    picture:SetEventScript(ui.RBUTTONUP, "SAVEQUEST_OPEN_SHORTCUT_MENU");
 
     local mapInfo = frame:CreateOrGetControl('richtext', "mapinfo", 0, 0, 100, 40);
     tolua.cast(mapInfo, "ui::CRichText");
@@ -259,6 +280,17 @@ function SaveQuest.new(self)
       return 1;
     end
     return 0;
+  end
+
+  members.GetFrameNameFromQuestID = function(self, questID)
+    return self.framePrefix..questID;
+  end
+
+  members.LockOrUnlockShortCut = function(self, frameName, locked)
+    local frame = ui.GetFrame(frameName);
+    frame:SetUserValue("SAVEQUEST_LOCKSTATE", locked);
+    local movable = 1 - locked;  -- reverse flag.
+    frame:EnableMove(movable);
   end
 
   -- recover addon state.
@@ -339,18 +371,28 @@ function SAVEQUEST_SHORTCUT(questID)
   local width = 50;
   local x = basePos + IMCRandom(-1 * width, width);
   local y = basePos + IMCRandom(-1 * width, width);
-  saqu:CreateShortCut(questID, x, y);
+  saqu:CreateShortCut(questID, x, y, 0);
 end
 
-function SAVEQUEST_REMOVE_SHORTCUT(ctrl)
-  local name = ctrl:GetName();
+function SAVEQUEST_OPEN_SHORTCUT_MENU(ctrl)
+  saqu:ShortcutMenu(ctrl:GetUserValue("SAVEQUEST_QUESTID"), ctrl:GetUserValue("SAVEQUEST_LOCKSTATE"));
+end
+
+function SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(questID, locked)
+  local frameName = saqu:GetFrameNameFromQuestID(questID);
+  saqu:LockOrUnlockShortCut(frameName, locked);
+  saqu:SaveShortCutPos(frameName, 0, locked);
+end
+
+function SAVEQUEST_REMOVE_SHORTCUT(questID)
+  local name = saqu:GetFrameNameFromQuestID(questID);
   ui.DestroyFrame(name);
-  saqu:SaveShortCutLoc(name, 1);
+  saqu:SaveShortCutPos(name, 1);
 end
 
 -- frame drag end.
 function SAVEQUEST_END_DRAG(frame)
-  saqu:SaveShortCutLoc(frame:GetName());
+  saqu:SaveShortCutPos(frame:GetName(), 0, frame:GetUserValue("SAVEQUEST_LOCKSTATE"));
 end
 
 -- remove old state.
