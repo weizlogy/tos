@@ -11,7 +11,7 @@
 チャットコマンドで設定ファイルをリロードできるようになります。
 
 ```lua
-/summons reload
+/summonc reload
 ```
 
 see [http://www.weizlogy.gq/tos/addon/summoncounter/](http://www.weizlogy.gq/tos/addon/summoncounter/) 
