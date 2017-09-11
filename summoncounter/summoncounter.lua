@@ -26,19 +26,11 @@ function SummonCounter.new(self)
     slot:RunUpdateScript("SUMMONCOUNTER_UPDATE", 0, 0, 0, 1)
   end
 
-  members.SaveSettings = function(self)
-    local frame = ui.GetFrame("summoncounter");
-    self.x = frame:GetX();
-    self.y = frame:GetY();
-    io.output(self.path.."/uipos.txt");
-    io.write(string.format("suco.x = %d; suco.y = %d;", self.x, self.y));
-    io.flush();
-    io.output();
-  end
-
   members.LoadSettings = function(self)
     dofile(self.path.."/settings.txt");
+  end
 
+  members.LoadPositions = function(self)
     local bufferW = 90;
     local bufferH = 250;
     local frame = ui.GetFrame("charbaseinfo1_my");
@@ -138,7 +130,7 @@ function SummonCounter.new(self)
 
   -- destroy.
   members.Destroy = function(self)
-    UI_CHAT = suco.UI_CHAT;
+    --UI_CHAT = suco.UI_CHAT;
   end
   return setmetatable(members, {__index = self});
 end
@@ -150,10 +142,22 @@ setmetatable(SummonCounter, {__call = SummonCounter.new});
 function SUMMONCOUNTER_ON_INIT(addon, frame)
   addon:RegisterMsg('GAME_START_3SEC', 'SUMMONCOUNTER_REFRESH');
   addon:RegisterMsg('GAME_START_3SEC', 'SUMMONCOUNTER_LOAD_AT_ONCE');
+
+  if (suco.UI_CHAT == nil) then
+    suco.UI_CHAT = UI_CHAT;
+  end
+  UI_CHAT = function(msg)
+    if (msg == "/summonc reload") then
+      suco:LoadSettings();
+      CHAT_SYSTEM("[summoncounter] settings reloaded.");
+    end
+    suco.UI_CHAT(msg);
+  end
 end
 
 function SUMMONCOUNTER_LOAD_AT_ONCE()
   suco:LoadSettings();
+  suco:LoadPositions();
 end
 
 --
@@ -176,7 +180,7 @@ function SUMMONCOUNTER_REFRESH()
       elseif (obj.ClassName == "Necromancer_CorpseTower") then
         -- suco:Start(slot, obj.Level, obj.ClassName, obj.ClassName.."_FindHandle");
       elseif (obj.ClassName == "Necromancer_CreateShoggoth") then
-        suco:Start(slot, obj.Level, obj.ClassName);
+        suco:Start(slot, 1, obj.ClassName);
       end
     end
   end
