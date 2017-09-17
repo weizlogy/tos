@@ -154,9 +154,57 @@ function SaveQuest.new(self)
     else
       ui.AddContextMenuItem(context, "UnLock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 0)", questID));	
     end
+
+    if (self:IsPartySharedQuest(questID)) then
+      ui.AddContextMenuItem(context, "UnShare", string.format("saqu:UnShareWithParty(%d)", questID));	
+    else
+      ui.AddContextMenuItem(context, "Share", string.format("saqu:ShareWithParty(%d)", questID));	
+    end
+
     ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));	
     ui.AddContextMenuItem(context, "Cancel", "None");
     ui.OpenContextMenu(context);
+  end
+
+  members.CreateSharePartyIcon = function(self, frame)
+		local icon = frame:CreateOrGetControl("picture", "SHARE_PARTY", 30, 30, 0, 0, 0, 0, 0, 0);
+    icon:SetOffset(frame:GetWidth() - 30, 0);
+		icon:ShowWindow(1);	
+		icon = tolua.cast(icon, "ui::CPicture");
+		icon:SetImage("party_indi_icon");
+    icon:SetEnableStretch(1);
+    return icon;
+  end
+
+  members.ShareWithParty = function(self, questID)
+    party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", questID);
+    REQUEST_SHARED_QUEST_PROGRESS(questID)
+    UPDATE_ALLQUEST(ui.GetFrame("quest"));
+    -- create share party icon.
+    local frame = ui.GetFrame(saqu:GetFrameNameFromQuestID(questID));
+    self:CreateSharePartyIcon(frame);
+  end
+
+  members.UnShareWithParty = function(self, questID)
+    party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", 0);
+    party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", -1);
+    UPDATE_ALLQUEST(ui.GetFrame("quest"));
+
+    local frame = ui.GetFrame(saqu:GetFrameNameFromQuestID(questID));
+    frame:RemoveChild("SHARE_PARTY");
+  end
+  
+  -- check share with party.
+  members.IsPartySharedQuest = function(self, questID)
+    local myInfo = session.party.GetMyPartyObj(PARTY_NORMAL);
+    local isSharedQuest = false;
+      if myInfo ~= nil then
+      local obj = GetIES(myInfo:GetObject());
+      if tostring(obj.Shared_Quest) == questID then
+        isSharedQuest = true;
+      end
+    end
+    return isSharedQuest;
   end
 
   -- save quest to local.
@@ -258,15 +306,23 @@ function SaveQuest.new(self)
     picture:SetTooltipArg(questIES.Name);
     picture:SetEventScript(ui.RBUTTONUP, "SAVEQUEST_OPEN_SHORTCUT_MENU");
 
+    local fontSize = 12;
     local mapInfo = frame:CreateOrGetControl('richtext', "mapinfo", 0, 0, 100, 40);
     tolua.cast(mapInfo, "ui::CRichText");
     mapInfo:SetOffset(22, 4);
-    mapInfo:SetText("{s12}{ol}"..zoneName);
+    mapInfo:SetText(string.format("{s%d}{ol}%s", fontSize, zoneName));
     mapInfo:EnableHitTest(0)
 
     frame:SetOffset(x, y);
-    frame:Resize(#zoneName / 7 * 12 + 30, 20);
+
+    local sharePartyIconSpace = 12;
+    frame:Resize(#zoneName / 7 * fontSize + 30 + sharePartyIconSpace, 20);
     frame:ShowWindow(1);
+
+    if (self:IsPartySharedQuest(tostring(questID))) then
+      self:CreateSharePartyIcon(frame);
+    end
+
     return frame;
   end
 
@@ -302,6 +358,10 @@ function SaveQuest.new(self)
     saqu.UPDATE_QUESTINFOSET_2 = nil;
     Q_CTRL_BASIC_SET = saqu.Q_CTRL_BASIC_SET;
     saqu.Q_CTRL_BASIC_SET = nil;
+    SHARE_QUEST_WITH_PARTY = saqu.SHARE_QUEST_WITH_PARTY;
+    saqu.SHARE_QUEST_WITH_PARTY = nil;
+    CANCEL_SHARE_QUEST_WITH_PARTY = saqu.CANCEL_SHARE_QUEST_WITH_PARTY;
+    saqu.CANCEL_SHARE_QUEST_WITH_PARTY = nil;
   end
   return setmetatable(members, {__index = self});
 end
@@ -320,8 +380,10 @@ function SAVEQUEST_ON_INIT(addon, frame)
     -- call my custom logics.
     saqu:LoadQuest();
     saqu:UpdateQuestUI();
+    saqu:LoadShortCutLoc();
     addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
   end
+
   -- override open quest list savemark.
   if (saqu.Q_CTRL_BASIC_SET == nil) then
     saqu.Q_CTRL_BASIC_SET = Q_CTRL_BASIC_SET;
@@ -330,8 +392,25 @@ function SAVEQUEST_ON_INIT(addon, frame)
     saqu.Q_CTRL_BASIC_SET(Quest_Ctrl, classID, isNew);
     saqu:UpdateQuestListUI(Quest_Ctrl, classID);
   end
-  saqu:LoadQuest();
-  saqu:LoadShortCutLoc();
+
+  -- override (un)share party process.
+  if (saqu.SHARE_QUEST_WITH_PARTY == nil) then
+    saqu.SHARE_QUEST_WITH_PARTY = SHARE_QUEST_WITH_PARTY;
+  end
+  SHARE_QUEST_WITH_PARTY = function(parent, ctrlSet)
+    saqu.SHARE_QUEST_WITH_PARTY(parent, ctrlSet);
+    saqu:ShareWithParty(parent:GetUserIValue("QUEST_CLASSID"));
+  end
+  if (saqu.CANCEL_SHARE_QUEST_WITH_PARTY == nil) then
+    saqu.CANCEL_SHARE_QUEST_WITH_PARTY = CANCEL_SHARE_QUEST_WITH_PARTY;
+  end
+  CANCEL_SHARE_QUEST_WITH_PARTY = function(parent, ctrlSet)
+    saqu:UnShareWithParty(parent:GetUserIValue("QUEST_CLASSID"));
+    saqu.CANCEL_SHARE_QUEST_WITH_PARTY(parent, ctrlSet);
+  end
+
+  --saqu:LoadQuest();
+  --saqu:LoadShortCutLoc();
 end
 
 -- remove npc event handler.

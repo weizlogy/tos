@@ -118,10 +118,10 @@
     "name" : "Save Quest",
     "file" : "savequest",
     "extension" : "ipf",
-    "fileVersion" : "v1.2.1",
+    "fileVersion" : "v1.2.2",
     "releaseTag" : "savequest",
     "unicode" : "📖",
-    "description" : "ワープ用クエストの誤完了を防止します。",
+    "description" : "ワープ用クエストの誤完了を防止します。ついでにクエストワープを使いやすくします。",
     "tags" : [
       "quest",
       "warp"
