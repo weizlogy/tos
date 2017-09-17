@@ -1,17 +1,9 @@
 ## Latest Release Note.
 
-### v1.0.1
+### v1.0.2
 
-#### ショゴス召喚最大値修正
+#### オブジェクトクリック阻害修正
 
-ショゴスの召喚最大値がスキルレベルになっていたのを1固定に修正しました。
-
-#### 設定ファイルリロード機能追加
-
-チャットコマンドで設定ファイルをリロードできるようになります。
-
-```lua
-/summonc reload
-```
+マウスモード時、召喚アイコン周辺にあるオブジェクトがクリックできない問題を修正しました。
 
 see [http://www.weizlogy.gq/tos/addon/summoncounter/](http://www.weizlogy.gq/tos/addon/summoncounter/) 

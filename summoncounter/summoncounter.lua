@@ -93,6 +93,8 @@ function SummonCounter.new(self)
     frame:Resize(suco.w, suco.h);
     frame:SetOffset(suco.x, suco.y);
     frame:ShowWindow(1);
+    frame:EnableMove(0);
+    frame:EnableHittestFrame(0);
 
     for key, value in pairs(self.Handles) do
       -- check config.
@@ -265,6 +267,7 @@ function ModeHPBar.new(self)
       summonsHPGauge:SetStatAlign(0, 'center', 'center');
     end
 
+    summonsHPGauge:EnableHitTest(0);
     summonsHPGauge:ShowWindow(1);
     frame:ShowWindow(1);
   end
@@ -330,6 +333,7 @@ function ModeIcon1.new(self)
     pic:SetImage("summoncounter_necro_skull");
     pic:SetEnableStretch(1);
     pic:SetOffset(x, y);
+    pic:EnableHitTest(0);
   end
 
   return setmetatable(members, {__index = self});
@@ -377,6 +381,7 @@ function ModeIcon2.new(self)
     pic:SetImage("summoncounter_necro_circle");
     pic:SetEnableStretch(1);
     pic:SetOffset(x, y);
+    pic:EnableHitTest(0);
   end
 
   return setmetatable(members, {__index = self});
