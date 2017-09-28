@@ -19,6 +19,9 @@ function HideName.new(self)
     familyName:SetText("");
     local name = GET_CHILD(my, "name", "ui::CRichText");
     name:SetText("");
+    -- invisible guild name below a character.
+    local guildName = GET_CHILD(my, "guildName", "ui::CRichText");
+    guildName:SetText("");
   end
   -- destroy.
   members.Destroy = function(self)

@@ -68,10 +68,10 @@
     "name" : "Hide Name",
     "file" : "hidename",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.1",
+    "fileVersion" : "v1.0.2",
     "releaseTag" : "hidename",
     "unicode" : "📖",
-    "description" : "画面にある自キャラ名を消します。",
+    "description" : "画面にある自キャラ名とギルド名を消します。",
     "tags" : [
       "hide",
       "headsupdisplay"
