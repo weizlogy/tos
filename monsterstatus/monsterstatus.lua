@@ -40,6 +40,13 @@ function MonsterStatus.new(self)
     Magic_Iron = 1.00,
     Magic_Ghost = 1.25,
   }
+
+  members.server = GetServerNation();
+
+  members.IsJpServer = function(self)
+    return self.server == "JP";
+  end
+
   -- 
   members.LoadSettings = function(self)
     if (self.X ~= -1 and self.Y ~= -1) then
@@ -240,13 +247,15 @@ function MonsterStatus.new(self)
     droptitle:SetText("{s14}{ol} DROP ");
     DESTROY_CHILD_BYNAME(frame, "drop_");
     frame:Resize(frame:GetWidth(), droptitle:GetY() + droptitle:GetHeight() + 5);
-    for i, item in ipairs(journals.drops) do
-      local drop = frame:CreateOrGetControl(
-        "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * i), frame:GetWidth(), ctrlHeight);
-      drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
-			drop:SetTooltipType('wholeitem');
-			drop:SetTooltipArg('', item[1].ClassID, 0);
-      frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
+    if (next(journals.drops)) then
+      for i, item in ipairs(journals.drops) do
+        local drop = frame:CreateOrGetControl(
+          "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * i), frame:GetWidth(), ctrlHeight);
+        drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
+        drop:SetTooltipType('wholeitem');
+        drop:SetTooltipArg('', item[1].ClassID, 0);
+        frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
+      end
     end
 
     frame:SetOffset(self.X, self.Y);
@@ -267,6 +276,15 @@ function MonsterStatus.new(self)
       return value;
     end
     value.kills.max = journal.Count1;
+    if (self:IsJpServer()) then
+      value = self:GetJournalsAtJpServer(monster, value);
+    else
+      value = self:GetJournalsAtNonJpServer(monster, value);
+    end
+    return value;
+  end
+
+  members.GetJournalsAtJpServer = function(self, monster, value)
     -- get wiki.
     local wiki = GetWikiByName(monster.ClassName)
     if wiki == nil then
@@ -291,6 +309,29 @@ function MonsterStatus.new(self)
     end
     return value;
   end
+
+  members.GetJournalsAtNonJpServer = function(self, monster, value)
+    -- get kill count.
+    value.kills.count = ADVENTURE_BOOK_MONSTER_CONTENT.MONSTER_KILL_COUNT(monster.ClassID);
+    -- get drop item.
+    local items = ADVENTURE_BOOK_MONSTER_CONTENT.MONSTER_DROP_ITEM(monster.ClassID);
+    for i = 1, #items do
+      local item = GetClassByType("Item", items[i]["item_id"])
+      if item ~= nil then
+        local itemObtainCount = GetItemObtainCount(pc, item.ClassID);
+        local curPoint = _GET_ADVENTURE_BOOK_POINT_ITEM(item.ItemType == 'Equip', itemObtainCount);
+        local pts = itemObtainCount;
+        local maxPts = curPoint;
+        local ratio = math.floor(pts * 100 / maxPts);
+        if maxPts <= 0 then
+          ratio = 0;
+        end
+        table.insert(value.drops, {item, ratio});
+      end
+    end
+    return value;
+  end
+
   -- 
   members.LimitStatusValue = function(self, value)
     if (value > 9999) then

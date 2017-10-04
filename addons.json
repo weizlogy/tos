@@ -81,7 +81,7 @@
     "name" : "Monster Status",
     "file" : "monsterstatus",
     "extension" : "ipf",
-    "fileVersion" : "v3.0.0",
+    "fileVersion" : "v3.0.1",
     "releaseTag" : "monsterstatus",
     "unicode" : "📖",
     "description" : "ターゲット中のモンスターのステータスを表示します。シンプルなv2系もあります。",
