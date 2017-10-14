@@ -1,0 +1,38 @@
+g.settings = {
+  showGrade = false;
+  showGroupName = false;
+  msgFilterGrade = "rare";
+  effectFilterGrade = "common";
+  nameTagFilterGrade = "common";
+  alwaysShowXPCards = false;
+  alwaysShowMonGems = true;
+  alwaysShowCubes = true;
+  showSilverNameTag = false;
+  onlyMeOrParty = true;
+  showPartyDrops = true;
+}
+g.settings.effects ={
+  ["common"] = {
+    name = "F_magic_prison_line_white";
+    scale = 6;
+  };
+
+  ["rare"] = {
+    name = "F_magic_prison_line_blue";
+    scale = 6;
+  };
+
+  ["epic"] = {
+    name = "F_magic_prison_line_dark";
+    scale = 6;
+  };
+
+  ["legendary"] = {
+    name = "F_magic_prison_line_red";
+    scale = 6;
+  };
+  ["set"] = {
+    name = "F_magic_prison_line_green";
+    scale = 6;
+  };
+}
