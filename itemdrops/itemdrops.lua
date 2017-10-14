@@ -13,7 +13,7 @@ _G['ADDONS'] = _G['ADDONS'] or {};
 _G['ADDONS']['MIEI'] = _G['ADDONS']['MIEI'] or {}
 _G['ADDONS']['MIEI'][addonName] = _G['ADDONS']['MIEI'][addonName] or {};
 local g = _G['ADDONS']['MIEI'][addonName];
-local acutil = require('acutil');
+--local acutil = require('acutil');
 
 if not g.loaded then
 	g.settings = {
@@ -93,23 +93,41 @@ showPartyDrops		- true will display drops from your party members, showPartyDrop
 ]];
 
 g.settingsComment = string.format(g.settingsComment, "--[[", "]]");
-g.settingsFileLoc = "../addons/itemdrops/settings.json";
-
+g.settingsFileLoc = "../addons/itemdrops/settings.txt";
+g.UI_CHAT = nil;
 
 function ITEMDROPS_3SEC()
 	local g = _G["ADDONS"]["MIEI"]["ITEMDROPS"];
-	local acutil = require('acutil');
+	--local acutil = require('acutil');
 
-	acutil.slashCommand('/drops', g.processCommand)
+	-- register chat commands.
+	--acutil.slashCommand('/drops', g.processCommand)
+	if (g.UI_CHAT == nil) then
+    g.UI_CHAT = UI_CHAT;
+  end
+  UI_CHAT = function(msg)
+		if (string.find(msg, "/drops ", 1, true) == 1) then
+			local words = {};
+			msg = string.gsub(msg, "/drops", "");
+			for m in string.gmatch(msg, "%a+") do
+				table.insert(words, m);
+			end
+			g.processCommand(words);
+		end
+    g.UI_CHAT(msg);
+  end
 	g.addon:RegisterMsg("MON_ENTER_SCENE", "ITEMDROPS_ON_MON_ENTER_SCENE")
 
 	if not g.loaded then
+	  --[[
 		local t, err = acutil.loadJSON(g.settingsFileLoc, g.settings);
 		if err then
 			acutil.saveJSON(g.settingsFileLoc, g.settings);
 		else
 			g.settings = t;
 		end
+		]]
+		--dofile(g.settingsFileLoc);
 		CHAT_SYSTEM('[itemDrops:help] /drops');
 		g.loaded = true;
 	end
@@ -281,7 +299,6 @@ function g.processCommand(words)
 	local g = _G["ADDONS"]["MIEI"]["ITEMDROPS"];
 	local cmd = table.remove(words,1);
 	local validFilterGrades = 'common, rare, epic, legendary, off';
-
 	if not cmd then
 		local msg = '/drops party on/off{nl}';
 		msg = msg .. 'Display drops owned by party members.{nl}';
@@ -396,7 +413,7 @@ function g.processCommand(words)
 	else
 		CHAT_SYSTEM('[itemDrops] Invalid input. Type "/drops" for help.');
 	end
-	acutil.saveJSON(g.settingsFileLoc, g.settings);
+	--acutil.saveJSON(g.settingsFileLoc, g.settings);
 end
 
 
@@ -427,7 +444,7 @@ end
 
 function ITEMDROPS_ON_INIT(addon, frame)
 	local g = _G['ADDONS']['MIEI']['ITEMDROPS'];
-	local acutil = require('acutil');
+	--local acutil = require('acutil');
 	g.addon = addon;
 	g.frame = frame;
 	
