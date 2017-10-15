@@ -113,6 +113,7 @@ function ITEMDROPS_3SEC()
 				table.insert(words, m);
 			end
 			g.processCommand(words);
+			return;
 		end
     g.UI_CHAT(msg);
   end
@@ -127,7 +128,7 @@ function ITEMDROPS_3SEC()
 			g.settings = t;
 		end
 		]]
-		--dofile(g.settingsFileLoc);
+		dofile(g.settingsFileLoc);
 		CHAT_SYSTEM('[itemDrops:help] /drops');
 		g.loaded = true;
 	end

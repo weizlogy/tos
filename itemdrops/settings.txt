@@ -1,3 +1,4 @@
+local g = _G['ADDONS']['MIEI']["ITEMDROPS"];
 g.settings = {
   showGrade = false;
   showGroupName = false;
