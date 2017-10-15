@@ -25,42 +25,28 @@ function PickItemInfo.new(self)
       return;
     end
 
-    local w = -30;
-    local h = 25;
-
     local frameName = "pickiteminfo_" .. handle;
     local frame = ui.GetFrame(frameName);
-    if (frame ~= nil) then
-      local mypos = info.GetPositionInMap(session.GetMyHandle(), m_mapWidth, m_mapHeight);
-      local tmypos = info.GetPositionInMap(handle, m_mapWidth, m_mapHeight);
-      local fx = frame:GetUserValue("PICKITEMINFO_FIRST_X");
-      local fy = frame:GetUserValue("PICKITEMINFO_FIRST_Y");
-      local clientW = option.GetClientWidth();
-      local clientH = option.GetClientHeight();
-      local magic = 50;
-      frame:SetUserValue("_AT_OFFSET_X",
-       w + -1 * magic * (clientW / (clientW + clientH)) * (mypos.x - tmypos.x - fx));
-      frame:SetUserValue("_AT_OFFSET_Y",
-       h + -1 * magic * (clientH / (clientW + clientH)) * (mypos.y - tmypos.y - fy));
-      return;
+    if (frame == nil) then
+      frame = ui.CreateNewFrame("pickiteminfo", frameName, 0);
     end
-    frame = ui.CreateNewFrame("pickiteminfo", frameName, 0);
     frame:SetLayerLevel(1);
-    frame:Resize(itemframe:GetWidth(), itemframe:GetHeight());
-    frame:ShowWindow(1);
-
-    local fmypos = info.GetPositionInMap(session.GetMyHandle(), m_mapWidth, m_mapHeight);
-    local ftmypos = info.GetPositionInMap(handle, m_mapWidth, m_mapHeight);
-    -- CHAT_SYSTEM(fmypos.x..", "..fmypos.y)
-    frame:SetUserValue("PICKITEMINFO_FIRST_X", fmypos.x - ftmypos.x);
-    frame:SetUserValue("PICKITEMINFO_FIRST_Y", fmypos.y - ftmypos.y);
-
+    
     local itemNameText = frame:CreateOrGetControl(
       'richtext', "itemNameText", 0, 0, frame:GetWidth(), frame:GetHeight());
     itemNameText:SetText(string.format("{ol}{s14}{#%s}%s", self:GetItemRarityColor(iesObj), iesObj.Name));
     itemNameText:ShowWindow(1);
 
-    FRAME_AUTO_POS_TO_OBJ(frame, handle, w, h, 1, 1, 1);
+    frame:SetUserValue("_AT_OFFSET_HANDLE", handle);
+    frame:SetUserValue("_AT_OFFSET_X", -frame:GetWidth() / 2);
+    frame:SetUserValue("_AT_OFFSET_Y", 30);
+    frame:SetUserValue("_AT_OFFSET_TYPE", 1);
+    frame:SetUserValue("_AT_AUTODESTROY", 1);
+  
+    _FRAME_AUTOPOS(frame);
+    frame:RunUpdateScript("_FRAME_AUTOPOS");
+
+    frame:ShowWindow(1);
   end
   -- get item name color. by coloreditemnames.
   members.GetItemRarityColor = function(self, iesObj)
