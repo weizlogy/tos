@@ -276,11 +276,14 @@ function MonsterStatus.new(self)
       return value;
     end
     value.kills.max = journal.Count1;
+    --[[
     if (self:IsJpServer()) then
       value = self:GetJournalsAtJpServer(monster, value);
     else
       value = self:GetJournalsAtNonJpServer(monster, value);
     end
+    ]]
+    value = self:GetJournalsAtNonJpServer(monster, value);
     return value;
   end
 
