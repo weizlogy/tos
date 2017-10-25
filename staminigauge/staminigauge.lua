@@ -13,31 +13,32 @@ function STAMINIGAUGE_UPDATE(frame, msg, argStr, argNum)
     local staGaugeObject = baseFrame:CreateOrGetControl("gauge", "pcStaGauge", 0, 0, 104, 15);
     staGauge = tolua.cast(staGaugeObject, "ui::CGauge");
     staGauge:SetGravity(ui.CENTER_HORZ, ui.TOP);
-    staGauge:SetMargin(0, 28, 0, 0);
+    staGauge:SetMargin(0, 32, 0, 0);
     staGauge:SetSkinName("pcinfo_gauge_sta2");
     staGauge:ShowWindow(1);
     -- adjust hp/sp gauge.
     local hp = baseFrame:GetChild("pcHpGauge");
     local hpm = hp:GetMargin();
-    hp:SetMargin(hpm.left, 8, hpm.right, hpm.bottom);
+    hp:SetMargin(hpm.left, 17, hpm.right, hpm.bottom);
     local sp = baseFrame:GetChild("pcSpGauge");
     local spm = sp:GetMargin();
-    sp:SetMargin(spm.left, 22, spm.right, spm.bottom);
+    sp:SetMargin(spm.left, 25, spm.right, spm.bottom);
     -- adjust left side image.
     local bgL = GET_CHILD(baseFrame, "pcinfo_bg_L", "ui::CPicture");
     bgL:SetEnableStretch(1);
-    bgL:Resize(20, 36);
+    bgL:Resize(10, 26);
     local bgLm = bgL:GetMargin();
-    bgL:SetMargin(-62, -44, bgLm.right, bgLm.bottom);
+    bgL:SetMargin(-57, -42, bgLm.right, bgLm.bottom);
     -- adjust right side image.
     local bgR = GET_CHILD(baseFrame, "pcinfo_bg_R", "ui::CPicture");
     bgR:SetEnableStretch(1);
-    bgR:Resize(20, 36);
+    bgR:Resize(10, 26);
     local bgRm = bgR:GetMargin();
-    bgR:SetMargin(62, -44, bgRm.right, bgRm.bottom);
+    bgR:SetMargin(57, -42, bgRm.right, bgRm.bottom);
     -- adjust shield gauge.
     local shieldGauge = GET_CHILD(baseFrame, "pcShieldGauge", "ui::CGauge");
     shieldGauge:SetOffset(0, 0);
+    -- shieldGauge:ShowWindow(0);
   end
   staGauge:SetPoint(stat.Stamina, stat.MaxStamina);
 end

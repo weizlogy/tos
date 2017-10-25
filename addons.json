@@ -167,10 +167,10 @@
     ]
   },
   {
-    "name" : "Stamina Gauge",
+    "name" : "Stamina Mini Gauge",
     "file" : "staminigauge",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.2",
+    "fileVersion" : "v1.0.3",
     "releaseTag" : "staminigauge",
     "unicode" : "📖",
     "description" : "キャラの足元にスタミナゲージを追加します。",
