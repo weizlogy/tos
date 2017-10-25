@@ -93,12 +93,27 @@ function DPSMeter.new(self)
 end
 -- set call.
 setmetatable(DPSMeter, {__call = DPSMeter.new});
+
 -- frame initialize.
 function DPSMETER_ON_INIT(addon, frame)
+  DPSMeter.IsLock = 1;
   -- register handlers.
   addon:RegisterMsg('MAP_CHARACTER_UPDATE', 'DPSMETER_START');
   addon:RegisterMsg('FPS_UPDATE', 'DPSMETER_START');
+
+  if (DPSMeter.UI_CHAT == nil) then
+    DPSMeter.UI_CHAT = UI_CHAT;
+  end
+  UI_CHAT = function(msg)
+    if (msg == "/dpsm on") then
+      DPSMeter.IsLock = 0;
+    elseif (msg == "/dpsm off") then
+      DPSMeter.IsLock = 1;
+    end
+    DPSMeter.UI_CHAT(msg);
+  end
 end
+
 function DPSMETER_START(frame, msg, str, myhandle)
   if (DPSMeter.IsLock == 1) then
     return;
