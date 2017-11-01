@@ -167,6 +167,22 @@
     ]
   },
   {
+    "name" : "Summon Skill Tooltip",
+    "file" : "summonskilltooltip",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "summonskilltooltip",
+    "unicode" : "📖",
+    "description" : "召喚獣にオベイして使えるクイックスロットのスキルにツールチップを表示します。",
+    "tags" : [
+      "summon",
+      "quickslot",
+      "obey",
+      "skill",
+      "tooltip"
+    ]
+  },
+  {
     "name" : "Stamina Mini Gauge",
     "file" : "staminigauge",
     "extension" : "ipf",
