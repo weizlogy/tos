@@ -103,6 +103,19 @@
     ]
   },
   {
+    "name" : "Preview Guild Emblem",
+    "file" : "previewguildemblem",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "previewguildemblem",
+    "unicode" : "📖",
+    "description" : "ギルドマスター以外でもギルドエンブレムのプレビューができます。",
+    "tags" : [
+      "guild",
+      "emblem"
+    ]
+  },
+  {
     "name" : "Repair Endurance",
     "file" : "repairendur",
     "extension" : "ipf",
