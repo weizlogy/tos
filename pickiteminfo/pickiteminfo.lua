@@ -29,6 +29,7 @@ function PickItemInfo.new(self)
     local frame = ui.GetFrame(frameName);
     if (frame == nil) then
       frame = ui.CreateNewFrame("pickiteminfo", frameName, 0);
+      --CHAT_SYSTEM(frameName);
     end
     frame:SetLayerLevel(1);
     
@@ -44,7 +45,7 @@ function PickItemInfo.new(self)
     frame:SetUserValue("_AT_AUTODESTROY", 1);
   
     _FRAME_AUTOPOS(frame);
-    frame:RunUpdateScript("_FRAME_AUTOPOS");
+    frame:RunUpdateScript("PICKITEMINFO_FRAME_AUTOPOS");
 
     frame:ShowWindow(1);
   end
@@ -92,6 +93,18 @@ end
 
 function PICKITEMINFO_UPDATE(frame, msg, str, handle)
   piin:Update(frame, msg, str, handle);
+end
+
+function PICKITEMINFO_FRAME_AUTOPOS(frame)
+  local r =  _FRAME_AUTOPOS(frame);
+  local frameName = frame:GetName();
+  local itemFrameName = string.gsub(frameName, 'pickiteminfo_', 'monb_');
+  if (ui.GetFrame(itemFrameName) == nil) then
+    ui.DestroyFrame(frameName);
+    --CHAT_SYSTEM(frameName..' deleted.');
+    return 0;
+  end
+  return r;
 end
 
 -- create instance.
