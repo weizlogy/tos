@@ -9,6 +9,8 @@ function ObjectDetector.new(self)
   members.path = "../addons/objectdetector/settings.txt";
   members.config = {};
 
+  members.searchName = "";
+
   -- initialize class.
   members.Initialize = function(self)
     dofile(self.path);
@@ -51,26 +53,44 @@ function ObjectDetector.new(self)
       frame:GetChild(picName):ShowWindow(1);
       return;
     end
-    local pic = frame:CreateOrGetControl('picture', picName, 0, 0, 7, 7);
+
+    local picSize = oi.size;
+    local pic = frame:CreateOrGetControl('picture', picName, 0, 0, picSize, picSize);
     tolua.cast(pic, "ui::CPicture");
     pic:SetImage("fullblack");
     pic:SetEnableStretch(1);
     pic:SetTooltipType('texthelp');
     pic:SetTooltipArg(oi.tooltipText);
 
-    local pictone = pic:CreateOrGetControl('picture', "tone", 1, 1, 5, 5);
+    local toneSize = picSize - 2;
+    local borderSize = 1;
+    local pictone = pic:CreateOrGetControl('picture', "tone", borderSize, borderSize, toneSize, toneSize);
     tolua.cast(pictone, "ui::CPicture");
     pictone:SetImage("fullwhite");
     pictone:SetColorTone(oi.color);
     pictone:SetEnableStretch(1);
     pictone:SetTooltipType('texthelp');
     pictone:SetTooltipArg(oi.tooltipText);
-
+    
     if (oi.isBlink == 1) then
       pictone:SetBlink(600000.0, 1.0, oi.color);
     end
 
+    if (oi.found == 1) then
+      local foundSize = toneSize - 2;
+      local foundBorderSize = 2;
+      local picfound = pic:CreateOrGetControl('picture', "found", foundBorderSize, foundBorderSize, foundSize, foundSize);
+      tolua.cast(picfound, "ui::CPicture");
+      picfound:SetImage("fullwhite");
+      picfound:SetColorTone(oi.color);
+      picfound:SetEnableStretch(1);
+      picfound:SetBlink(600000.0, 1.0, oi.color);
+      picfound:SetTooltipType('texthelp');
+      picfound:SetTooltipArg(oi.tooltipText);
+    end
+
     pic:SetUserValue("HANDLE", handle);
+
     if (frame:GetName() == "map") then
       pic:RunUpdateScript("UPDATE_MAP_STATE");
     elseif (frame:GetName() == "minimap") then
@@ -84,7 +104,9 @@ function ObjectDetector.new(self)
       isVisible = 1,
       isBlink = 0,
       tooltipText = "...",
-      color = "FF000000"
+      color = "FF000000",
+      size = 6,
+      found = 0
     };
     -- insert info by object type, faction, and some conditions.
     local objType = actor:GetObjType();
@@ -100,6 +122,12 @@ function ObjectDetector.new(self)
       oi.isBlink = tempConfig.isBlink;
       oi.tooltipText = string.format("[Lv.%s]%s(%s) f=%s",
        actor:GetLv(), actor:GetName(), iesObj.ClassName, faction);
+      -- monster size related by it's icon size.
+      local sdr = SCR_Get_MON_SDR(iesObj);
+      if (sdr >= 5) then
+        sdr = sdr - 5;
+      end
+      oi.size = oi.size + sdr;
       -- check treasure.
       if (string.find(iesObj.ClassName, "treasure") ~= nil) then
         local trConfig = self.config.treasure;
@@ -145,6 +173,14 @@ function ObjectDetector.new(self)
     else
       -- CHAT_SYSTEM("unknown object type. => "..objType);
     end
+    
+    if (self.searchName ~= "") then
+      local dicName = dictionary.ReplaceDicIDInCompStr(actor:GetName());
+      if (dicName == self.searchName) then
+        oi.found = 1;
+        oi.tooltipText = oi.tooltipText.." found!";
+      end
+    end
     return oi;
   end
   -- update object state.
@@ -153,8 +189,9 @@ function ObjectDetector.new(self)
     local actor = world.GetActor(handle);
     if (self.objectList[handle] == nil or actor:IsDead() == 1) then
       frame:ShowWindow(0);
-      --ui.DestroyFrame(frame:GetName());
-      return 1;
+      DESTROY_CHILD_BYNAME(ui.GetFrame('map'), "icon_"..handle);
+      DESTROY_CHILD_BYNAME(ui.GetFrame('minimap'), "icon_"..handle);
+      return 0;
     end
     local axis = calculateAxis(self, parent, actor);
     axis.x = axis.x - frame:GetWidth() / 2;
@@ -190,6 +227,11 @@ function ObjectDetector.new(self)
       y = mmpos.y - (mypos.y - mini_frame_hh)
     };
   end
+  -- 
+  members.SetSearchName = function(self, name)
+    self.searchName = name;
+    CHAT_SYSTEM("[objectdetector] Searching <"..self.searchName.."> ...");
+  end
   -- clear output objects.
   members.Clear = function(self)
     DESTROY_CHILD_BYNAME(ui.GetFrame('map'), "icon_");
@@ -197,6 +239,7 @@ function ObjectDetector.new(self)
   end
   -- destroy.
   members.Destroy = function(self)
+    UI_CHAT = obde.UI_CHAT;
   end
   return setmetatable(members, {__index = self});
 end
@@ -213,6 +256,21 @@ function OBJECTDETECTOR_ON_INIT(addon, frame)
   -- regist check object handler.
   addon:RegisterMsg('MAP_CHARACTER_UPDATE', 'DETECTOR_UPDATE');
   addon:RegisterMsg('FPS_UPDATE', 'DETECTOR_UPDATE');
+  -- override chat command.
+  if (obde.UI_CHAT == nil) then
+    obde.UI_CHAT = UI_CHAT;
+  end
+  UI_CHAT = function(msg)
+    local temp = msg;
+    temp = string.gsub(temp, '/g', '');
+    temp = string.gsub(temp, '/p', '');
+    temp = string.gsub(temp, '/y', '');
+    if (string.find(temp, "/detector search", 1, true) == 1) then
+      local name = string.match(temp, "^/detector search (.+)$");
+      obde:SetSearchName(name);
+    end
+    obde.UI_CHAT(msg);
+  end
 end
 
 -- check object handler.
