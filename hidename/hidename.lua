@@ -14,14 +14,18 @@ function HideName.new(self)
     -- invisible name below a character.
     local my = ui.GetFrame("charbaseinfo1_my");
     local givenName = GET_CHILD(my, "givenName", "ui::CRichText");
-    givenName:SetText("");
+    givenName:SetAlpha(0);
     local familyName = GET_CHILD(my, "familyName", "ui::CRichText");
-    familyName:SetText("");
+    familyName:SetAlpha(0);
     local name = GET_CHILD(my, "name", "ui::CRichText");
-    name:SetText("");
+    name:SetAlpha(0);
     -- invisible guild name below a character.
     local guildName = GET_CHILD(my, "guildName", "ui::CRichText");
-    guildName:SetText("");
+    guildName:SetAlpha(0);
+    local guildEmblemEdge = GET_CHILD(my, "guildEmblem_edge", "ui::CPicture");
+    guildEmblemEdge:SetAlpha(0)
+    local guildEmblem = GET_CHILD(my, "guildEmblem", "ui::CPicture");
+    guildEmblem:SetAlpha(0)
   end
   -- destroy.
   members.Destroy = function(self)
