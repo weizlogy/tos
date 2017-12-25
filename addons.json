@@ -154,6 +154,18 @@
     ]
   },
   {
+    "name" : "Show Buff-Seller Type",
+    "file" : "showbuffsellertype",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "showbuffsellertype",
+    "unicode" : "📖",
+    "description" : "商店のフキダシに商店名を付けて紛らわしさを回避します。（主に武器メンテ、防具メンテ、修理の区別）",
+    "tags" : [
+      "buffseller"
+    ]
+  },
+  {
     "name" : "Skill-Item Counter",
     "file" : "skillitemcounter",
     "extension" : "ipf",
