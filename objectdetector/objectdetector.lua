@@ -120,12 +120,17 @@ function ObjectDetector.new(self)
       oi.color = tempConfig.color;
       oi.isVisible = tempConfig.isVisible;
       oi.isBlink = tempConfig.isBlink;
-      oi.tooltipText = string.format("[Lv.%s]%s(%s) f=%s",
-       actor:GetLv(), actor:GetName(), iesObj.ClassName, faction);
+      oi.tooltipText = string.format("[Lv.%s]%s(%s) f=%s r=%s",
+       actor:GetLv(), actor:GetName(), iesObj.ClassName, faction, rank);
       -- monster size related by it's icon size.
       local sdr = SCR_Get_MON_SDR(iesObj);
       if (sdr >= 5) then
         sdr = sdr - 5;
+      end
+      -- ボス判定
+      -- サモニングはクラス名の接頭詞としてpc_summon_付いているのでそれで除外判定する
+      if (rank == 'Boss' and string.find(iesObj.ClassName, 'pc_summon_') == nil) then
+        sdr = oi.size * 2
       end
       oi.size = oi.size + sdr;
       -- check treasure.
