@@ -91,6 +91,18 @@
     ]
   },
   {
+    "name" : "Mini Gauge Text",
+    "file" : "minigaugetext",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "minigaugetext",
+    "unicode" : "📖",
+    "description" : "キャラクター下のHP/SPバーに現在値と最大値を表示します。",
+    "tags" : [
+      "gauge"
+    ]
+  },
+  {
     "name" : "Monster Status",
     "file" : "monsterstatus",
     "extension" : "ipf",
