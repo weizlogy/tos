@@ -178,6 +178,19 @@
     ]
   },
   {
+    "name" : "Show Hiddden Map",
+    "file" : "showhiddenmap",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "showhiddenmap",
+    "unicode" : "📖",
+    "description" : "（ミニ）マップが表示されないマップで（ミニ）マップが表示されるようになります。",
+    "tags" : [
+      "map",
+      "minimap"
+    ]
+  },
+  {
     "name" : "Skill-Item Counter",
     "file" : "skillitemcounter",
     "extension" : "ipf",
