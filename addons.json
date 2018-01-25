@@ -119,10 +119,10 @@
     "name" : "Pick-Item Info",
     "file" : "pickiteminfo",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.3",
+    "fileVersion" : "v1.0.4",
     "releaseTag" : "pickiteminfo",
     "unicode" : "📖",
-    "description" : "ドロップアイテム名を常時表示します。",
+    "description" : "ドロップアイテム名を常時表示＋レアリティで色分けします。",
     "tags" : [
       "pickitem"
     ]

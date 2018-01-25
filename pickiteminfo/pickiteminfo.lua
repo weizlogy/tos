@@ -31,15 +31,18 @@ function PickItemInfo.new(self)
       frame = ui.CreateNewFrame("pickiteminfo", frameName, 0);
       --CHAT_SYSTEM(frameName);
     end
+    frame:Resize(itemframe:GetWidth(), itemframe:GetHeight())
     frame:SetLayerLevel(1);
     
+    local baseItemName = itemframe:GetChild('name')
+
     local itemNameText = frame:CreateOrGetControl(
-      'richtext', "itemNameText", 0, 0, frame:GetWidth(), frame:GetHeight());
+      'richtext', "itemNameText", 0, 0, baseItemName:GetWidth(), baseItemName:GetHeight());
     itemNameText:SetText(string.format("{ol}{s14}{#%s}%s", self:GetItemRarityColor(iesObj), iesObj.Name));
     itemNameText:ShowWindow(1);
 
     frame:SetUserValue("_AT_OFFSET_HANDLE", handle);
-    frame:SetUserValue("_AT_OFFSET_X", -frame:GetWidth() / 2);
+    frame:SetUserValue("_AT_OFFSET_X", -20);
     frame:SetUserValue("_AT_OFFSET_Y", 30);
     frame:SetUserValue("_AT_OFFSET_TYPE", 1);
     frame:SetUserValue("_AT_AUTODESTROY", 1);
