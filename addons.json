@@ -181,7 +181,7 @@
     "name" : "Show Hiddden Map",
     "file" : "showhiddenmap",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.0.1",
     "releaseTag" : "showhiddenmap",
     "unicode" : "📖",
     "description" : "（ミニ）マップが表示されないマップで（ミニ）マップが表示されるようになります。",
