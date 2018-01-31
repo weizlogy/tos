@@ -33,19 +33,21 @@ function SHOWHIDDENMAP_ON_INIT(addon, frame)
   end
   -- 旧関数でミニマップ不使用だったマップに居るときはイベントハンドラーを設置する
   if (g.instance.DontUseMinimap() == true) then
-    addon:RegisterMsg('FPS_UPDATE', 'SHOWHIDDENMAP_UPDATE_MINIMAP')
-    addon:RegisterMsg('FPS_UPDATE', 'SHOWHIDDENMAP_UPDATE_MAP')
+    ui.GetFrame('minimap'):RunUpdateScript("SHOWHIDDENMAP_UPDATE_MINIMAP", 0.2)
+    ui.GetFrame('map'):RunUpdateScript("SHOWHIDDENMAP_UPDATE_MAP", 0.2)
   end
 end
 
 -- ミニマップ更新イベントハンドラー
-function SHOWHIDDENMAP_UPDATE_MINIMAP()
-  MINIMAP_CHAR_UDT(ui.GetFrame('minimap'), '', '', session.GetMyHandle())
+function SHOWHIDDENMAP_UPDATE_MINIMAP(frame)
+  MINIMAP_CHAR_UDT(frame, '', '', session.GetMyHandle())
+  return 1
 end
 
 -- マップ更新イベントハンドラー
-function SHOWHIDDENMAP_UPDATE_MAP()
-  MAP_CHAR_UPDATE(ui.GetFrame('map'), '', '', session.GetMyHandle())
+function SHOWHIDDENMAP_UPDATE_MAP(frame)
+  MAP_CHAR_UPDATE(frame, '', '', session.GetMyHandle())
+  return 1
 end
 
 -- インスタンス作成
