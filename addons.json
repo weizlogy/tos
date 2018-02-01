@@ -14,32 +14,6 @@
     ]
   },
   {
-    "name" : "Console",
-    "file" : "console",
-    "extension" : "ipf",
-    "fileVersion" : "v1.2.0",
-    "releaseTag" : "console",
-    "unicode" : "📖",
-    "description" : "開発者用。[_G]配下をテキストアウトします。",
-    "tags" : [
-      "console",
-      "addon-developper"
-    ]
-  },
-  {
-    "name" : "Distance",
-    "file" : "distance",
-    "extension" : "ipf",
-    "fileVersion" : "v1.1.1",
-    "releaseTag" : "distance",
-    "unicode" : "📖",
-    "description" : "開発者用。自キャラから近隣モンスターまでの距離を表示します。",
-    "tags" : [
-      "distance",
-      "addon-developper"
-    ]
-  },
-  {
     "name" : "Dice",
     "file" : "dice",
     "extension" : "ipf",
