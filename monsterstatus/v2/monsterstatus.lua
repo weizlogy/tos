@@ -7,6 +7,9 @@ function MonsterStatus.new(self)
   members.X = -1;
   members.Y = -1;
 
+  
+  members.pathLoc = "../addons/monsterstatus/location.txt";
+
   members.server = GetServerNation();
 
   members.IsJpServer = function(self)
@@ -14,6 +17,7 @@ function MonsterStatus.new(self)
   end
 
   members.LoadSettings = function(self)
+    dofile(self.pathLoc)
     if (self.X ~= -1 and self.Y ~= -1) then
       return;
     end
@@ -28,6 +32,14 @@ function MonsterStatus.new(self)
     local frame = ui.GetFrame("monsterstatus");
     self.X = frame:GetX();
     self.Y = frame:GetY();
+    
+    local f, e = io.open(self.pathLoc, "w");
+    if (f == nil) then
+      return;
+    end
+    f:write(string.format("most.X = %d; most.Y = %d;", self.X, self.Y));
+    f:flush();
+    f:close();
   end
 
   members.Clear = function(self)
@@ -77,11 +89,16 @@ function MonsterStatus.new(self)
     frame:Resize(frame:GetWidth(), droptitle:GetY() + droptitle:GetHeight() + 5);
     if (next(journals.drops)) then
       for i, item in ipairs(journals.drops) do
-        local drop = frame:CreateOrGetControl("richtext", "drop_"..i, 10, 70 + (20 * i), frame:GetWidth(), 20);
-        drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
-        drop:SetTooltipType('wholeitem');
-        drop:SetTooltipArg('', item[1].ClassID, 0);
-        frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
+        -- 未鑑定品を除く！
+        local needAppraisal = TryGetProp(item[1], "NeedAppraisal")
+        if (needAppraisal ~= 0) then
+          local drop = frame:CreateOrGetControl(
+            "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * i), frame:GetWidth(), ctrlHeight);
+          drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
+          drop:SetTooltipType('wholeitem');
+          drop:SetTooltipArg('', item[1].ClassID, 0);
+          frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
+        end
       end
     end
 
