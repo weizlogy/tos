@@ -168,7 +168,7 @@
     "name" : "Skill-Item Counter",
     "file" : "skillitemcounter",
     "extension" : "ipf",
-    "fileVersion" : "v1.1.0",
+    "fileVersion" : "v1.1.1",
     "releaseTag" : "skillitemcounter",
     "unicode" : "📖",
     "description" : "消費アイテムありスキルの使用回数を表示します。",
