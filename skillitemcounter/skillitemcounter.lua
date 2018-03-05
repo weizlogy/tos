@@ -35,18 +35,24 @@ function SKILLITEMCOUNTER_ON_INIT(addon, frame)
   end
   QUICKSLOTNEXPBAR_ON_DROP = function(frame, control, argStr, argNum)
     skic.QUICKSLOTNEXPBAR_ON_DROP(frame, control, argStr, argNum);
-    SKILLITEMCOUNTER_REFRESH_COUNTER();
+    SKILLITEMCOUNTER_REFRESH_KICKER();
   end
-  SKILLITEMCOUNTER_REFRESH_COUNTER();
+  addon:RegisterMsg('GAME_START_3SEC', 'SKILLITEMCOUNTER_REFRESH');
 	addon:RegisterMsg('INV_ITEM_CHANGE_COUNT', 'SKILLITEMCOUNTER_REFRESH');
 end
+
 -- refresh.
 function SKILLITEMCOUNTER_REFRESH(frame, msg, argStr, argNum)
-  DebounceScript("SKILLITEMCOUNTER_REFRESH_COUNTER", 0.1);
+  DebounceScript("SKILLITEMCOUNTER_REFRESH_KICKER", 0.1);
 end
+
+function SKILLITEMCOUNTER_REFRESH_KICKER()
+  SKILLITEMCOUNTER_REFRESH_COUNTER(ui.GetFrame('quickslotnexpbar'))
+  SKILLITEMCOUNTER_REFRESH_COUNTER(ui.GetFrame('joystickquickslot'))
+end
+
 --
-function SKILLITEMCOUNTER_REFRESH_COUNTER()
-  local frame = ui.GetFrame('quickslotnexpbar');
+function SKILLITEMCOUNTER_REFRESH_COUNTER(frame)
   local quickSlotList = session.GetQuickSlotList();
   for i = 0, MAX_QUICKSLOT_CNT - 1 do
     local quickSlotInfo = quickSlotList:Element(i);		
