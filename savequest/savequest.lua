@@ -51,7 +51,11 @@ function SaveQuest.new(self)
     if (frame == nil or remove == 1) then
       self.questShortCutInfo[name] = nil;
     else
-      self.questShortCutInfo[name] = { x = frame:GetX(), y = frame:GetY(), ls = locked };
+      local layerlevel = frame:GetUserIValue('SAVEQUEST_LAYERLEVEL')
+      if (frame:GetUserValue('SAVEQUEST_LAYERLEVEL') == 'None') then
+        layerlevel = 199
+      end
+      self.questShortCutInfo[name] = { x = frame:GetX(), y = frame:GetY(), ls = locked, ll = layerlevel };
     end
     -- persistence.
     local cid = info.GetCID(session.GetMyHandle());
@@ -60,7 +64,7 @@ function SaveQuest.new(self)
       return;
     end
     for k, v in pairs(self.questShortCutInfo) do
-      f:write(string.format("saqu.questShortCutInfo.%s = { x = %d, y = %d, ls = %d };\n", k, v.x, v.y, v.ls));
+      f:write(string.format("saqu.questShortCutInfo.%s = { x = %d, y = %d, ls = %d, ll = %d };\n", k, v.x, v.y, v.ls, v.ll));
     end
     f:flush();
     f:close();
@@ -77,9 +81,14 @@ function SaveQuest.new(self)
       -- for v1.2.0 up to v1.2.1.
       if (v.ls == nil) then
         v.ls = 0;
-        self:SaveShortCutPos("dummy", 0, 0);
+        self:SaveShortCutPos("dummy", 0, v.ls);
       end
-      self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y, v.ls);
+      -- for v1.2.1 up to v1.2.2.
+      if (v.ll == nil) then
+        v.ll = 199;
+        self:SaveShortCutPos("dummy", 0, v.ls);
+      end
+      self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y, v.ls, v.ll);
     end
   end
 
@@ -297,6 +306,7 @@ function SaveQuest.new(self)
     frame:SetSkinName("downbox");
     frame:SetAlpha(50);
     frame:SetEventScript(ui.LBUTTONUP, "SAVEQUEST_END_DRAG");
+    frame:SetEventScript(ui.MOUSEWHEEL, "SAVEQUEST_END_WHEEL");
 
     frame:SetUserValue("SAVEQUEST_QUESTID", questID);
     self:LockOrUnlockShortCut(frameName, locked);
@@ -475,6 +485,31 @@ end
 -- frame drag end.
 function SAVEQUEST_END_DRAG(frame)
   saqu:SaveShortCutPos(frame:GetName(), 0, frame:GetUserValue("SAVEQUEST_LOCKSTATE"));
+end
+
+function SAVEQUEST_END_WHEEL(frame, ctrl, delta, argNum)
+  local locked = frame:GetUserIValue("SAVEQUEST_LOCKSTATE")
+  if (locked == 1) then
+    return
+  end
+  local level = frame:GetUserIValue('SAVEQUEST_LAYERLEVEL')
+  if (frame:GetUserValue('SAVEQUEST_LAYERLEVEL') == 'None') then
+    level = 199
+    frame:SetUserValue('SAVEQUEST_LAYERLEVEL', level)
+  end
+  if (level < 0) then
+    return
+  end
+  if (delta > 0) then
+    level = level + 1
+  elseif (delta < 0) then
+    level = level - 1
+  else
+    CHAT_SYSTEM('[savequest] delta is 0.')
+  end
+  CHAT_SYSTEM(string.format('[savequest] %s LayerLevel to %d', frame:GetName(), level))
+  frame:SetUserValue('SAVEQUEST_LAYERLEVEL', level)
+  frame:SetLayerLevel(level)
 end
 
 -- remove old state.
