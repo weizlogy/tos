@@ -1,9 +1,11 @@
-SaveQuest = {};
+SaveQuest = {}
+SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL = 'SAVEQUEST_LAYERLEVEL'
 
 -- constructor.
 function SaveQuest.new(self)
   -- initialize members.
   local members = {};
+
   members.path = "../addons/savequest/quests_%s.txt";
   members.pathShortCutLoc = "../addons/savequest/quests_scl_%s.txt";
   members.savemark = "{ol}saved."
@@ -51,8 +53,8 @@ function SaveQuest.new(self)
     if (frame == nil or remove == 1) then
       self.questShortCutInfo[name] = nil;
     else
-      local layerlevel = frame:GetUserIValue('SAVEQUEST_LAYERLEVEL')
-      if (frame:GetUserValue('SAVEQUEST_LAYERLEVEL') == 'None') then
+      local layerlevel = frame:GetUserIValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL)
+      if (frame:GetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL) == 'None') then
         layerlevel = 199
       end
       self.questShortCutInfo[name] = { x = frame:GetX(), y = frame:GetY(), ls = locked, ll = layerlevel };
@@ -70,24 +72,34 @@ function SaveQuest.new(self)
     f:close();
   end
 
-  -- load shortcut ui location.
-  members.LoadShortCutLoc = function(self)
-    -- load from file.
+  -- 設定ファイルからショートカット情報を取得して画面に復元する
+  --  self：
+  --  customLayerLevel：０より大きい場合、任意のレイヤーレベルを設定して復元する
+  members.LoadShortCutLoc = function(self, customLayerLevel)
+    -- ファイルから設定を読み込む
     self.questShortCutInfo = {};
     local cid = info.GetCID(session.GetMyHandle());
     dofile(string.format(self.pathShortCutLoc, cid));
-    -- recreate.
+    -- ショートカットの数だけ生成処理
     for k, v in pairs(self.questShortCutInfo) do
+      -- 任意のレイヤーレベルを設定
+      if (customLayerLevel > 0) then
+        v.ll = customLayerLevel
+        ui.GetFrame(k):SetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL, v.ll)
+        self:SaveShortCutPos(k, 0, v.ls)
+      end
+      -- バージョンで過不足のあるものを調整する
       -- for v1.2.0 up to v1.2.1.
       if (v.ls == nil) then
         v.ls = 0;
-        self:SaveShortCutPos("dummy", 0, v.ls);
+        self:SaveShortCutPos(k, 0, v.ls);
       end
       -- for v1.2.1 up to v1.2.2.
       if (v.ll == nil) then
         v.ll = 199;
-        self:SaveShortCutPos("dummy", 0, v.ls);
+        self:SaveShortCutPos(k, 0, v.ls);
       end
+      -- ショートカット生成
       self:CreateShortCut(string.gsub(k, self.framePrefix, ""), v.x, v.y, v.ls, v.ll);
     end
   end
@@ -165,10 +177,12 @@ function SaveQuest.new(self)
     end
 
     if (self:IsPartySharedQuest(questID)) then
-      ui.AddContextMenuItem(context, "UnShare", string.format("saqu:UnShareWithParty(%d)", questID));	
+      ui.AddContextMenuItem(context, "UnShare", string.format("saqu:UnShareWithParty(%d)", questID));
     else
-      ui.AddContextMenuItem(context, "Share", string.format("saqu:ShareWithParty(%d)", questID));	
+      ui.AddContextMenuItem(context, "Share", string.format("saqu:ShareWithParty(%d)", questID));
     end
+
+    ui.AddContextMenuItem(context, "FlattenLayerLv", string.format("saqu:FlattenLayerLv(%d)", questID));
 
     ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));	
     ui.AddContextMenuItem(context, "Cancel", "None");
@@ -287,7 +301,7 @@ function SaveQuest.new(self)
   end
 
   -- create quest warp shortcut.
-  members.CreateShortCut = function(self, questID, x, y, locked)
+  members.CreateShortCut = function(self, questID, x, y, locked, layerlevel)
     -- check exists.
     local frameName = self:GetFrameNameFromQuestID(questID);
     local frame = ui.GetFrame(frameName);
@@ -310,6 +324,8 @@ function SaveQuest.new(self)
 
     frame:SetUserValue("SAVEQUEST_QUESTID", questID);
     self:LockOrUnlockShortCut(frameName, locked);
+
+    frame:SetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL, layerlevel)
 
     local picture = self:CreateStatePicture(frame, questIES);
     picture:SetTooltipType('texthelp');
@@ -362,6 +378,19 @@ function SaveQuest.new(self)
     frame:EnableMove(movable);
   end
 
+  -- ショートカットのレイヤーレベルを統一する
+  members.FlattenLayerLv = function(self, questID)
+    CHAT_SYSTEM('[savequest] flatten layer level start.')
+    local frame = ui.GetFrame(self:GetFrameNameFromQuestID(questID))
+    local layerlevel = frame:GetUserIValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL)
+    if (frame:GetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL) == 'None') then
+      layerlevel = 199
+    end
+    CHAT_SYSTEM('[savequest] change to ' .. layerlevel)
+    self:LoadShortCutLoc(layerlevel)
+    CHAT_SYSTEM('[savequest] flatten layer level end.')
+  end
+
   -- recover addon state.
   members.Destroy = function(self)
     UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
@@ -390,7 +419,7 @@ function SAVEQUEST_ON_INIT(addon, frame)
     -- call my custom logics.
     saqu:LoadQuest();
     saqu:UpdateQuestUI();
-    saqu:LoadShortCutLoc();
+    saqu:LoadShortCutLoc(0)
     addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
   end
 
@@ -418,9 +447,6 @@ function SAVEQUEST_ON_INIT(addon, frame)
     saqu:UnShareWithParty(parent:GetUserIValue("QUEST_CLASSID"));
     saqu.CANCEL_SHARE_QUEST_WITH_PARTY(parent, ctrlSet);
   end
-
-  --saqu:LoadQuest();
-  --saqu:LoadShortCutLoc();
 end
 
 -- remove npc event handler.
@@ -463,7 +489,7 @@ function SAVEQUEST_SHORTCUT(questID)
   local width = 50;
   local x = basePos + IMCRandom(-1 * width, width);
   local y = basePos + IMCRandom(-1 * width, width);
-  saqu:CreateShortCut(questID, x, y, 0);
+  saqu:CreateShortCut(questID, x, y, 0, 199);
 end
 
 function SAVEQUEST_OPEN_SHORTCUT_MENU(ctrl)
@@ -492,10 +518,10 @@ function SAVEQUEST_END_WHEEL(frame, ctrl, delta, argNum)
   if (locked == 1) then
     return
   end
-  local level = frame:GetUserIValue('SAVEQUEST_LAYERLEVEL')
-  if (frame:GetUserValue('SAVEQUEST_LAYERLEVEL') == 'None') then
+  local level = frame:GetUserIValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL)
+  if (frame:GetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL) == 'None') then
     level = 199
-    frame:SetUserValue('SAVEQUEST_LAYERLEVEL', level)
+    frame:SetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL, level)
   end
   if (level < 0) then
     return
@@ -508,7 +534,7 @@ function SAVEQUEST_END_WHEEL(frame, ctrl, delta, argNum)
     CHAT_SYSTEM('[savequest] delta is 0.')
   end
   CHAT_SYSTEM(string.format('[savequest] %s LayerLevel to %d', frame:GetName(), level))
-  frame:SetUserValue('SAVEQUEST_LAYERLEVEL', level)
+  frame:SetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL, level)
   frame:SetLayerLevel(level)
 end
 
