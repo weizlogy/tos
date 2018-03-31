@@ -326,6 +326,7 @@ function SaveQuest.new(self)
     self:LockOrUnlockShortCut(frameName, locked);
 
     frame:SetUserValue(SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL, layerlevel)
+    frame:SetLayerLevel(layerlevel)
 
     local picture = self:CreateStatePicture(frame, questIES);
     picture:SetTooltipType('texthelp');
