@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="costumeplay" x="10" y="10" width="100" height="100">
+  <frame title="Costume Play" snapclient="false" snapframe="false"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" hideable="true" autoopen="false"/>
+  <input hittest="true" movable="false" moveintitlebar="false" hittestframe="true"/>
+  <layer layerlevel="96" />
+  <draw blend="100" drawtitlebar="false" drawframe="true"/>
+  <script CloseScp="COSTUMEPLAY_ON_CLOSE" />
+  <controls>
+  </controls>
+</uiframe>
