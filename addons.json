@@ -1,5 +1,4 @@
 [
-
   {
     "name" : "Compact Heads Up Display",
     "file" : "compactheadsupdisplay",
@@ -11,6 +10,19 @@
     "tags" : [
       "headsupdispplay",
       "compact"
+    ]
+  },
+  {
+    "name" : "Costume Play",
+    "file" : "costumeplay",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "costumeplay",
+    "unicode" : "📖",
+    "description" : "GUI操作で装備を保存/復元します。",
+    "tags" : [
+      "equip",
+      "costume"
     ]
   },
   {
