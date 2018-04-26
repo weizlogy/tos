@@ -37,7 +37,7 @@ function REMOVETIPSFE_ON_INIT(addon, frame)
     local msg = '[TIPS] '
     for i = 1, #idList do
       local ies = GetClassByType('levelinformmessage', idList[i])
-      msg = msg..'{nl} {nl}'..i..'. '..string.gsub(ies.Message, '%{.-%}', '')
+      msg = msg..'{nl} {nl}'..i..'. '..string.gsub(dictionary.ReplaceDicIDInCompStr(ies.Message), '%{.-%}', '')
     end
     CHAT_SYSTEM(msg)
   end
