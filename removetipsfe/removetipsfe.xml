@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="removetipsfe" x="0" y="0" width="130" height="70">
+  <frame title="Remove Tips Forever" snapclient="false" snapframe="false" layout_gravity="center center"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" autoopen="false" hideable="true"/>
+  <input hittest="false" movable="false" moveintitlebar="false" hittestframe="false"/>
+  <layer layerlevel="0"/>
+  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <controls>
+  </controls>
+</uiframe>
