@@ -127,6 +127,18 @@
     ]
   },
   {
+    "name" : "Remove Tips Forever",
+    "file" : "removetipsfe",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "removetipsfe",
+    "unicode" : "📖",
+    "description" : "邪魔なtipsを非表示にしつつチャットウィンドウにシステムメッセージとして表示します。",
+    "tags" : [
+      "tip"
+    ]
+  },
+  {
     "name" : "Repair Endurance",
     "file" : "repairendur",
     "extension" : "ipf",
