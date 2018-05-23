@@ -64,6 +64,18 @@
     ]
   },
   {
+    "name" : "Guild Notify In Chat",
+    "file" : "guildnotifyinchat",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "guildnotifyinchat",
+    "unicode" : "📖",
+    "description" : "ギルドのお知らせをログイン時に、システムチャットで表示します。",
+    "tags" : [
+      "guild"
+    ]
+  },
+  {
     "name" : "Hide Name",
     "file" : "hidename",
     "extension" : "ipf",
