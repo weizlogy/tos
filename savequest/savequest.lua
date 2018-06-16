@@ -402,6 +402,8 @@ function SaveQuest.new(self)
     saqu.SHARE_QUEST_WITH_PARTY = nil;
     CANCEL_SHARE_QUEST_WITH_PARTY = saqu.CANCEL_SHARE_QUEST_WITH_PARTY;
     saqu.CANCEL_SHARE_QUEST_WITH_PARTY = nil;
+    EXEC_ABANDON_QUEST = saqu.EXEC_ABANDON_QUEST;
+    saqu.EXEC_ABANDON_QUEST = nil;
   end
   return setmetatable(members, {__index = self});
 end
@@ -421,7 +423,6 @@ function SAVEQUEST_ON_INIT(addon, frame)
     saqu:LoadQuest();
     saqu:UpdateQuestUI();
     saqu:LoadShortCutLoc(0)
-    addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
   end
 
   -- override open quest list savemark.
@@ -448,6 +449,16 @@ function SAVEQUEST_ON_INIT(addon, frame)
     saqu:UnShareWithParty(parent:GetUserIValue("QUEST_CLASSID"));
     saqu.CANCEL_SHARE_QUEST_WITH_PARTY(parent, ctrlSet);
   end
+  -- 保存済みのクエストを破棄すると困ったことになることの対応
+  -- なんでこんな操作をするかな...
+  if (saqu.EXEC_ABANDON_QUEST == nil) then
+    saqu.EXEC_ABANDON_QUEST = EXEC_ABANDON_QUEST
+  end
+  EXEC_ABANDON_QUEST = function(questID)
+    saqu.EXEC_ABANDON_QUEST(questID)
+    SAVEQUEST_RELEASE(questID)
+  end
+  addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
 end
 
 -- remove npc event handler.
