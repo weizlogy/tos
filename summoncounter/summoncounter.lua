@@ -196,9 +196,8 @@ end
 function SUMMONCOUNTER_REFRESH(frame)
   local pc = GetMyPCObject()
   -- 召喚スキルのクイックスロットを探して、召喚物をカウントし始める
-  local quickSlotList = session.GetQuickSlotList()
   for i = 0, MAX_QUICKSLOT_CNT - 1 do
-    local quickSlotInfo = quickSlotList:Element(i)		
+    local quickSlotInfo = quickslot.GetInfoByIndex(i)
     if (quickSlotInfo.category == 'Skill') then
       local slot = GET_CHILD_RECURSIVELY(frame, 'slot'..(i + 1), 'ui::CSlot')
       local skill = session.GetSkill(quickSlotInfo.type)

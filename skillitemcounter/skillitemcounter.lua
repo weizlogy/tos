@@ -53,9 +53,8 @@ end
 
 --
 function SKILLITEMCOUNTER_REFRESH_COUNTER(frame)
-  local quickSlotList = session.GetQuickSlotList();
   for i = 0, MAX_QUICKSLOT_CNT - 1 do
-    local quickSlotInfo = quickSlotList:Element(i);		
+    local quickSlotInfo = quickslot.GetInfoByIndex(i)
     if (quickSlotInfo.category == 'Skill') then
       local skl = GetClassByType("Skill", quickSlotInfo.type);
       local skillitem = skl.SpendItem;
