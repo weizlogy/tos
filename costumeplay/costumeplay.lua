@@ -44,6 +44,8 @@ function g.new(self)
     WING = { JP = '　　　　翼', use = 1, unequip = 'NoOuter'},
     SPECIALCOSTUME = { JP = '　スペコス', use = 1, unequip = 'NoOuter'},
     EFFECTCOSTUME = { JP = 'エフェクト', use = 1, unequip = 'NoOuter'},
+    HAIRCOLOR = { JP = 'ヘアカラー', use = 1, unequip = '', fnEq = 'EquipHairColor'},
+    ACHIEVE = { JP = '　　　称号', use = 1, unequip = 'None', fnEq = 'EquipAchieve'},
     -- 変換処理
     Convert = function(self, key)
       local translated = self[key][GetServerNation()]
@@ -52,14 +54,28 @@ function g.new(self)
       end
       return translated
     end,
+    -- 装備位置の平準化（装備品以外を管理下に置くため
+    NormalizeSpot = function(self, equip)
+      if (equip.name == nil) then
+        return item.GetEquipSpotName(equip.slot), GetClassByType('Item', equip.id).Name
+      end
+      return equip.slot, equip.name
+    end,
     -- デフォルト使用可否取得
     -- 0：未使用 / 1：使用
     IsUse = function(self, key)
       return self[key]['use']
     end,
     -- 未装備クラス名取得
-    UnEquip = function(self, key)
+    UnEquipClass = function(self, key)
       return self[key]['unequip']
+    end,
+    Equip = function(self, key)
+      local fn = self[key]['fnEq']
+      if (fn == nil) then
+        return 'EquipNormal'
+      end
+      return fn
     end
   }
   
@@ -79,9 +95,11 @@ function g.new(self)
     local menuTitle = 'CostumePlay'
     local context = ui.CreateContextMenu(
       'CONTEXT_COSTUMEPLAY_ON_COSTUME_SELECT', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
+    -- 画面表示
+    ui.AddContextMenuItem(context, 'Open', 'COSTUMEPLAY_SELECT_ON_OPEN')
     -- コスチューム情報からメニューを作る
     for title, equips in pairs(_costumes) do
-      ui.AddContextMenuItem(context, title, string.format('COSTUMEPLAY_SELECT_ON_EQUIP("%s")', title))
+      ui.AddContextMenuItem(context, '- '..title, string.format('COSTUMEPLAY_SELECT_ON_EQUIP("%s")', title))
     end
     ui.AddContextMenuItem(context, 'Cancel', 'None')
     ui.OpenContextMenu(context)
@@ -102,37 +120,70 @@ function g.new(self)
       -- 装備対象だけ
       if (equip.use == 1) then
         useCount = useCount + 1
-        local itemCls = GetClassByType('Item', equip.id)
-        local className = itemCls.ClassName
-        local spotkey = item.GetEquipSpotName(equip.slot)
-        -- 装備解除の場合
-        if (__EQUIP_SPOT_DATA:UnEquip(spotkey) == className) then
-          -- 動的に装備関数を作ってDebounceScriptで一定時間後に呼び出すことで
-          -- 時間差でお着替えさせる
-          local tempFuncName = 'COSTUMEPLAY_ON_UNEQUIP'..spotkey
-          _G[tempFuncName] = function()
-            self:Log('UnEquip '..__EQUIP_SPOT_DATA:Convert(spotkey))
-            item.UnEquip(equip.slot)
-            _G[tempFuncName] = nil
-            DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
-          end
-          DebounceScript(tempFuncName, useCount / 2)
-        else
-          -- インベントリにあるものだけ
-          local invItem = session.GetInvItemByName(className)
-          if (invItem ~= nil) then
-            local tempFuncName = 'COSTUMEPLAY_ON_EQUIP'..spotkey..invItem.invIndex
-            _G[tempFuncName] = function()
-              self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..itemCls.Name)
-              item.Equip(spotkey, invItem.invIndex)
-              _G[tempFuncName] = nil
-              -- 装備完了ログ出力用の動的関数
-              -- DebounceScriptで同名関数は時間を上書きするので最後の一回のみ呼ばれる
-              DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
-            end
-            DebounceScript(tempFuncName, useCount / 2)
-          end
-        end
+        local spotkey = __EQUIP_SPOT_DATA:NormalizeSpot(equip)
+        self[__EQUIP_SPOT_DATA:Equip(spotkey)](self, spotkey, equip, useCount)
+      end
+    end
+  end
+
+  -- 通常装備品変更ロジック
+  members.EquipNormal = function(self, spotkey, equip, useCount)
+    local itemCls = GetClassByType('Item', equip.id)
+    local className = itemCls.ClassName
+    -- 装備解除の場合
+    if (__EQUIP_SPOT_DATA:UnEquipClass(spotkey) == className) then
+      -- 動的に装備関数を作ってDebounceScriptで一定時間後に呼び出すことで
+      -- 時間差でお着替えさせる
+      local tempFuncName = 'COSTUMEPLAY_ON_UNEQUIP'..spotkey
+      _G[tempFuncName] = function()
+        self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..className)
+        item.UnEquip(equip.slot)
+        _G[tempFuncName] = nil
+        DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
+      end
+      DebounceScript(tempFuncName, useCount / 2)
+      return
+    end
+    -- 装備の場合
+    -- インベントリにあるものだけ
+    local invItem = session.GetInvItemByName(className)
+    if (invItem == nil) then
+      return
+    end
+    local tempFuncName = 'COSTUMEPLAY_ON_EQUIP'..spotkey..invItem.invIndex
+    _G[tempFuncName] = function()
+      self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..itemCls.Name)
+      item.Equip(spotkey, invItem.invIndex)
+      _G[tempFuncName] = nil
+      -- 装備完了ログ出力用の動的関数
+      -- DebounceScriptで同名関数は時間を上書きするので最後の一回のみ呼ばれる
+      DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
+    end
+    DebounceScript(tempFuncName, useCount / 2)
+  end
+
+  -- ヘアカラー変更ロジック
+  members.EquipHairColor = function(self, spotkey, equip, useCount)
+    self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..equip.name)
+    item.ReqChangeHead(equip.id)
+  end
+
+  -- 称号変更ロジック
+  members.EquipAchieve = function(self, spotkey, equip, useCount)
+    self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..equip.name)
+    if (__EQUIP_SPOT_DATA:UnEquipClass(spotkey) == equip.name) then
+      session.EquipAchieve(0)
+      return
+    end
+    local clslist, clscnt = GetClassList("Achieve")
+    for i = 0, clscnt - 1 do
+      local cls = GetClassByIndexFromList(clslist, i);
+      if cls == nil then
+        break
+      end
+      if (cls.Name == equip.name) then
+        session.EquipAchieve(cls.ClassID)
+        break
       end
     end
   end
@@ -170,14 +221,6 @@ function g.new(self)
 
   -- インベントリ系関数をフックして任意のコードを実行させる
   members.HookInventry = function(self)
-    -- インベントリを開くときに自フレームも追従
-    if (self.INVENTORY_OPEN == nil) then
-      self.INVENTORY_OPEN = INVENTORY_OPEN
-    end
-    INVENTORY_OPEN = function(frame)
-      self.INVENTORY_OPEN(frame)
-      DebounceScript('COSTUMEPLAY_ON_OPEN', 1.0)
-    end
     -- インベントリを閉じるときに自フレームも追従
     if (self.INVENTORY_CLOSE == nil) then
       self.INVENTORY_CLOSE = INVENTORY_CLOSE
@@ -251,10 +294,11 @@ function g.new(self)
   -- コスチューム個々のUIを装飾
   -- 登録/更新時に使えるように
   members.__DecorateEquipUI = function(self, equipText, title, equip, index)
-    local itemCls = GetClassByType('Item', equip.id)
-    local spotkey = item.GetEquipSpotName(equip.slot)
-    equipText:SetText('{s14}{ol}'..__EQUIP_SPOT_DATA:Convert(spotkey)..' - '..itemCls.Name)
-    equipText:SetTextTooltip(itemCls.Name)
+    local spotkey, equipName = __EQUIP_SPOT_DATA:NormalizeSpot(equip)
+    self:Dbg('Decorated '..spotkey.." - "..equipName..'('..equip.id)
+    -- データ表示
+    equipText:SetText('{s14}{ol}'..__EQUIP_SPOT_DATA:Convert(spotkey)..' - '..equipName)
+    equipText:SetTextTooltip(equipName)
     equipText:Resize(100, 20)
     equipText:SetOffset(10, 20 * index)
     equipText:SetColorTone('00000000')
@@ -294,13 +338,34 @@ function g.new(self)
       local equipInfo = {}
       local equipItem = equiplist:Element(i)
       local itemCls = GetIES(equipItem:GetObject())
-      local name = string.lower(dictionary.ReplaceDicIDInCompStr(itemCls.Name))
-      self:Dbg(item.GetEquipSpotName(equipItem.equipSpot).." - "..name..'('..itemCls.ClassName)
+      self:Dbg(item.GetEquipSpotName(equipItem.equipSpot).." - "..itemCls.Name..'('..itemCls.ClassName)
       equipInfo.slot = equipItem.equipSpot
       equipInfo.id = itemCls.ClassID
       equipInfo.use = __EQUIP_SPOT_DATA:IsUse(item.GetEquipSpotName(equipItem.equipSpot))
       table.insert(data, equipInfo)
     end
+    -- ヘアカラー
+    -- IDから変換するのが面倒な感じなので仕方なくnameに突っ込む
+    local hairColors = imcIES.GetClassList('HairType'):GetClass(GetMyPCObject().Gender):GetSubClassList()
+    local myHairColor = hairColors:GetByIndex(item.GetHeadIndex() - 1)
+    if myHairColor ~= nil then
+      local hairColor = {}
+      hairColor.slot = 'HAIRCOLOR'
+      hairColor.id = imcIES.GetString(myHairColor, 'ColorE')
+      hairColor.use = __EQUIP_SPOT_DATA:IsUse(hairColor.slot)
+      hairColor.name = imcIES.GetString(myHairColor, 'Color')
+      self:Dbg(hairColor.slot.." - "..hairColor.name..'('..hairColor.id)
+      table.insert(data, hairColor)
+    end
+    -- 称号
+    -- 称号未設定の判定が面倒なのでnameを起点にして、装備時にクラスIDを取得する
+    local achieve = {}
+    achieve.slot = 'ACHIEVE'
+    achieve.id = ''
+    achieve.use = __EQUIP_SPOT_DATA:IsUse(achieve.slot)
+    achieve.name = pc.GetEquipAchieveName()
+    self:Dbg(achieve.slot.." - "..achieve.name..'('..achieve.id)
+    table.insert(data, achieve)
     return data
   end
 
@@ -317,7 +382,11 @@ function g.new(self)
     for title, costume in pairs(_costumes) do
       f:write(string.format('s[\'%s\'] = {', title))
       for i, equip in ipairs(costume) do
-        f:write(string.format('{slot=%s,id=%s,use=%s},', equip.slot, equip.id, equip.use))
+        f:write(string.format('{slot=\'%s\',id=\'%s\',use=%s', equip.slot, equip.id, equip.use))
+        if (equip.name ~= nil) then
+          f:write(string.format(',name=\'%s\'', equip.name))
+        end
+        f:write('},')
       end
       f:write('}\n')
     end
@@ -329,6 +398,7 @@ function g.new(self)
 
   -- ファイルから読み込む
   members.LoadCostumes = function(self)
+    _costumes = {}
     local cid = info.GetCID(session.GetMyHandle())
     self:Dbg('Loading costumes file...'..cid)
     local file = string.format('%s/%s', __ADDON_DIR, cid)
@@ -355,9 +425,6 @@ function g.new(self)
 
   -- デストラクター
   members.Destroy = function(self)
-    if (self.INVENTORY_OPEN ~= nil) then
-      INVENTORY_OPEN = self.INVENTORY_OPEN
-    end
     if (self.INVENTORY_CLOSE ~= nil) then
       INVENTORY_CLOSE = self.INVENTORY_CLOSE
     end
@@ -371,31 +438,14 @@ setmetatable(g, {__call = g.new})
 -- 自フレーム初期化処理
 function COSTUMEPLAY_ON_INIT(addon, frame)
   g.instance:Dbg('COSTUMEPLAY_ON_INIT called.')
+  g.instance:LoadCostumes()
   addon:RegisterMsg('GAME_START_3SEC', 'COSTUMEPLAY_GAME_START_3SEC')
 end
 
 -- 自フレーム初期化処理の続き
 function COSTUMEPLAY_GAME_START_3SEC()
-  g.instance:LoadCostumes()
   g.instance:CustomSysMenu()
   g.instance:HookInventry()
-end
-
--- 自フレームオープン処理
--- 連打対策いろいろ
-function COSTUMEPLAY_ON_OPEN()
-  local frame = ui.GetFrame('inventory')
-  -- 表示アクション中ならリトライ
-  if (frame:IsPIPMoving() == 1) then
-    DebounceScript('COSTUMEPLAY_ON_OPEN', 1.0)
-    return
-  end
-  -- アクション終わってフレーム消えてたらおしまい
-  if (frame:IsVisible() == 0) then
-    return
-  end
-  -- 表示する
-  g.instance:CreateFrame()
 end
 
 -- 自フレームクローズ処理
@@ -407,6 +457,12 @@ end
 -- コスチューム選択メニュー表示
 function COSTUMEPLAY_ON_INVEN_SELECT_MENU()
   g.instance:ShowCostumeInvenSelectMenu()
+end
+
+-- あどーんフレーム表示
+function COSTUMEPLAY_SELECT_ON_OPEN()
+  ui.OpenFrame('inventory')
+  g.instance:CreateFrame()
 end
 
 -- コスチューム装備
@@ -438,6 +494,7 @@ function COSTUMEPLAY_SAVE(frame, ctrl, str, num)
   g.instance:CreateFrame()
 end
 
+-- 装備完了コールバック
 function COSTUMEPLAY_ON_EQUIP_END()
   g.instance:Log('Equip costumes finished.')
 end
