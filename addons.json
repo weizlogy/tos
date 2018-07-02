@@ -16,7 +16,7 @@
     "name" : "Costume Play",
     "file" : "costumeplay",
     "extension" : "ipf",
-    "fileVersion" : "v1.1.0",
+    "fileVersion" : "v1.1.1",
     "releaseTag" : "costumeplay",
     "unicode" : "📖",
     "description" : "GUI操作で装備/ヘアカラー/称号を保存/復元します。",

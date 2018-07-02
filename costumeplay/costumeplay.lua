@@ -145,13 +145,13 @@ function g.new(self)
       return
     end
     -- 装備の場合
-    -- インベントリにあるものだけ
-    local invItem = session.GetInvItemByName(className)
-    if (invItem == nil) then
-      return
-    end
-    local tempFuncName = 'COSTUMEPLAY_ON_EQUIP'..spotkey..invItem.invIndex
+    local tempFuncName = 'COSTUMEPLAY_ON_EQUIP'..spotkey
     _G[tempFuncName] = function()
+      -- インベントリにあるものだけ
+      local invItem = session.GetInvItemByName(className)
+      if (invItem == nil) then
+        return
+      end
       self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..itemCls.Name)
       item.Equip(spotkey, invItem.invIndex)
       _G[tempFuncName] = nil
@@ -208,6 +208,7 @@ function g.new(self)
   end
 
   -- コスチュームの使用可否を個別に切り替える
+  -- 保存もする
   members.ToggleCostumeUse = function(self, ctrl, title, index)
     self:Dbg('ToggleCostumeUse called.'..'('..title..' - '..index)
     local equip = _costumes[title][index]
@@ -217,6 +218,8 @@ function g.new(self)
     end
     equip.use = equip.use == 0 and 1 or 0
     self:__DecorateEquipUI(ctrl, title, equip, index)
+    -- 保存
+    self:__Serialize()
   end
 
   -- インベントリ系関数をフックして任意のコードを実行させる
