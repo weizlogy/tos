@@ -1,9 +1,19 @@
-## Latest Release Note.
+# Release Note.
 
-### v1.0.0
+## v1.1.0
 
-#### 新規作成
+### 何をするもの？
 
-商店のフキダシに商店名を付けて紛らわしさを回避します。（主に武器メンテ、防具メンテ、修理の区別）
+商店のフキダシに商店名を付けて紛らわしさを回避します。（主に装備メンテ、修理の区別）
 
-see [http://www.weizlogy.gq/tos/addon/showbuffsellertype/](http://www.weizlogy.gq/tos/addon/showbuffsellertype/) 
+### どうすれば？
+
+ipfファイルをインストールするだけです。
+
+### いつ動くの？
+
+- バフ屋バルーンフレーム処理発生時
+
+### 注意事項
+
+ないよ！

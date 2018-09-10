@@ -20,11 +20,10 @@ function g.new(self)
     elseif sellType == AUTO_SELL_GEM_ROASTING then
       sellerTypeName = 'ジェムロースト'
     elseif sellType == AUTO_SELL_SQUIRE_BUFF then
-      if skillID == 10701 then
-        sellerTypeName = '武器メンテ'
-      elseif skillID == 10702 then
-        sellerTypeName = '防具メンテ'
-      elseif skillID == 10703 then
+      local skillName = GetClassByType("Skill", skillID).ClassName
+      if "Squire_EquipmentTouchUp" == skillName then
+        sellerTypeName = '装備メンテ'
+      elseif "Squire_Repair" == skillName then
         sellerTypeName = '修理'
       end
     elseif sellType == AUTO_SELL_OBLATION then
@@ -37,6 +36,8 @@ function g.new(self)
       sellerTypeName = '鑑定'
     elseif sellType == AUTO_SELL_PORTAL then
       sellerTypeName = 'ポータル'
+    elseif sellType == AUTO_SELL_AWAKENING then
+      sellerTypeName = '覚醒'
     end
     return sellerTypeName
   end

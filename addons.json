@@ -192,10 +192,10 @@
     "name" : "Show Buff-Seller Type",
     "file" : "showbuffsellertype",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.1.0",
     "releaseTag" : "showbuffsellertype",
     "unicode" : "📖",
-    "description" : "商店のフキダシに商店名を付けて紛らわしさを回避します。（主に武器メンテ、防具メンテ、修理の区別）",
+    "description" : "商店のフキダシに商店名を付けて紛らわしさを回避します。（主に装備メンテ、修理の区別）",
     "tags" : [
       "buffseller"
     ]
