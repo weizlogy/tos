@@ -289,6 +289,19 @@
     ]
   },
   {
+    "name" : "Warehouse Sorter",
+    "file" : "warehousesorter",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "warehousesorter",
+    "unicode" : "📖",
+    "description" : "個人倉庫にソートボタンを追加します。",
+    "tags" : [
+      "warehouse",
+      "sort"
+    ]
+  },
+  {
     "name" : "Remove New Collection Mark",
     "file" : "rmnewcollectionmark",
     "extension" : "ipf",
