@@ -81,7 +81,7 @@
     "name" : "Fix Inventory Sort",
     "file" : "fixinventorysort",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.1.0",
     "releaseTag" : "fixinventorysort",
     "unicode" : "📖",
     "description" : "名前でのソートを正常化します。",

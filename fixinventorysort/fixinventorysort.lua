@@ -18,11 +18,17 @@ function g.new(self)
   --   1 = WEIGHT,
   --   2 = NAME,
   local __sortType = -1
+  -- 拡張ソート設定
+  local __config = {}
+  -- デフォルトのソート種別と重複しないように拡張ソート種別の開始位置を決める
+  local __extendSortStartIndex = 10
 
+  -- ソート条件を保存
   members.SetSortType = function(self, sortType)
     __sortType = sortType
   end
 
+  -- ソート処理
   members.Sort = function(self, baseList)
     -- INV_ITEM_SORTED_LIST型を再現（いらないんじゃないか疑惑はある
     local sortWorker = {
@@ -42,26 +48,64 @@ function g.new(self)
       end
     end
 
-    local sortType = __sortType
     local sortFunc = nil
     if (__sortType == 1) then
       sortFunc = function(s1, s2)
         local o1 = GetIES(s1:GetObject())
         local o2 = GetIES(s2:GetObject())
         local r = o1.Weight < o2.Weight
-        if (o1.Weight == o2.Weight) then
-          r = dictionary.ReplaceDicIDInCompStr(o1.Name) < dictionary.ReplaceDicIDInCompStr(o2.Name)
+        if o1.Weight ~= o2.Weight then
+          return r
         end
-        return r
+        r = dictionary.ReplaceDicIDInCompStr(o1.Name) < dictionary.ReplaceDicIDInCompStr(o2.Name)
+        if o1.Name ~= o2.Name then
+          return r
+        end
+        r = s1.count > s2.count
+        if s1.count ~= s2.count then
+          return r
+        end
+        return s1:GetIESID() < s2:GetIESID()
       end
     elseif (__sortType == 2) then
       sortFunc = function(s1, s2)
         local o1 = GetIES(s1:GetObject())
         local o2 = GetIES(s2:GetObject())
-        return dictionary.ReplaceDicIDInCompStr(o1.Name) < dictionary.ReplaceDicIDInCompStr(o2.Name)
+        local r = dictionary.ReplaceDicIDInCompStr(o1.Name) < dictionary.ReplaceDicIDInCompStr(o2.Name)
+        if o1.Name ~= o2.Name then
+          return r
+        end
+        return s1:GetIESID() < s2:GetIESID()
       end
+    -- 拡張ソートロジック
+    elseif (__sortType >= __extendSortStartIndex) then
+      -- 設定復元
+      local config = __config[__sortType - __extendSortStartIndex]
+      if (not config) then
+        return baseList
+      end
+      -- ソートロジック作成
+      local sortFuncTemplate =
+        " return function(s1, s2) \
+            local o1 = GetIES(s1:GetObject()); \
+            local o2 = GetIES(s2:GetObject()); \
+            local r = 0; \
+            %s \
+            return s1:GetIESID() < s2:GetIESID(); \
+          end; "
+      local sortFuncDynamicaly = ''
+      local sortKeys = config.Sort
+      for i = 0, #sortKeys do
+        local key = sortKeys[i]
+        local logic = string.format(
+          " r = dictionary.ReplaceDicIDInCompStr(o1['%s']) < dictionary.ReplaceDicIDInCompStr(o2['%s']);  \
+            if (o1['%s'] ~= o2['%s']) then  \
+              return r  \
+            end; ", key, key, key, key)
+        sortFuncDynamicaly = sortFuncDynamicaly..logic
+      end
+      sortFunc = assert(loadstring(string.format(sortFuncTemplate, sortFuncDynamicaly)))()
     else
-      -- ソート未指定なら何もしない
       return baseList
     end
     -- ソート実行
@@ -74,6 +118,49 @@ function g.new(self)
     return sortWorker
   end
 
+  members.CreateSortMenu = function(self)
+    local configName = '../addons/fixinventorysort/settings.txt'
+    -- 設定ファイルが不正ならオリジナル
+    -- 設定ファイルがあればそこからメニュー構築
+    local customContextConfig, e = loadfile(configName)
+    if (e) then
+      self:Err(e)
+      self.SORT_ITEM_INVENTORY()
+      return
+    end
+    __config = customContextConfig()
+    local context = ui.CreateContextMenu('FIXINVENTORYSORT_CONTEXT_SORT', addonName, 0, 0, 170, 100)
+
+    for i = 0, #__config do
+      local scpScp = ''
+      local config = __config[i]
+      -- 文字列だけ == 既存ロジック
+      -- 文字列以外 == 拡張ロジック
+      if (type(config) == 'string') then
+        scpScp = string.format("REQ_INV_SORT(%d, %d)",IT_INVENTORY, loadstring('return BY_'..config:upper())())
+        ui.AddContextMenuItem(context, loadstring(string.format('return ScpArgMsg("SortBy%s")', config:gsub('^%l', string.upper)))(), scpScp)
+      else
+        config.Id = i + __extendSortStartIndex -- Index値から勝手にIDを捏造
+        self:Dbg(config.Id..' - '..config.Desc)
+        scpScp = string.format("REQ_INV_SORT(%d, %d)",IT_INVENTORY, config.Id)
+        ui.AddContextMenuItem(context, config.Desc, scpScp)
+      end
+    end
+
+  	ui.OpenContextMenu(context)
+  end
+
+  -- ログ出力
+  members.Dbg = function(self, msg)
+    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+  end
+  members.Log = function(self, msg)
+    CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
+  end
+  members.Err = function(self, msg)
+    CHAT_SYSTEM(string.format('[%s] <Err> %s', addonName, msg))
+  end
+
   -- デストラクター
   members.Destroy = function(self)
     if (self.sessionGetInvItemSortedList ~= nil) then
@@ -83,6 +170,10 @@ function g.new(self)
     if (self.REQ_INV_SORT ~= nil) then
       REQ_INV_SORT = self.REQ_INV_SORT
       self.REQ_INV_SORT = nil
+    end
+    if (self.SORT_ITEM_INVENTORY ~= nil) then
+      SORT_ITEM_INVENTORY = self.SORT_ITEM_INVENTORY
+      self.SORT_ITEM_INVENTORY = nil
     end
   end
   -- おまじない
@@ -107,6 +198,13 @@ function FIXINVENTORYSORT_ON_INIT(addon, frame)
   end
   session.GetInvItemSortedList = function()
     return g.instance:Sort(g.instance.sessionGetInvItemSortedList())
+  end
+  -- インベントリソートメニュー生成処理をフックしてカスタムソートを追加する
+  if (g.instance.SORT_ITEM_INVENTORY == nil) then
+    g.instance.SORT_ITEM_INVENTORY = SORT_ITEM_INVENTORY
+  end
+  SORT_ITEM_INVENTORY = function()
+    g.instance:CreateSortMenu()
   end
 end
 
