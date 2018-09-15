@@ -18,7 +18,7 @@ addons/fixinventorysort/settings.txt
 #### 初期設定
 
 下記テンプレートをコピペします。
----
+```
 local s = {}
 --
 s[0] = 'weight'
@@ -32,7 +32,7 @@ s[2] = {
 }
 --
 return s
----
+```
 
 #### 設定方法
 
@@ -42,13 +42,13 @@ return s
 
 これは既存のソート順である「重さ順」を使えるようにします。
 この書き方で、'name'（名前順）, 'level'（等級順）の定義ができます。
----
+```
 s[0] = 'weight'
----
+```
 
 これは独自に拡張したソート順の定義で、ソートメニュー上では「アイコン順」と表示されます。
 並び方は、アイコン（昇順） > 名前（昇順）の順序です。
----
+```
 s[2] = {
   Desc = 'アイコン順',
   Sort = {
@@ -56,16 +56,16 @@ s[2] = {
     [1] = 'Name'
   }
 }
----
+```
 
 sの後に続く数字はソートメニュー上の表示順序です。
 テンプレートでは、「重さ順」「名前順」「アイコン順」と表示されます。
 **数字が重複しないように気をつけてください。**
----
+```
 s[0]...
 s[1]...
 s[2]...
----
+```
 
 ##### 拡張ソート順で使える項目
 
@@ -74,9 +74,9 @@ item.ies（とマージしているies）に定義された以下の項目が使
 
 とまあ作ってみたものの実際そんな使えそうなものがないという...
 
----
+```
 ClassID,Weight,ItemStar,UseLv,MaterialPrice,Price,PriceRatio,SellPrice,RepairPriceRatio,MaxStack,Scale,DropSoundTime,DeadBreakRatio,NumberArg1,NumberArg2,ItemCoolDown,BelongingCount,LifeTime,ItemLifeTimeOver,ReopenDiscountRatio,CardLevel,PackageTradeCount,ItemExp,SkillType,SkillLevel,ClassName,Name,ItemType,Journal,GroupName,EquipXpGroup,MergeTable1,MergeClass1,MergeTable2,MergeClass2,MergeTable3,MergeClass3,ToolTipScp,ItemGrade,TooltipImage,Icon,ReqToolTip,TooltipValue,Desc,DropSound,EquipSound,InOutScp,Script,Destroyable,TeamTrade,ShopTrade,MarketTrade,UserTrade,RefreshScp,DropStyle,StringArg,Usable,PreCheckScp,Consumable,UseAnim,ClientScp,ParticleName,UseTx,CoolDown,CoolDownGroup,AllowDuplicate,NotExist,LogoutSave,PVPMap,ItemLifeTime,SpineTooltipImage,AllowReopen,Reinforce_Type,CubeDuplicate,MarketCategory,Desc_Sub,CardGroupName,FileName,CustomToolTip,ClassType2,LifeTime_Limitcheck,PVP,PackageTradeAble,Package,ClassType
----
+```
 
 ## v1.0.0
 
