@@ -30,12 +30,18 @@ function g.new(self)
     local hptext = frame:CreateOrGetControl("richtext", "hptext", 0, 0, hp:GetWidth(), hp:GetHeight())
     hptext:SetText(string.format('{s11}{ol}%d/%d', stat.HP, stat.maxHP))
     hptext:SetGravity(ui.RIGHT, ui.TOP);
-    hptext:SetOffset(hp:GetX(), hp:GetY() - 2)
+    hptext:SetOffset(hp:GetX(), hp:GetY() - 8)
 
     local sptext = frame:CreateOrGetControl("richtext", "sptext", 0, 0, sp:GetWidth(), sp:GetHeight())
     sptext:SetText(string.format('{s11}{ol}%d/%d', stat.SP, stat.maxSP))
     sptext:SetGravity(ui.RIGHT, ui.TOP);
-    sptext:SetOffset(sp:GetX(), sp:GetY() - 0)
+    sptext:SetOffset(sp:GetX(), sp:GetY() + 10)
+
+    -- 面倒なのでこれでいいやξ･~ ･๑Ҙ
+    local checkStaGauge = frame:GetChild('pcStaGauge')
+    if (checkStaGauge ~= nil) then
+      sptext:SetOffset(sp:GetX(), sp:GetY() + 19)
+    end
   end
 
   -- デストラクター
@@ -62,6 +68,7 @@ function MINIGAUGETEXT_STAT_UPDATE()
 end
 
 -- HP/SP変化のイベントハンドラー（他人）
+-- （あきらめたやつ
 function MINIGAUGETEXT_STAT_UPDATE_OTHERS()
   local list, count = SelectBaseObject(GetMyPCObject(), 300, 'ALL')
   for i = 1 , count do
