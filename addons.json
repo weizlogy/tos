@@ -326,6 +326,18 @@
     "tags" : [
       "collection"
     ]
+  },
+  {
+    "name" : "Master Place",
+    "file" : "masterplace",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "masterplace",
+    "unicode" : "📖",
+    "description" : "クラスマスターの所在地を教えてくれます。",
+    "tags" : [
+      "classmaster"
+    ]
   }
 
 ]
