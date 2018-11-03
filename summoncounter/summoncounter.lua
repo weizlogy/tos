@@ -20,7 +20,7 @@ function g.new(self)
   members.y = -1
   members.w = -1
   members.h = -1
-  
+
   -- 設定ファイルへのパス
   members.path = '../addons/summoncounter'
 
@@ -201,18 +201,20 @@ function SUMMONCOUNTER_REFRESH(frame)
     if (quickSlotInfo.category == 'Skill') then
       local slot = GET_CHILD_RECURSIVELY(frame, 'slot'..(i + 1), 'ui::CSlot')
       local skill = session.GetSkill(quickSlotInfo.type)
-      local obj = GetIES(skill:GetObject())
-      if (obj.ClassName == 'Bokor_Zombify') then
-        -- ８固定になった
-        suco:Start(slot, 8, obj.ClassName)
-      elseif (obj.ClassName == 'Necromancer_RaiseDead') then
-        suco:Start(slot, obj.Level, obj.ClassName)
-      elseif (obj.ClassName == 'Necromancer_RaiseSkullarcher') then
-        suco:Start(slot, obj.Level, obj.ClassName)
-      elseif (obj.ClassName == 'Necromancer_CorpseTower') then
-        -- g:Start(slot, obj.Level, obj.ClassName, obj.ClassName..'_FindHandle')
-      elseif (obj.ClassName == 'Necromancer_CreateShoggoth') then
-        suco:Start(slot, 1, obj.ClassName)
+      if (skill ~= nil) then
+        local obj = GetIES(skill:GetObject())
+        if (obj.ClassName == 'Bokor_Zombify') then
+          -- ８固定になった
+          suco:Start(slot, 8, obj.ClassName)
+        elseif (obj.ClassName == 'Necromancer_RaiseDead') then
+          suco:Start(slot, obj.Level, obj.ClassName)
+        elseif (obj.ClassName == 'Necromancer_RaiseSkullarcher') then
+          suco:Start(slot, obj.Level, obj.ClassName)
+        elseif (obj.ClassName == 'Necromancer_CorpseTower') then
+          -- g:Start(slot, obj.Level, obj.ClassName, obj.ClassName..'_FindHandle')
+        elseif (obj.ClassName == 'Necromancer_CreateShoggoth') then
+          suco:Start(slot, 1, obj.ClassName)
+        end
       end
     end
   end
@@ -264,7 +266,7 @@ ModeHPBar = {}
 
 -- コンストラクター
 function ModeHPBar.new(self)
-  
+
   local members = {}
 
   members.Key = ''
@@ -338,7 +340,7 @@ ModeIcon1 = {}
 -- コンストラクター
 function ModeIcon1.new(self)
   local members = {}
-  
+
   members.Key = ''
   members.Handles = {}
 
@@ -392,7 +394,7 @@ ModeIcon2 = {}
 
 function ModeIcon2.new(self)
   local members = {}
-  
+
   members.Key = ''
   members.Handles = {}
 
