@@ -29,7 +29,7 @@ function g.new(self)
   end
 
   -- ソート処理
-  members.Sort = function(self, baseList)
+  members.Sort = function(self, baseList, useAffect)
     -- INV_ITEM_SORTED_LIST型を再現（いらないんじゃないか疑惑はある
     local sortWorker = {
       at = function(self, index)
@@ -39,15 +39,67 @@ function g.new(self)
         return #self
       end
     }
+    -- ソート対象外保管領域
+    local ignoreSortWorker = {}
 
     -- データを作業ワークへコピー
+    -- 対象外のアイテムは専用ワーク行き
     for i = 0 , baseList:size() - 1 do
       local invItem = baseList:at(i)
       if (invItem ~= nil) then
-        table.insert(sortWorker, invItem)
+        if (not useAffect) then
+          table.insert(sortWorker, invItem)
+        else
+          local baseidcls = GET_BASEID_CLS_BY_INVINDEX(invItem.invIndex)
+          -- CHAT_SYSTEM(GetIES(invItem:GetObject()).GroupName..' / '..baseidcls.TreeGroupCaption..' / '..baseidcls.TreeSSetTitle)
+          local affect = __config['affect']
+          local target = baseidcls.TreeSSetTitle
+          if (affect and affect[dictionary.ReplaceDicIDInCompStr(target)]) then
+            -- 対象グループ名ごとにまとめる
+            -- ここも再帰的呼び出しのためINV_ITEM_SORTED_LIST型を再現
+            ignoreSortWorker[target] = ignoreSortWorker[target] or {
+              at = function(self, index)
+                return self[index + 1]
+              end,  -- <- カンマないと死ぬ気をつけて
+              size = function(self)
+                return #self
+              end
+            }
+            table.insert(ignoreSortWorker[target], invItem)
+          else
+            table.insert(sortWorker, invItem)
+          end
+        end
       end
     end
 
+    local sortFunc = self:ToSortFunc(__sortType)
+    if (sortFunc == nil) then
+      return baseList
+    end
+    -- ソート実行
+    table.sort(sortWorker, sortFunc)
+
+    -- for i = 0, 20 do
+    --   CHAT_SYSTEM('['..dictionary.ReplaceDicIDInCompStr(GetIES(sortWorker:at(i):GetObject()).Name)..']')
+    -- end
+
+    local chooseSortType = __sortType
+    for k, v in pairs(ignoreSortWorker) do
+      __sortType = self:ToSortType(__config['affect'][dictionary.ReplaceDicIDInCompStr(k)])
+      local sortedList = self:Sort(v)
+      -- CHAT_SYSTEM(k..' - '..__sortType..' - '..#sortedList)
+      for _, v in ipairs(sortedList) do
+        table.insert(sortWorker, 1, v)
+      end
+    end
+    __sortType = chooseSortType
+
+    return sortWorker
+  end
+
+  -- ソート種別からソートロジックに変換
+  members.ToSortFunc = function(self, type)
     local sortFunc = nil
     if (__sortType == 1) then
       sortFunc = function(s1, s2)
@@ -105,17 +157,8 @@ function g.new(self)
         sortFuncDynamicaly = sortFuncDynamicaly..logic
       end
       sortFunc = assert(loadstring(string.format(sortFuncTemplate, sortFuncDynamicaly)))()
-    else
-      return baseList
     end
-    -- ソート実行
-    table.sort(sortWorker, sortFunc)
-
-    -- for i = 0, 20 do
-    --   CHAT_SYSTEM('['..dictionary.ReplaceDicIDInCompStr(GetIES(sortWorker:at(i):GetObject()).Name)..']')
-    -- end
-
-    return sortWorker
+    return sortFunc
   end
 
   members.CreateSortMenu = function(self)
@@ -137,10 +180,10 @@ function g.new(self)
       -- 文字列だけ == 既存ロジック
       -- 文字列以外 == 拡張ロジック
       if (type(config) == 'string') then
-        scpScp = string.format("REQ_INV_SORT(%d, %d)",IT_INVENTORY, loadstring('return BY_'..config:upper())())
+        scpScp = string.format("REQ_INV_SORT(%d, %d)",IT_INVENTORY, self:ToSortType(config))
         ui.AddContextMenuItem(context, loadstring(string.format('return ScpArgMsg("SortBy%s")', config:gsub('^%l', string.upper)))(), scpScp)
       else
-        config.Id = i + __extendSortStartIndex -- Index値から勝手にIDを捏造
+        config.Id = self:ToSortType(i)
         self:Dbg(config.Id..' - '..config.Desc)
         scpScp = string.format("REQ_INV_SORT(%d, %d)",IT_INVENTORY, config.Id)
         ui.AddContextMenuItem(context, config.Desc, scpScp)
@@ -148,6 +191,13 @@ function g.new(self)
     end
 
   	ui.OpenContextMenu(context)
+  end
+
+  members.ToSortType = function(self, value)
+    if (type(value) == 'string') then
+      return loadstring('return BY_'..value:upper())()
+    end
+    return value + __extendSortStartIndex  -- Index値から勝手にIDを捏造
   end
 
   -- ログ出力
@@ -197,7 +247,7 @@ function FIXINVENTORYSORT_ON_INIT(addon, frame)
     g.instance.sessionGetInvItemSortedList = session.GetInvItemSortedList
   end
   session.GetInvItemSortedList = function()
-    return g.instance:Sort(g.instance.sessionGetInvItemSortedList())
+    return g.instance:Sort(g.instance.sessionGetInvItemSortedList(), true)
   end
   -- インベントリソートメニュー生成処理をフックしてカスタムソートを追加する
   if (g.instance.SORT_ITEM_INVENTORY == nil) then
