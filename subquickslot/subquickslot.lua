@@ -145,7 +145,7 @@ function g.new(self)
     self:Dbg('createed slot.')
     -- スロット復元
     for k, v in pairs(__config[configKey]) do
-      local index = string.match(k, 'slot(%d)')
+      local index = string.match(k, 'slot(%d+)')
       if (index) then
         local dummyLiftIconInfo = {}
         dummyLiftIconInfo.category = v[__CONFIG_SLOT_CATEGORY]
@@ -287,9 +287,6 @@ function g.new(self)
     -- 追加
     if (slotIndex) then
       local key = 'slot'..slotIndex
-      -- __config[configKey] = __config[configKey] or {}
-      CHAT_SYSTEM(configKey)
-      CHAT_SYSTEM(type(__config[configKey]))
       __config[configKey][key] = __config[configKey][key] or {}
       __config[configKey][key][__CONFIG_SLOT_CATEGORY] = liftIconInfo.category
       __config[configKey][key][__CONFIG_SLOT_TYPE] = liftIconInfo.type
