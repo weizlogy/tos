@@ -25,7 +25,7 @@ function g.new(self)
   local __CONFIG_SLOTSET_POS = 'pos'
 
   -- === 内部データ === --
-  local __cid = info.GetCID(session.GetMyHandle())
+  local __cid = ''
   local __config = {}
 
   -- === 内部関数 === --
@@ -38,10 +38,33 @@ function g.new(self)
   members.CreateFrames = function(self)
     self:Dbg('CreateFrames called.')
 
+    __cid = info.GetCID(session.GetMyHandle())
     __config = self:Deserialize(__cid)
 
     for index in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       self:CreateFrame(index)
+    end
+  end
+
+  -- 全フレームのアイテム数を更新
+  members.RedrawFrames = function(self)
+    self:Dbg('RedrawFrames called.')
+
+    for frameIndex in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+      local frame = ui.GetFrame(addonName..'-'..frameIndex)
+      self:Dbg('Redrawing... target='..frame:GetName())
+      local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
+
+      for k, v in pairs(__config[GetConfigByFrameKey(frameIndex)]) do
+        local index = string.match(k, 'slot(%d+)')
+        if (index and v[__CONFIG_SLOT_CATEGORY] == 'Item') then
+          local slot = slotset:GetSlotByIndex(index)
+          local invItem = session.GetInvItemByGuid(v[__CONFIG_SLOT_IESID])
+          self:Dbg('change count => '..invItem.count)
+          SET_SLOT_INVITEM(slot, invItem)
+        end
+      end
+      self:Dbg('Finish redraw... target='..frame:GetName())
     end
   end
 
@@ -153,7 +176,13 @@ function g.new(self)
         dummyLiftIconInfo.GetIESID = function(self)
           return v[__CONFIG_SLOT_IESID]
         end
-        self:SetSubSlot(slotset:GetSlotByIndex(index), dummyLiftIconInfo)
+        -- 設定がバグっても大丈夫なように回避を入れる
+        local slot = slotset:GetSlotByIndex(index)
+        if (not slot) then
+          __config[configKey][k] = nil
+        else
+          self:SetSubSlot(slot, dummyLiftIconInfo)
+        end
       end
     end
     self:Dbg('recovered slot.')
@@ -333,9 +362,9 @@ setmetatable(g, {__call = g.new})
 -- 自フレーム初期化処理
 function SUBQUICKSLOT_ON_INIT(addon, frame)
   -- インベントリ操作が発生したら再描画が必要
-  addon:RegisterMsg('INV_ITEM_ADD', 'SUBQUICKSLOT_ON_REDRAW')
-  addon:RegisterMsg('INV_ITEM_POST_REMOVE', 'SUBQUICKSLOT_ON_REDRAW')
-  addon:RegisterMsg('INV_ITEM_CHANGE_COUNT', 'SUBQUICKSLOT_ON_REDRAW')
+  addon:RegisterMsg('INV_ITEM_ADD', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
+  addon:RegisterMsg('INV_ITEM_POST_REMOVE', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
+  addon:RegisterMsg('INV_ITEM_CHANGE_COUNT', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
 
   g.instance:CreateFrames()
 end
@@ -371,7 +400,8 @@ end
 function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   local info = ui.GetLiftIcon():GetInfo()
   g.instance:SetSubSlot(slot, info)
-  if (info.fromIndex) then
+  -- ドラッグ開始とドラッグ終了が同じ場所の場合は消したらいけない
+  if (info.fromIndex and info.fromIndex ~= slot:GetSlotIndex()) then
     g.instance:RemoveFromSubSlot(parent:GetSlotByIndex(info.fromIndex))
   end
   g.instance:SaveSlot(parent:GetTopParentFrame(), slot:GetSlotIndex(), info, info.fromIndex)
@@ -394,6 +424,9 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
   if (category == 'Item') then
     SLOT_ITEMUSE_BY_TYPE(parent, slot, str, num)
   end
+end
+function SUBQUICKSLOT_ON_REDRAW_COUNT()
+  g.instance:RedrawFrames()
 end
 
 -- インスタンス作成
