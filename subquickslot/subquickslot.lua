@@ -35,6 +35,13 @@ function g.new(self)
   local GetFrameKeyByFrameName = function(frameName)
     return string.match(frameName, '^.-%-(%d+)$')
   end
+  local CreateNotInInventoryItemImage = function(icon, category, type, iesid)
+    icon:Set(GetClassByType('Item', type).Icon, category, type, 0, iesid)
+    icon:SetTooltipType('wholeitem')
+    icon:SetTooltipNumArg(type)
+    icon:SetTooltipIESID(iesid)
+    icon:SetColorTone('FFFF0000')
+  end
 
   -- === 公開関数 === --
   -- 全フレームを読み込む
@@ -60,11 +67,21 @@ function g.new(self)
 
       for k, v in pairs(__config[GetConfigByFrameKey(frameIndex)]) do
         local index = string.match(k, 'slot(%d+)')
-        if (index and v[__CONFIG_SLOT_CATEGORY] == 'Item') then
+        local category = v[__CONFIG_SLOT_CATEGORY]
+        local type = v[__CONFIG_SLOT_TYPE]
+        local iesid = v[__CONFIG_SLOT_IESID]
+        if (index and category == 'Item') then
           local slot = slotset:GetSlotByIndex(index)
-          local invItem = session.GetInvItemByGuid(v[__CONFIG_SLOT_IESID])
-          self:Dbg('change count => '..invItem.count)
-          SET_SLOT_INVITEM(slot, invItem)
+          local invItem = session.GetInvItemByGuid(iesid) or session.GetInvItemByType(type)
+          if (not invItem) then
+            self:Dbg('change count to '..0)
+            CreateNotInInventoryItemImage(CreateIcon(slot), category, type, iesid)
+            SET_SLOT_COUNT_TEXT(slot, 0)
+          else
+            self:Dbg('change count => '..invItem.count)
+            SET_SLOT_INVITEM(slot, invItem)
+            CreateIcon(slot):SetColorTone('FFFFFFFF')
+          end
         end
       end
       self:Dbg('Finish redraw... target='..frame:GetName())
@@ -123,7 +140,7 @@ function g.new(self)
 
   -- ログ出力
   members.Dbg = function(self, msg)
-    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+    CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
   end
   members.Log = function(self, msg)
     CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
@@ -282,13 +299,22 @@ function g.new(self)
     -- ドロップ情報を取得
     local category = liftIconInfo.category
     local type = liftIconInfo.type
+    local iesid = liftIconInfo:GetIESID()
     self:Dbg(string.format('%s - %s - %s', category, type, liftIconInfo:GetIESID()))
 
     tolua.cast(slot, "ui::CSlot")
     if (category == 'Item') then
-      local invItem = session.GetInvItemByGuid(liftIconInfo:GetIESID())
+      local invItem = session.GetInvItemByGuid(iesid) or session.GetInvItemByType(type)
+      if (not invItem) then
+        invItem = session.GetInvItemByType(type)
+        self:Dbg('not in inventory.')
+        CreateNotInInventoryItemImage(CreateIcon(slot), category, type, iesid)
+        SET_SLOT_COUNT_TEXT(slot, 0)
+        return
+      end
       -- スロット格納してイベント定義
       SET_SLOT_INVITEM(slot, invItem)
+      CreateIcon(slot):SetColorTone('FFFFFFFF')
       slot:SetUserValue(__USERVALUE_SLOT_CATEGORY, category)
       slot:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SLOTRUP')
       slot:SetEventScriptArgNumber(ui.RBUTTONUP, type)
