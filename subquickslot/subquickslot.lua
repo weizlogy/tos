@@ -140,7 +140,7 @@ function g.new(self)
 
   -- ログ出力
   members.Dbg = function(self, msg)
-    CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
   end
   members.Log = function(self, msg)
     CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
@@ -207,6 +207,12 @@ function g.new(self)
     end
     self:Dbg('recovered slot.')
     -- タイマー作成
+    -- OH用
+    local timer = frame:CreateOrGetControl('timer', 'addontimer', 0, 0, 0, 0)
+    tolua.cast(timer, 'ui::CAddOnTimer')
+  	timer:SetUpdateScript('SUBQUICKSLOT_ON_UPDATE_OVERHEAT')
+  	timer:Start(0.3)
+    -- ディスペラー系スクロールエフェクト用
     frame:CreateOrGetControl('timer', 'jungtantimer', 0, 0, 0, 0)
     frame:CreateOrGetControl('timer', 'jungtandeftimer', 0, 0, 0, 0)
     frame:CreateOrGetControl('timer', 'dispeldebufftimer', 0, 0, 0, 0)
@@ -303,6 +309,13 @@ function g.new(self)
     self:Dbg(string.format('%s - %s - %s', category, type, liftIconInfo:GetIESID()))
 
     tolua.cast(slot, "ui::CSlot")
+    slot:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SLOTRUP')
+    slot:SetEventScriptArgNumber(ui.RBUTTONUP, type)
+    slot:SetUserValue(__USERVALUE_SLOT_CATEGORY, category)
+    -- OH用のゲージ作成するものの一旦消しておく
+    QUICKSLOT_MAKE_GAUGE(slot)
+    QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
+
     if (category == 'Item') then
       local invItem = session.GetInvItemByGuid(iesid) or session.GetInvItemByType(type)
       if (not invItem) then
@@ -315,13 +328,20 @@ function g.new(self)
       -- スロット格納してイベント定義
       SET_SLOT_INVITEM(slot, invItem)
       CreateIcon(slot):SetColorTone('FFFFFFFF')
-      slot:SetUserValue(__USERVALUE_SLOT_CATEGORY, category)
-      slot:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SLOTRUP')
-      slot:SetEventScriptArgNumber(ui.RBUTTONUP, type)
       -- クールダウンの設定
       ICON_SET_ITEM_COOLDOWN_OBJ(slot:GetIcon(), GetIES(invItem:GetObject()))
     elseif (category == 'Skill') then
-
+      local skill = session.GetSkill(type)
+      local icon = CreateIcon(slot)
+      icon:SetOnCoolTimeUpdateScp('ICON_UPDATE_SKILL_COOLDOWN')
+      icon:SetEnableUpdateScp('ICON_UPDATE_SKILL_ENABLE')
+      icon:SetColorTone('FFFFFFFF')
+      icon:SetTooltipType('skill')
+      icon:Set('icon_' .. GetClassString('Skill', type, 'Icon'), category, type, 0, iesid)
+			icon:SetTooltipNumArg(type)
+			icon:SetTooltipIESID(iesid)
+      slot:ClearText()
+      SET_QUICKSLOT_OVERHEAT(slot)
     end
   end
 
@@ -358,6 +378,18 @@ function g.new(self)
       if (index and v[__CONFIG_SLOT_CATEGORY] == 'Item' and v[__CONFIG_SLOT_TYPE] == itemType) then
         local x, y = GET_SCREEN_XY(slotset:GetSlotByIndex(index))
         movie.PlayUIEffect('I_sys_item_slot', x, y, 0.8)
+      end
+    end
+  end
+
+  -- OH変更監視
+  members.UpdateSkillOverHeat = function(self, frame)
+    local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
+
+    for k, v in pairs(__config[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
+      local index = string.match(k, 'slot(%d+)')
+      if (index and v[__CONFIG_SLOT_CATEGORY] == 'Skill') then
+        UPDATE_SLOT_OVERHEAT(slotset:GetSlotByIndex(index))
       end
     end
   end
@@ -497,6 +529,12 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
   local category = g.instance:GetCategoryFromSlot(slot)
   if (category == 'Item') then
     SLOT_ITEMUSE_BY_TYPE(parent, slot, str, num)
+  elseif (category == 'Skill') then
+    local icon = slot:GetIcon()
+    if (not icon) then
+      return
+    end
+    ICON_USE(icon)
   end
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()
@@ -523,6 +561,9 @@ function SUBQUICKSLOT_UPDATE_DISPELDEBUFF(frame, ctrl, num, str, time)
     return
   end
   g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+end
+function SUBQUICKSLOT_ON_UPDATE_OVERHEAT(frame, ctrl, num, str, time)
+  g.instance:UpdateSkillOverHeat(frame)
 end
 
 -- インスタンス作成
