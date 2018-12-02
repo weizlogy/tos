@@ -32,6 +32,9 @@ function g.new(self)
   local GetConfigByFrameKey = function(index)
     return 'frame'..index
   end
+  local GetFrameKeyByFrameName = function(frameName)
+    return string.match(frameName, '^.-%-(%d+)$')
+  end
 
   -- === 公開関数 === --
   -- 全フレームを読み込む
@@ -186,6 +189,11 @@ function g.new(self)
       end
     end
     self:Dbg('recovered slot.')
+    -- タイマー作成
+    frame:CreateOrGetControl('timer', 'jungtantimer', 0, 0, 0, 0)
+    frame:CreateOrGetControl('timer', 'jungtandeftimer', 0, 0, 0, 0)
+    frame:CreateOrGetControl('timer', 'dispeldebufftimer', 0, 0, 0, 0)
+    self:Dbg('created timers.')
 
     frame:ShowWindow(1)
   end
@@ -205,7 +213,7 @@ function g.new(self)
     local frame = ui.CreateNewFrame(addonName, __OPTION_FRAME_NAME)
     frame:SetUserValue(__USERVALUE_FRAME_INDEX, frameIndex)
     frame:SetEventScript(ui.LOST_FOCUS, "SUBQUICKSLOT_ON_LOSTFOCUSOPTION")
-    frame:SetLayerLevel(32)
+    frame:SetLayerLevel(999)
     frame:SetSkinName('test_frame_low')
     frame:SetOffset(mouse.GetX(), mouse.GetY())
     frame:Resize(250, 200)
@@ -286,6 +294,45 @@ function g.new(self)
       slot:SetEventScriptArgNumber(ui.RBUTTONUP, type)
       -- クールダウンの設定
       ICON_SET_ITEM_COOLDOWN_OBJ(slot:GetIcon(), GetIES(invItem:GetObject()))
+    elseif (category == 'Skill') then
+
+    end
+  end
+
+  -- ディスペラー系スクロールのエフェクトONOFF制御
+  members.UpdateJungtan = function(self, spellName, onoff, itemType)
+    self:Dbg('UpdateJungtan called.')
+    self:Dbg(spellName..' - '..onoff)
+
+    for frameIndex in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+      local frame = ui.GetFrame(addonName..'-'..frameIndex)
+      self:Dbg('UpdateJungtan... target='..frame:GetName())
+
+      frame:SetUserValue(string.format('%s_%s', spellName, 'EFFECT'), onoff == 'ON' and itemType or 0)
+      local timer = GET_CHILD(frame, spellName:lower()..'timer', 'ui::CAddOnTimer')
+      if (onoff == 'OFF') then
+        timer:Stop()
+      elseif (onoff == 'ON') then
+        timer:SetUpdateScript('SUBQUICKSLOT_UPDATE_'..spellName)
+        timer:Start(1)
+      end
+    end
+  end
+
+  -- ディスペラー系スクロールのエフェクト処理
+  -- スロットの上にエフェクトを乗せるので、エフェクト中に移動させるとエフェクトが遅れてついてくる
+  -- どうにかならないかな（どうにもならない
+  members.UpdateJungtanEffect = function(self, frame, timerName)
+    local itemType = frame:GetUserValue(string.format('%s_%s', string.gsub(timerName:upper(), 'TIMER', ''), 'EFFECT'))
+
+    local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
+
+    for k, v in pairs(__config[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
+      local index = string.match(k, 'slot(%d+)')
+      if (index and v[__CONFIG_SLOT_CATEGORY] == 'Item' and v[__CONFIG_SLOT_TYPE] == itemType) then
+        local x, y = GET_SCREEN_XY(slotset:GetSlotByIndex(index))
+        movie.PlayUIEffect('I_sys_item_slot', x, y, 0.8)
+      end
     end
   end
 
@@ -365,6 +412,7 @@ function SUBQUICKSLOT_ON_INIT(addon, frame)
   addon:RegisterMsg('INV_ITEM_ADD', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
   addon:RegisterMsg('INV_ITEM_POST_REMOVE', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
   addon:RegisterMsg('INV_ITEM_CHANGE_COUNT', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
+  addon:RegisterMsg('JUNGTAN_SLOT_UPDATE', 'SUBQUICKSLOT_ON_JUNGTAN_SLOT_UPDATE')
 
   g.instance:CreateFrames()
 end
@@ -427,6 +475,28 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()
   g.instance:RedrawFrames()
+end
+function SUBQUICKSLOT_ON_JUNGTAN_SLOT_UPDATE(frame, msg, str, itemType)
+  local spellName, onoff = string.match(str, '^(.-)%_(.-)$')
+  g.instance:UpdateJungtan(spellName, onoff, itemType)
+end
+function SUBQUICKSLOT_UPDATE_JUNGTAN(frame, ctrl, num, str, time)
+  if (frame:IsVisible() == 0) then
+    return
+  end
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+end
+function SUBQUICKSLOT_UPDATE_JUNGTANDEF(frame, ctrl, num, str, time)
+  if (frame:IsVisible() == 0) then
+    return
+  end
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+end
+function SUBQUICKSLOT_UPDATE_DISPELDEBUFF(frame, ctrl, num, str, time)
+  if (frame:IsVisible() == 0) then
+    return
+  end
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
 end
 
 -- インスタンス作成
