@@ -22,6 +22,9 @@ function g.new(self)
   local __CONFIG_SLOT_TYPE = 'type'
   local __CONFIG_SLOT_IESID = 'iesid'
   local __CONFIG_SLOTSET_SIZE = 'size'
+  local __CONFIG_SLOTSET_ALPHA = 'alpha'
+  local __CONFIG_SLOTSET_ALPHASLOT = 'alphaslot'
+  local __CONFIG_SLOTSET_LOCK = 'lock'
   local __CONFIG_SLOTSET_POS = 'pos'
 
   -- === 内部データ === --
@@ -36,7 +39,7 @@ function g.new(self)
     return string.match(frameName, '^.-%-(%d+)$')
   end
   local CreateNotInInventoryItemImage = function(icon, category, type, iesid)
-    icon:Set(GetClassByType('Item', type).Icon, category, type, 0, iesid)
+    icon:Set(GET_ITEM_ICON_IMAGE(GetClassByType('Item', type)), category, type, 0, iesid)
     icon:SetTooltipType('wholeitem')
     icon:SetTooltipNumArg(type)
     icon:SetTooltipIESID(iesid)
@@ -79,7 +82,8 @@ function g.new(self)
             SET_SLOT_COUNT_TEXT(slot, 0)
           else
             self:Dbg('change count => '..invItem.count)
-            SET_SLOT_INVITEM(slot, invItem)
+            SET_SLOT_ITEM_IMAGE(slot, invItem)
+            SET_SLOT_ITEM_TEXT(slot, invItem, GetClassByType('Item', type))
             CreateIcon(slot):SetColorTone('FFFFFFFF')
           end
         end
@@ -166,7 +170,7 @@ function g.new(self)
     frame:SetSkinName('downbox')
     frame:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SHOWMENU')
     frame:SetEventScript(ui.LBUTTONUP, 'SUBQUICKSLOT_ON_ENDMOVE')
-    frame:SetAlpha(50)
+    frame:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
     local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
     frame:SetOffset(frameX, frameY)
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
@@ -186,6 +190,10 @@ function g.new(self)
   	slotset:EnableSelection(0)
   	slotset:CreateSlots()
     self:Dbg('createed slot.')
+    for i = 0, slotw * sloth - 1 do
+      local slot = slotset:GetSlotByIndex(i)
+      slot:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHASLOT] or '100', '^(%d+)$'))
+    end
     -- スロット復元
     for k, v in pairs(__config[configKey]) do
       local index = string.match(k, 'slot(%d+)')
@@ -240,21 +248,41 @@ function g.new(self)
     frame:SetSkinName('test_frame_low')
     frame:SetOffset(mouse.GetX(), mouse.GetY())
     frame:Resize(250, 200)
+    -- タイトル
     local titlelabel = frame:CreateOrGetControl('richtext', 'titlelabel', 0, 14, 0, 0)
-    titlelabel:SetFontName('white_20_ol')
+    titlelabel:SetFontName('white_18_ol')
     titlelabel:SetTextAlign('center', 'center')
     titlelabel:SetGravity(ui.CENTER_HORZ, ui.TOP)
     titlelabel:SetText(string.format('SubQuickSlot-%s Options', frameIndex))
+    -- サイズ
     local sizelabel = frame:CreateOrGetControl('richtext', 'sizelabel', 10, 49, 0, 0)
     sizelabel:SetFontName('white_16_ol')
     sizelabel:SetText('VxH')
     sizelabel:SetTextTooltip('Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.')
-    local sizeinput = frame:CreateOrGetControl('edit', 'sizeinput', 50, sizelabel:GetY() - 4, 80, 25)
+    local sizeinput = frame:CreateOrGetControl('edit', 'sizeinput', 55, sizelabel:GetY() - 4, 80, 25)
     tolua.cast(sizeinput, 'ui::CEditControl')
 		sizeinput:SetFontName('white_16_ol')
     sizeinput:SetSkinName('test_weight_skin')
     sizeinput:SetTextAlign('center', 'center')
     sizeinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
+    -- 不透明度
+    local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, sizelabel:GetY() + sizelabel:GetHeight() + 10, 0, 0)
+    alphalabel:SetFontName('white_16_ol')
+    alphalabel:SetText('Alpha')
+    alphalabel:SetTextTooltip('Input alpha channel which ranged between 10 and 100. Left is background and the other is slot. Fromat: number. Ex: 50.')
+    local alphainput = frame:CreateOrGetControl('edit', 'alphainput', 55, alphalabel:GetY() - 4, 50, 25)
+    tolua.cast(alphainput, 'ui::CEditControl')
+		alphainput:SetFontName('white_16_ol')
+    alphainput:SetSkinName('test_weight_skin')
+    alphainput:SetTextAlign('center', 'center')
+    alphainput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHA] or '100')
+    local alphaslotinput =
+      frame:CreateOrGetControl('edit', 'alphaslotinput', alphainput:GetX() + alphainput:GetWidth() + 5, alphalabel:GetY() - 4, alphainput:GetWidth(), 25)
+    tolua.cast(alphaslotinput, 'ui::CEditControl')
+		alphaslotinput:SetFontName('white_16_ol')
+    alphaslotinput:SetSkinName('test_weight_skin')
+    alphaslotinput:SetTextAlign('center', 'center')
+    alphaslotinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHASLOT] or '100')
 
     frame:ShowWindow(1)
   end
@@ -265,13 +293,27 @@ function g.new(self)
 
     local frame = ui.GetFrame(__OPTION_FRAME_NAME)
     local frameIndex = frame:GetUserValue(__USERVALUE_FRAME_INDEX)
-    -- 設定保存
+    -- 設定取得
     local size = GET_CHILD(frame, 'sizeinput', 'ui::CEditControl'):GetText()
+    local alpha = GET_CHILD(frame, 'alphainput', 'ui::CEditControl'):GetText()
+    alpha = math.min(tonumber(alpha) or 100, 100)
+    alpha = math.max(tonumber(alpha) or 10, 10)
+    local alphaslot = GET_CHILD(frame, 'alphaslotinput', 'ui::CEditControl'):GetText()
+    alphaslot = math.min(tonumber(alphaslot) or 100, 100)
+    alphaslot = math.max(tonumber(alphaslot) or 10, 10)
     -- 再描画判定
     local configKey = GetConfigByFrameKey(frameIndex)
-    local redraw = __config[configKey][__CONFIG_SLOTSET_SIZE] ~= size
+    local redraw =
+      __config[configKey][__CONFIG_SLOTSET_SIZE] ~= size
+      or __config[configKey][__CONFIG_SLOTSET_ALPHA] ~= alpha
+      or __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
+      -- 設定保存
     __config[configKey][__CONFIG_SLOTSET_SIZE] = size
     self:Dbg('size='..size)
+    __config[configKey][__CONFIG_SLOTSET_ALPHA] = alpha
+    self:Dbg('alpha='..alpha)
+    __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = alphaslot
+    self:Dbg('alpha='..alpha)
     self:Serialize(__cid, __config)
     -- フレーム非表示
     frame:ShowWindow(0)
@@ -319,14 +361,14 @@ function g.new(self)
     if (category == 'Item') then
       local invItem = session.GetInvItemByGuid(iesid) or session.GetInvItemByType(type)
       if (not invItem) then
-        invItem = session.GetInvItemByType(type)
         self:Dbg('not in inventory.')
         CreateNotInInventoryItemImage(CreateIcon(slot), category, type, iesid)
         SET_SLOT_COUNT_TEXT(slot, 0)
         return
       end
       -- スロット格納してイベント定義
-      SET_SLOT_INVITEM(slot, invItem)
+      SET_SLOT_ITEM_IMAGE(slot, invItem)
+      SET_SLOT_ITEM_TEXT(slot, invItem, GetClassByType('Item', type))
       CreateIcon(slot):SetColorTone('FFFFFFFF')
       -- クールダウンの設定
       ICON_SET_ITEM_COOLDOWN_OBJ(slot:GetIcon(), GetIES(invItem:GetObject()))
@@ -507,7 +549,10 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   local info = ui.GetLiftIcon():GetInfo()
   g.instance:SetSubSlot(slot, info)
   -- ドラッグ開始とドラッグ終了が同じ場所の場合は消したらいけない
-  if (info.fromIndex and info.fromIndex ~= slot:GetSlotIndex()) then
+  -- ドラッグ開始とドラッグ終了のフレームが違う場合は消したらいけない
+  if ((info.fromIndex and info.fromIndex ~= slot:GetSlotIndex())
+    and (ui.GetLiftIcon():GetTopParentFrame():GetName() == parent:GetTopParentFrame():GetName())
+  ) then
     g.instance:RemoveFromSubSlot(parent:GetSlotByIndex(info.fromIndex))
   end
   g.instance:SaveSlot(parent:GetTopParentFrame(), slot:GetSlotIndex(), info, info.fromIndex)
