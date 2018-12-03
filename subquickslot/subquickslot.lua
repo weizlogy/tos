@@ -550,9 +550,11 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   g.instance:SetSubSlot(slot, info)
   -- ドラッグ開始とドラッグ終了が同じ場所の場合は消したらいけない
   -- ドラッグ開始とドラッグ終了のフレームが違う場合は消したらいけない
-  if ((info.fromIndex and info.fromIndex ~= slot:GetSlotIndex())
-    and (ui.GetLiftIcon():GetTopParentFrame():GetName() == parent:GetTopParentFrame():GetName())
-  ) then
+  if (ui.GetLiftIcon():GetTopParentFrame():GetName() ~= parent:GetTopParentFrame():GetName()) then
+    -- fromIndexを消すことで削除処理と削除データ保存処理を回避する
+    info.fromIndex = nil
+  end
+  if (info.fromIndex and info.fromIndex ~= slot:GetSlotIndex()) then
     g.instance:RemoveFromSubSlot(parent:GetSlotByIndex(info.fromIndex))
   end
   g.instance:SaveSlot(parent:GetTopParentFrame(), slot:GetSlotIndex(), info, info.fromIndex)
