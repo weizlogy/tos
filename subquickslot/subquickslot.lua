@@ -164,6 +164,9 @@ function g.new(self)
     local slotw, sloth = string.match(__config[configKey][__CONFIG_SLOTSET_SIZE] or '1x1', '(%d+)x(%d+)')
     self:Dbg('creating slot => '..slotw..' x '..sloth)
     local slotsize = 48
+    -- ロック状態取得
+    local lockstate = tonumber(__config[configKey][__CONFIG_SLOTSET_LOCK] or '0')
+    self:Dbg('lockstate => '..lockstate)
 
     local frame = ui.CreateNewFrame(addonName, addonName..'-'..frameIndex)
     frame:SetUserValue(__USERVALUE_FRAME_INDEX, frameIndex)
@@ -174,14 +177,15 @@ function g.new(self)
     local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
     frame:SetOffset(frameX, frameY)
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
+    frame:EnableMove(math.abs(lockstate - 1))
     -- スロット作成
     DESTROY_CHILD_BYNAME(frame, 'slotset')
     local slotset = frame:CreateOrGetControl('slotset', 'slotset', 10, 10, 0, 0)
     tolua.cast(slotset, 'ui::CSlotSet')
     slotset:SetSlotSize(slotsize, slotsize)  -- スロットの大きさ
-    slotset:EnablePop(1)
-  	slotset:EnableDrag(1)
-  	slotset:EnableDrop(1)
+    slotset:EnablePop(math.abs(lockstate - 1))
+    slotset:EnableDrag(math.abs(lockstate - 1))
+    slotset:EnableDrop(math.abs(lockstate - 1))
   	slotset:SetColRow(slotw, sloth)  -- スロットの配置と個数
   	slotset:SetSpc(0, 0)
   	slotset:SetSkinName('slot')
@@ -283,6 +287,13 @@ function g.new(self)
     alphaslotinput:SetSkinName('test_weight_skin')
     alphaslotinput:SetTextAlign('center', 'center')
     alphaslotinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHASLOT] or '100')
+    -- ロック状態
+    local lockcheck = frame:CreateOrGetControl('checkbox', 'lockcheck', 10, alphalabel:GetY() + alphalabel:GetHeight() + 10, 0, 0)
+    tolua.cast(lockcheck, 'ui::CCheckBox')
+    lockcheck:SetFontName('white_16_ol')
+    lockcheck:SetText('Lock')
+    lockcheck:SetTextTooltip('If you check, the slot is lock.')
+    lockcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_LOCK] or '0'))
 
     frame:ShowWindow(1)
   end
@@ -301,12 +312,14 @@ function g.new(self)
     local alphaslot = GET_CHILD(frame, 'alphaslotinput', 'ui::CEditControl'):GetText()
     alphaslot = math.min(tonumber(alphaslot) or 100, 100)
     alphaslot = math.max(tonumber(alphaslot) or 10, 10)
+    local lock = GET_CHILD(frame, 'lockcheck', 'ui::CCheckBox'):IsChecked()
     -- 再描画判定
     local configKey = GetConfigByFrameKey(frameIndex)
     local redraw =
       __config[configKey][__CONFIG_SLOTSET_SIZE] ~= size
       or __config[configKey][__CONFIG_SLOTSET_ALPHA] ~= alpha
       or __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
+      or __config[configKey][__CONFIG_SLOTSET_LOCK] ~= lock
       -- 設定保存
     __config[configKey][__CONFIG_SLOTSET_SIZE] = size
     self:Dbg('size='..size)
@@ -314,6 +327,8 @@ function g.new(self)
     self:Dbg('alpha='..alpha)
     __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = alphaslot
     self:Dbg('alpha='..alpha)
+    __config[configKey][__CONFIG_SLOTSET_LOCK] = lock
+    self:Dbg('lock='..lock)
     self:Serialize(__cid, __config)
     -- フレーム非表示
     frame:ShowWindow(0)
