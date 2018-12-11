@@ -399,6 +399,13 @@ function g.new(self)
 			icon:SetTooltipIESID(iesid)
       slot:ClearText()
       SET_QUICKSLOT_OVERHEAT(slot)
+    elseif (category == 'Pose') then
+      local icon = CreateIcon(slot)
+      local pose = GetClassByType('Pose', type)
+      icon:Set(pose.Icon, category, type, 0, iesid)
+      icon:SetColorTone('FFFFFFFF')
+      icon:SetTextTooltip(pose.Name)
+      slot:ClearText()
     end
   end
 
@@ -449,6 +456,21 @@ function g.new(self)
         UPDATE_SLOT_OVERHEAT(slotset:GetSlotByIndex(index))
       end
     end
+  end
+
+  -- ポーズD&D事前加工
+  members.ModifyForPose = function(self, liftIcon)
+    self:Dbg('ModifyForPose called.')
+
+    local info = liftIcon:GetInfo()
+    local poseid = liftIcon:GetUserValue('POSEID')
+    if (poseid == 'None') then
+      return info
+    end
+    info.category = 'Pose'
+    info.type = poseid
+    info.iesid = 0
+    return info
   end
 
   -- サブスロットからアイコンを削除
@@ -561,11 +583,13 @@ function SUBQUICKSLOT_ON_ENDMOVE(frame, str, num)
   g.instance:SavePos(frame)
 end
 function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
-  local info = ui.GetLiftIcon():GetInfo()
+  local liftIcon = ui.GetLiftIcon()
+  local info = liftIcon:GetInfo()
+  info = g.instance:ModifyForPose(liftIcon)
   g.instance:SetSubSlot(slot, info)
   -- ドラッグ開始とドラッグ終了が同じ場所の場合は消したらいけない
   -- ドラッグ開始とドラッグ終了のフレームが違う場合は消したらいけない
-  if (ui.GetLiftIcon():GetTopParentFrame():GetName() ~= parent:GetTopParentFrame():GetName()) then
+  if (liftIcon:GetTopParentFrame():GetName() ~= parent:GetTopParentFrame():GetName()) then
     -- fromIndexを消すことで削除処理と削除データ保存処理を回避する
     info.fromIndex = nil
   end
@@ -575,7 +599,8 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   g.instance:SaveSlot(parent:GetTopParentFrame(), slot:GetSlotIndex(), info, info.fromIndex)
 end
 function SUBQUICKSLOT_ON_POPSLOT(parent, slot, str, num)
-  local info = ui.GetLiftIcon():GetInfo()
+  local liftIcon = ui.GetLiftIcon()
+  local info = liftIcon:GetInfo()
   -- 画面外にドロップしてもイベント発生しないのでLALTで消すようにする
   if (keyboard.IsKeyPressed('LALT') == 1) then
     g.instance:RemoveFromSubSlot(slot)
@@ -597,6 +622,8 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
       return
     end
     ICON_USE(icon)
+  elseif (category == 'Pose') then
+    control.Pose(GetClassByType('Pose', num).ClassName)
   end
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()
