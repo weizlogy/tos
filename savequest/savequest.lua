@@ -157,9 +157,10 @@ function SaveQuest.new(self)
     local menuTitle = string.format("[%d] %s", questID, questName);
     local context = ui.CreateContextMenu(
       "CONTEXT_SAVE_QUEST", menuTitle, 0, 0, string.len(menuTitle) * 6, 100);
-    ui.AddContextMenuItem(context, "Save", string.format("SAVEQUEST_SAVE(%d)", questID));	
-    ui.AddContextMenuItem(context, "Release", string.format("SAVEQUEST_RELEASE(%d)", questID));	
-    ui.AddContextMenuItem(context, "ShortCut", string.format("SAVEQUEST_SHORTCUT(%d)", questID));	
+    ui.AddContextMenuItem(context, "Save", string.format("SAVEQUEST_SAVE(%d)", questID));
+    ui.AddContextMenuItem(context, "Release", string.format("SAVEQUEST_RELEASE(%d)", questID));
+    ui.AddContextMenuItem(context, "ShortCut", string.format("SAVEQUEST_SHORTCUT(%d)", questID));
+    ui.AddContextMenuItem(context, "Slot", string.format("saqu:CreateSlot(%d)", questID));
     ui.AddContextMenuItem(context, "Cancel", "None");
     ui.OpenContextMenu(context);
   end
@@ -171,28 +172,56 @@ function SaveQuest.new(self)
     local context = ui.CreateContextMenu(
       "CONTEXT_SAVE_QUEST_SHORTCUT", menuTitle, 0, 0, string.len(menuTitle) * 6, 100);
     if (locked == "0") then
-      ui.AddContextMenuItem(context, "Lock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 1)", questID));	
+      ui.AddContextMenuItem(context, "Lock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 1)", questID));
     else
-      ui.AddContextMenuItem(context, "UnLock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 0)", questID));	
+      ui.AddContextMenuItem(context, "UnLock", string.format("SAVEQUEST_LOCK_OR_UNLOCK_SHORTCUT(%d, 0)", questID));
     end
 
-    if (self:IsPartySharedQuest(questID)) then
-      ui.AddContextMenuItem(context, "UnShare", string.format("saqu:UnShareWithParty(%d)", questID));
-    else
-      ui.AddContextMenuItem(context, "Share", string.format("saqu:ShareWithParty(%d)", questID));
+    if (session.party.GetMyPartyObj(PARTY_NORMAL)) then
+      if (self:IsPartySharedQuest(questID)) then
+        ui.AddContextMenuItem(context, "UnShare", string.format("saqu:UnShareWithParty(%d)", questID));
+      else
+        ui.AddContextMenuItem(context, "Share", string.format("saqu:ShareWithParty(%d)", questID));
+      end
     end
 
     ui.AddContextMenuItem(context, "FlattenLayerLv", string.format("saqu:FlattenLayerLv(%d)", questID));
 
-    ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));	
+    ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));
     ui.AddContextMenuItem(context, "Cancel", "None");
     ui.OpenContextMenu(context);
+  end
+
+  -- スロットを一時的に作成
+  members.CreateSlot = function(self, questID)
+    local questIES = GetClassByType('QuestProgressCheck', questID)
+    local zoneName =
+      GetClassString(
+        'Map',
+        questIES[CONVERT_STATE(SCR_QUEST_CHECK_Q(SCR_QUESTINFO_GET_PC(), questIES.ClassName)) .. 'Map'],
+        'Name')
+
+    local frameName = 'savequest_tempslot'
+    local frame = ui.GetFrame(frameName) or ui.CreateNewFrame('savequest', frameName)
+    frame:SetSkinName("downbox")
+    frame:SetAlpha(10)
+    frame:Resize(40, 40)
+    frame:SetOffset(mouse.GetX(), mouse.GetY())
+    local slot = frame:CreateOrGetControl('slot', 'slot', 0, 0, 40, 40)
+    tolua.cast(slot, 'ui::CSlot')
+    local icon = CreateIcon(slot)
+    icon:Set('questinfo_return', 'WarpAction', questID, 0, 0)
+    icon:SetTextTooltip(zoneName..' - '..questIES.Name)
+    SAVEQUEST_TEMPSLOT_ON_RIGHTBUTTONUP = function(frame, ctrl, str, num)
+      ui.DestroyFrame(frame:GetName())
+    end
+    slot:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_TEMPSLOT_ON_RIGHTBUTTONUP')
   end
 
   members.CreateSharePartyIcon = function(self, frame)
 		local icon = frame:CreateOrGetControl("picture", "SHARE_PARTY", 30, 30, 0, 0, 0, 0, 0, 0);
     icon:SetOffset(frame:GetWidth() - 30, 0);
-		icon:ShowWindow(1);	
+		icon:ShowWindow(1);
 		icon = tolua.cast(icon, "ui::CPicture");
 		icon:SetImage("party_indi_icon");
     icon:SetEnableStretch(1);
@@ -216,12 +245,12 @@ function SaveQuest.new(self)
     local frame = ui.GetFrame(saqu:GetFrameNameFromQuestID(questID));
     frame:RemoveChild("SHARE_PARTY");
   end
-  
+
   -- check share with party.
   members.IsPartySharedQuest = function(self, questID)
     local myInfo = session.party.GetMyPartyObj(PARTY_NORMAL);
     local isSharedQuest = false;
-      if myInfo ~= nil then
+    if myInfo ~= nil then
       local obj = GetIES(myInfo:GetObject());
       if tostring(obj.Shared_Quest) == questID then
         isSharedQuest = true;
@@ -343,9 +372,10 @@ function SaveQuest.new(self)
     frame:SetOffset(x, y);
 
     local sharePartyIconSpace = 12;
-    frame:Resize(#zoneName / 7 * fontSize + 30 + sharePartyIconSpace, 20);
+    frame:Resize(mapInfo:GetWidth() + 35 + sharePartyIconSpace, 20);
     frame:ShowWindow(1);
 
+    DESTROY_CHILD_BYNAME(frame, 'SHARE_PARTY')
     if (self:IsPartySharedQuest(tostring(questID))) then
       self:CreateSharePartyIcon(frame);
     end
