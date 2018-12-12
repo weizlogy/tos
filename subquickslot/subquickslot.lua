@@ -406,6 +406,17 @@ function g.new(self)
       icon:SetColorTone('FFFFFFFF')
       icon:SetTextTooltip(pose.Name)
       slot:ClearText()
+    elseif (category == 'WarpAction') then
+      local questIES = GetClassByType('QuestProgressCheck', type)
+      local zoneName =
+        GetClassString(
+          'Map',
+          questIES[CONVERT_STATE(SCR_QUEST_CHECK_Q(SCR_QUESTINFO_GET_PC(), questIES.ClassName)) .. 'Map'],
+          'Name')
+      local icon = CreateIcon(slot)
+      icon:Set('questinfo_return', 'WarpAction', type, 0, 0)
+      icon:SetTextTooltip(zoneName..' - '..questIES.Name)
+      SET_SLOT_COUNT_TEXT(slot, zoneName, '{s10}{ol}{b}', 'left', 'bottom', 0, 0)
     end
   end
 
@@ -624,6 +635,8 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
     ICON_USE(icon)
   elseif (category == 'Pose') then
     control.Pose(GetClassByType('Pose', num).ClassName)
+  elseif (category == 'WarpAction') then
+    QUESTION_QUEST_WARP(parent, slot, str, num)
   end
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()
