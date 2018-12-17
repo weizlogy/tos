@@ -79,9 +79,19 @@ function g.new(self)
     end
     -- ソート実行
     table.sort(sortWorker, sortFunc)
-
+    local s, e = pcall(table.sort, sortWorker, sortFunc)
+    if (not s) then
+      self:Err(e)
+    end
     -- for i = 0, 20 do
-    --   CHAT_SYSTEM('['..dictionary.ReplaceDicIDInCompStr(GetIES(sortWorker:at(i):GetObject()).Name)..']')
+    --   local obj = GetIES(sortWorker:at(i):GetObject())
+    --   local icon = obj.Icon
+    --   if (__config['removeprefix']) then
+    --     for k, v in pairs(__config['removeprefix']['Icon']) do
+    --       icon = string.gsub(icon, v, '')
+    --     end
+    --   end
+    --   self:Dbg('['..dictionary.ReplaceDicIDInCompStr(obj.Name)..']'..' '..icon)
     -- end
 
     local chooseSortType = __sortType
@@ -149,11 +159,22 @@ function g.new(self)
       local sortKeys = config.Sort
       for i = 0, #sortKeys do
         local key = sortKeys[i]
+        local rmprelogic = ''
+        if (__config['removeprefix'] and __config['removeprefix'][key]) then
+          for k, v in pairs(__config['removeprefix'][key]) do
+            rmprelogic = rmprelogic ..
+              string.format("  t1 = string.gsub(t1, '%s', ''); t2 = string.gsub(t2, '%s', '');  ", v, v)
+          end
+        end
         local logic = string.format(
-          " r = dictionary.ReplaceDicIDInCompStr(o1['%s']) < dictionary.ReplaceDicIDInCompStr(o2['%s']);  \
-            if (o1['%s'] ~= o2['%s']) then  \
-              return r  \
-            end; ", key, key, key, key)
+          " \
+           local t1 = string.lower(dictionary.ReplaceDicIDInCompStr(o1['%s'])) \
+           local t2 = string.lower(dictionary.ReplaceDicIDInCompStr(o2['%s'])) \
+           %s \
+           r = t1 < t2; \
+           if (o1['%s'] ~= o2['%s']) then  \
+             return r  \
+           end; ", key, key, rmprelogic, key, key)
         sortFuncDynamicaly = sortFuncDynamicaly..logic
       end
       sortFunc = assert(loadstring(string.format(sortFuncTemplate, sortFuncDynamicaly)))()
@@ -247,7 +268,12 @@ function FIXINVENTORYSORT_ON_INIT(addon, frame)
     g.instance.sessionGetInvItemSortedList = session.GetInvItemSortedList
   end
   session.GetInvItemSortedList = function()
-    return g.instance:Sort(g.instance.sessionGetInvItemSortedList(), true)
+    local sorted = g.instance:Sort(g.instance.sessionGetInvItemSortedList(), true)
+    for i = 0 , sorted:size() - 1 do
+      local invItem = sorted:at(i)
+      invItem.index = i
+    end
+    return sorted
   end
   -- インベントリソートメニュー生成処理をフックしてカスタムソートを追加する
   if (g.instance.SORT_ITEM_INVENTORY == nil) then
@@ -256,6 +282,13 @@ function FIXINVENTORYSORT_ON_INIT(addon, frame)
   SORT_ITEM_INVENTORY = function()
     g.instance:CreateSortMenu()
   end
+  -- 邪魔な既存ソート処理をどうにかする
+  INVENTORY_SORT_BY_GRADE = function(a, b)
+    return a.index < b.index
+  end
+  INVENTORY_SORT_BY_WEIGHT = INVENTORY_SORT_BY_GRADE
+  INVENTORY_SORT_BY_NAME = INVENTORY_SORT_BY_GRADE
+  INVENTORY_SORT_BY_COUNT = INVENTORY_SORT_BY_GRADE
 end
 
 -- インスタンス作成
