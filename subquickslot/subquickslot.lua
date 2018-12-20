@@ -26,6 +26,8 @@ function g.new(self)
   local __CONFIG_SLOTSET_ALPHASLOT = 'alphaslot'
   local __CONFIG_SLOTSET_LOCK = 'lock'
   local __CONFIG_SLOTSET_POS = 'pos'
+  local __CONFIG_SLOTSET_MAGNI = 'magnification'
+  local __COMMON_CONFIG_FILENAME = 'commonConfig'
 
   -- === 内部データ === --
   local __cid = ''
@@ -45,6 +47,19 @@ function g.new(self)
     icon:SetTooltipIESID(iesid)
     icon:SetColorTone('FFFF0000')
   end
+  local CreateLabeledEditCtrl = function(frame, key, labelText, x, y, tooltip)
+    local label = frame:CreateOrGetControl('richtext', key..'label', x, y, 0, 0)
+    label:SetFontName('white_16_ol')
+    label:SetText(labelText)
+    label:SetTextTooltip(tooltip)
+    local input = frame:CreateOrGetControl(
+      'edit', key..'input', label:GetWidth() + 10, label:GetY() - 4, 50, 25)
+    tolua.cast(input, 'ui::CEditControl')
+		input:SetFontName('white_16_ol')
+    input:SetSkinName('test_weight_skin')
+    input:SetTextAlign('center', 'center')
+    return input
+  end
 
   -- === 公開関数 === --
   -- 全フレームを読み込む
@@ -52,7 +67,7 @@ function g.new(self)
     self:Dbg('CreateFrames called.')
 
     __cid = info.GetCID(session.GetMyHandle())
-    __config = self:Deserialize(__cid)
+    __config = self:Deserialize(__cid) or {}
 
     for index in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       self:CreateFrame(index)
@@ -96,7 +111,8 @@ function g.new(self)
   members.Serialize = function(self, fileName, dataObj)
     self:Dbg('Serialize called. '..fileName)
 
-    local f, e = io.open(string.format('%s/%s', __ADDON_DIR, fileName), 'w')
+    local filePath = string.format('%s/%s', __ADDON_DIR, fileName)
+    local f, e = io.open(filePath, 'w')
     if (e) then
       self:Err('Failed to save option to file.'..fileName)
       self:Err(tostring(e))
@@ -134,12 +150,16 @@ function g.new(self)
 
     local filePath = string.format('%s/%s', __ADDON_DIR, fileName)
     local f, e = io.open(filePath, 'r')
-    if (e or f == nil) then
+    if (e) then
       self:Dbg('Nothing to load option from file.')
-      return {}
+      return nil
     end
     f:close()
-    return dofile(filePath)
+    local s, e = pcall(dofile, filePath)
+    if (not s) then
+      self:Err(e)
+    end
+    return e
   end
 
   -- ログ出力
@@ -158,12 +178,23 @@ function g.new(self)
     self:Dbg('CreateFrame called. '..frameIndex)
 
     local configKey = GetConfigByFrameKey(frameIndex)
-    __config[configKey] = __config[configKey] or {}
+    __config[configKey] = __config[configKey]
+    -- 設定がない場合は index == 1 のスロットから設定をいくつか継承する
+    if (not __config[configKey]) then
+      __config[configKey] = {}
+      local baseConfig = __config[GetConfigByFrameKey(1)]
+      if (baseConfig) then
+        -- 継承するのは、倍率/透過度2種
+        __config[configKey][__CONFIG_SLOTSET_MAGNI] = baseConfig[__CONFIG_SLOTSET_MAGNI]
+        __config[configKey][__CONFIG_SLOTSET_ALPHA] = baseConfig[__CONFIG_SLOTSET_ALPHA]
+        __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = baseConfig[__CONFIG_SLOTSET_ALPHASLOT]
+      end
+    end
 
     -- スロットサイズ解析
     local slotw, sloth = string.match(__config[configKey][__CONFIG_SLOTSET_SIZE] or '1x1', '(%d+)x(%d+)')
     self:Dbg('creating slot => '..slotw..' x '..sloth)
-    local slotsize = 48
+    local slotsize = 48 * (tonumber(__config[configKey][__CONFIG_SLOTSET_MAGNI] or '100') / 100)
     -- ロック状態取得
     local lockstate = tonumber(__config[configKey][__CONFIG_SLOTSET_LOCK] or '0')
     self:Dbg('lockstate => '..lockstate)
@@ -175,8 +206,8 @@ function g.new(self)
     frame:SetEventScript(ui.LBUTTONUP, 'SUBQUICKSLOT_ON_ENDMOVE')
     frame:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
     local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
-    frame:SetOffset(frameX, frameY)
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
+    frame:MoveIntoClientRegion(frameX, frameY)
     frame:EnableMove(math.abs(lockstate - 1))
     -- スロット作成
     DESTROY_CHILD_BYNAME(frame, 'slotset')
@@ -242,7 +273,7 @@ function g.new(self)
   end
 
   -- オプションフレーム作成
-  members.CreateOptionFrame = function(self, frameIndex)
+  members.CreateOptionFrame = function(self, frameIndex, x, y)
     self:Dbg('CreateOptionFrame called. index='..frameIndex)
 
     local frame = ui.CreateNewFrame(addonName, __OPTION_FRAME_NAME)
@@ -250,27 +281,19 @@ function g.new(self)
     frame:SetEventScript(ui.LOST_FOCUS, "SUBQUICKSLOT_ON_LOSTFOCUSOPTION")
     frame:SetLayerLevel(999)
     frame:SetSkinName('test_frame_low')
-    frame:SetOffset(mouse.GetX(), mouse.GetY())
     frame:Resize(250, 200)
+    frame:MoveIntoClientRegion(x, y)
     -- タイトル
     local titlelabel = frame:CreateOrGetControl('richtext', 'titlelabel', 0, 14, 0, 0)
-    titlelabel:SetFontName('white_18_ol')
+    titlelabel:SetFontName('white_16_ol')
     titlelabel:SetTextAlign('center', 'center')
     titlelabel:SetGravity(ui.CENTER_HORZ, ui.TOP)
     titlelabel:SetText(string.format('SubQuickSlot-%s Options', frameIndex))
-    -- サイズ
-    local sizelabel = frame:CreateOrGetControl('richtext', 'sizelabel', 10, 49, 0, 0)
-    sizelabel:SetFontName('white_16_ol')
-    sizelabel:SetText('VxH')
-    sizelabel:SetTextTooltip('Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.')
-    local sizeinput = frame:CreateOrGetControl('edit', 'sizeinput', 55, sizelabel:GetY() - 4, 80, 25)
-    tolua.cast(sizeinput, 'ui::CEditControl')
-		sizeinput:SetFontName('white_16_ol')
-    sizeinput:SetSkinName('test_weight_skin')
-    sizeinput:SetTextAlign('center', 'center')
-    sizeinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
+    CreateLabeledEditCtrl(
+      frame, 'size', 'VxH  ', 10, 45, 'Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.')
+        :SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
     -- 不透明度
-    local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, sizelabel:GetY() + sizelabel:GetHeight() + 10, 0, 0)
+    local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, 75, 0, 0)
     alphalabel:SetFontName('white_16_ol')
     alphalabel:SetText('Alpha')
     alphalabel:SetTextTooltip('Input alpha channel which ranged between 10 and 100. Left is background and the other is slot. Fromat: number. Ex: 50.')
@@ -281,14 +304,18 @@ function g.new(self)
     alphainput:SetTextAlign('center', 'center')
     alphainput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHA] or '100')
     local alphaslotinput =
-      frame:CreateOrGetControl('edit', 'alphaslotinput', alphainput:GetX() + alphainput:GetWidth() + 5, alphalabel:GetY() - 4, alphainput:GetWidth(), 25)
+      frame:CreateOrGetControl('edit', 'alphaslotinput', alphainput:GetX() + alphainput:GetWidth() + 5, alphainput:GetY(), alphainput:GetWidth(), 25)
     tolua.cast(alphaslotinput, 'ui::CEditControl')
 		alphaslotinput:SetFontName('white_16_ol')
     alphaslotinput:SetSkinName('test_weight_skin')
     alphaslotinput:SetTextAlign('center', 'center')
     alphaslotinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHASLOT] or '100')
+    -- 倍率
+    CreateLabeledEditCtrl(
+      frame, 'magni', 'Magni', 10, 105, 'Input slot magnification which ranged between 50 and 100.')
+        :SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_MAGNI] or '100')
     -- ロック状態
-    local lockcheck = frame:CreateOrGetControl('checkbox', 'lockcheck', 10, alphalabel:GetY() + alphalabel:GetHeight() + 10, 0, 0)
+    local lockcheck = frame:CreateOrGetControl('checkbox', 'lockcheck', 10, 135, 0, 0)
     tolua.cast(lockcheck, 'ui::CCheckBox')
     lockcheck:SetFontName('white_16_ol')
     lockcheck:SetText('Lock')
@@ -312,6 +339,9 @@ function g.new(self)
     local alphaslot = GET_CHILD(frame, 'alphaslotinput', 'ui::CEditControl'):GetText()
     alphaslot = math.min(tonumber(alphaslot) or 100, 100)
     alphaslot = math.max(tonumber(alphaslot) or 10, 10)
+    local magni = GET_CHILD(frame, 'magniinput', 'ui::CEditControl'):GetText()
+    magni = math.min(tonumber(magni) or 100, 100)
+    magni = math.max(tonumber(magni) or 50, 50)
     local lock = GET_CHILD(frame, 'lockcheck', 'ui::CCheckBox'):IsChecked()
     -- 再描画判定
     local configKey = GetConfigByFrameKey(frameIndex)
@@ -319,6 +349,7 @@ function g.new(self)
       __config[configKey][__CONFIG_SLOTSET_SIZE] ~= size
       or __config[configKey][__CONFIG_SLOTSET_ALPHA] ~= alpha
       or __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
+      or __config[configKey][__CONFIG_SLOTSET_MAGNI] ~= magni
       or __config[configKey][__CONFIG_SLOTSET_LOCK] ~= lock
       -- 設定保存
     __config[configKey][__CONFIG_SLOTSET_SIZE] = size
@@ -327,6 +358,8 @@ function g.new(self)
     self:Dbg('alpha='..alpha)
     __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = alphaslot
     self:Dbg('alpha='..alpha)
+    __config[configKey][__CONFIG_SLOTSET_MAGNI] = magni
+    self:Dbg('magni='..magni)
     __config[configKey][__CONFIG_SLOTSET_LOCK] = lock
     self:Dbg('lock='..lock)
     self:Serialize(__cid, __config)
@@ -342,17 +375,84 @@ function g.new(self)
     local frameIndex = frame:GetUserValue(__USERVALUE_FRAME_INDEX)
     local menuTitle = 'SubQuickSlot-'..frameIndex
     local context = ui.CreateContextMenu(
-      'CONTEXT_COSTUMEPLAY_ON_COSTUME_SELECT', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
+      'CONTEXT_SUBQUICKSLOT_OPTION', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
     -- 画面表示
-    ui.AddContextMenuItem(context, 'Option', string.format('SUBQUICKSLOT_ON_MENU_SHOWOPTION(%s)', frameIndex))
+    ui.AddContextMenuItem(context, 'Option', string.format('SUBQUICKSLOT_ON_MENU_SHOWOPTION(%s, %d, %d)', frameIndex, frame:GetX(), frame:GetY()))
     ui.AddContextMenuItem(context, 'Redraw', 'SUBQUICKSLOT_ON_MENU_REDRAW')
     if (frameIndex == '1') then
       ui.AddContextMenuItem(context, 'CreateNew', string.format('SUBQUICKSLOT_ON_MENU_CREATENEW(%s)', frameIndex))
+      ui.AddContextMenuItem(context, 'CommonConfig', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG')
     else
       ui.AddContextMenuItem(context, 'Delete', string.format('SUBQUICKSLOT_ON_MENU_DELETE(%s)', frameIndex))
     end
     ui.AddContextMenuItem(context, 'Cancel', 'None')
     ui.OpenContextMenu(context)
+  end
+
+  -- 共通設定メニュー作成
+  members.CreateCommonConfigMenu = function(self)
+    self:Dbg('CreateCommonConfigMenu called.')
+
+    local menuTitle = 'SubQuickSlot Common Config'
+    local context = ui.CreateContextMenu(
+      'CONTEXT_SUBQUICKSLOT_COMMON_CONFIG', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
+
+    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK = function()
+      g.instance:MarkedCommonConfig()
+    end
+    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD = function()
+      g.instance:LoadCommonConfig()
+    end
+
+    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK_PRECHECK = function()
+      ui.MsgBox('It will be MARKED current settings to common config. Are you alrigh?', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK', 'None')
+    end
+    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD_PRECHECK = function()
+      ui.MsgBox('It will be LOADED current settings from common config. Are you alrigh?', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD', 'None')
+    end
+
+    -- 画面表示
+    ui.AddContextMenuItem(context, 'Mark as a Common', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK_PRECHECK')
+    ui.AddContextMenuItem(context, 'Load from Common', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD_PRECHECK')
+    ui.AddContextMenuItem(context, 'Cancel', 'None')
+    ui.OpenContextMenu(context)
+  end
+
+  -- 共通設定保存
+  -- 解除は要らないよね
+  members.MarkedCommonConfig = function(self)
+    self:Dbg('MarkedCommonConfig called.')
+
+    local filePath = string.format('%s/%s', __ADDON_DIR, __COMMON_CONFIG_FILENAME)
+    local f, e = io.open(filePath, 'w')
+    if (e) then
+      self:Err(tostring(e))
+      return
+    end
+    -- 共通化ってしたもののCIDを別ファイルに控えるだけ...！
+    f:write(string.format("return '%s'", __cid))
+    f:flush()
+    f:close()
+    self:Log('Successfully saved to common config.')
+  end
+
+  -- 共有設定呼び出し
+  members.LoadCommonConfig = function(self)
+    self:Dbg('LoadCommonConfig called.')
+
+    -- 控えたCIDを取得
+    local markedCID = self:Deserialize(__COMMON_CONFIG_FILENAME)
+    if (not markedCID) then
+      self:Err('Could not load from commonConfig.')
+      return
+    end
+    self:Dbg('markedCID = '..markedCID)
+    -- ファイル読み込み
+    __config = self:Deserialize(markedCID)
+    -- 自分の設定として即時保存
+    self:Serialize(__cid, __config)
+    -- 再描画
+    self:CreateFrames()
   end
 
   -- サブスロットにアイコンをセット
@@ -489,6 +589,7 @@ function g.new(self)
     self:Dbg('RemoveFromSubSlot called.')
     slot:ClearIcon()
     slot:ClearText()
+    QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
   end
 
   -- スロットからカテゴリー情報を復元
@@ -561,16 +662,17 @@ function SUBQUICKSLOT_ON_INIT(addon, frame)
   addon:RegisterMsg('INV_ITEM_POST_REMOVE', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
   addon:RegisterMsg('INV_ITEM_CHANGE_COUNT', 'SUBQUICKSLOT_ON_REDRAW_COUNT')
   addon:RegisterMsg('JUNGTAN_SLOT_UPDATE', 'SUBQUICKSLOT_ON_JUNGTAN_SLOT_UPDATE')
-
-  g.instance:CreateFrames()
+  -- 遅延呼び出し的な
+  -- これをしないとSCR_QUEST_CHECK_Q() の戻り値がNoneになって正しく動かない
+  addon:RegisterMsg('GAME_START', 'SUBQUICKSLOT_ON_MENU_REDRAW')
 end
 
 -- === イベントハンドラー === --
 function SUBQUICKSLOT_ON_SHOWMENU(frame, index, num)
   g.instance:CreateOptionMenu(frame)
 end
-function SUBQUICKSLOT_ON_MENU_SHOWOPTION(index)
-  g.instance:CreateOptionFrame(index)
+function SUBQUICKSLOT_ON_MENU_SHOWOPTION(index, x, y)
+  g.instance:CreateOptionFrame(index, x, y)
 end
 function SUBQUICKSLOT_ON_MENU_REDRAW()
   g.instance:CreateFrames()
@@ -579,6 +681,9 @@ function SUBQUICKSLOT_ON_MENU_CREATENEW(index)
   local newIndex = IMCRandom(2,999)
   g.instance:CreateFrame(newIndex)
   g.instance:SaveFrameIndex(newIndex)
+end
+function SUBQUICKSLOT_ON_MENU_COMMONCONFIG()
+  g.instance:CreateCommonConfigMenu()
 end
 function SUBQUICKSLOT_ON_MENU_DELETE(index)
   g.instance:DeleteFrame(index)
