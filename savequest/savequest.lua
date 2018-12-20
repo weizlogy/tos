@@ -147,6 +147,11 @@ function SaveQuest.new(self)
             savemark:SetText(self.savemark);
             savemark:SetOffset(36, 35);
           end
+        else
+          content:EnableHitTest(1);
+          content:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU_ALT');
+          content:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
+          content:SetEventScriptArgNumber(ui.RBUTTONUP, questIES.ClassID);
         end
       end
     end
@@ -161,6 +166,16 @@ function SaveQuest.new(self)
     ui.AddContextMenuItem(context, "Release", string.format("SAVEQUEST_RELEASE(%d)", questID));
     ui.AddContextMenuItem(context, "ShortCut", string.format("SAVEQUEST_SHORTCUT(%d)", questID));
     ui.AddContextMenuItem(context, "Slot", string.format("saqu:CreateSlot(%d)", questID));
+    ui.AddContextMenuItem(context, "Uncheck", string.format("SAVEQUEST_UNCHECK(%d)", questID));
+    ui.AddContextMenuItem(context, "Cancel", "None");
+    ui.OpenContextMenu(context);
+  end
+
+  members.QuestMenu_Alt = function(self, questName, questID)
+    local menuTitle = string.format("[%d] %s", questID, questName);
+    local context = ui.CreateContextMenu(
+      "CONTEXT_SAVE_QUEST", menuTitle, 0, 0, string.len(menuTitle) * 6, 100);
+    ui.AddContextMenuItem(context, "Uncheck", string.format("SAVEQUEST_UNCHECK(%d)", questID));
     ui.AddContextMenuItem(context, "Cancel", "None");
     ui.OpenContextMenu(context);
   end
@@ -312,6 +327,11 @@ function SaveQuest.new(self)
       --CHAT_SYSTEM(questCtrl:GetName().." - "..questIES.ClassID)
       -- create warp icon.
       local picture = self:CreateStatePicture(questCtrl, questIES);
+    else
+      questCtrl:EnableHitTest(1);
+      questCtrl:SetEventScript(ui.RBUTTONUP, 'SAVEQUEST_RBUP_MENU_ALT');
+      questCtrl:SetEventScriptArgString(ui.RBUTTONUP, questIES.Name);
+      questCtrl:SetEventScriptArgNumber(ui.RBUTTONUP, questIES.ClassID);
     end
   end
 
@@ -501,6 +521,10 @@ function SAVEQUEST_RBUP_MENU(frame, ctrl, str, num)
   saqu:QuestMenu(str, num);
 end
 
+function SAVEQUEST_RBUP_MENU_ALT(frame, ctrl, str, num)
+  saqu:QuestMenu_Alt(str, num);
+end
+
 -- save menu selected event.
 function SAVEQUEST_SAVE(questID)
   saqu:Save(questID);
@@ -532,6 +556,16 @@ function SAVEQUEST_SHORTCUT(questID)
   local x = basePos + IMCRandom(-1 * width, width);
   local y = basePos + IMCRandom(-1 * width, width);
   saqu:CreateShortCut(questID, x, y, 0, 199);
+end
+
+function SAVEQUEST_UNCHECK(questID)
+  local Quest_Ctrl = ui.GetFrame('quest'):GetChild('questGbox'):GetChild("_Q_" .. questID);
+    if Quest_Ctrl ~= nil then
+      local checkBox = GET_CHILD(Quest_Ctrl, "save", "ui::CCheckBox");
+      tolua.cast(checkBox, "ui::CCheckBox");
+      checkBox:SetCheck(0);
+      ADD_QUEST_DETAIL(nil, Quest_Ctrl, nil, questID);
+  end
 end
 
 function SAVEQUEST_OPEN_SHORTCUT_MENU(ctrl)
