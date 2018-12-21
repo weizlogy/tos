@@ -60,6 +60,27 @@ function g.new(self)
     input:SetTextAlign('center', 'center')
     return input
   end
+  local MyMoveIntoClientRegion = function(frame, x, y)
+    local clientInitWidth = ui.GetClientInitialWidth()  -- 1920
+    local clientInitHeight = ui.GetClientInitialHeight()  -- 1080
+    local sceneWidth = ui.GetSceneWidth()  -- 実画面サイズ
+    local sceneHeight = ui.GetSceneHeight()  -- 実画面サイズ
+    -- 最大値計算
+    local maxWidth = math.max(clientInitWidth, math.max(sceneWidth, sceneWidth * clientInitHeight / sceneHeight))
+    local maxHeight = math.max(clientInitHeight, sceneHeight)
+    -- オーバーラップ抑止
+    local movex = x
+    local movey = y
+    if (x + frame:GetWidth() > maxWidth) then
+      movex = maxWidth - frame:GetWidth()
+    end
+    if (y + frame:GetHeight() > maxHeight) then
+      movey = maxHeight - frame:GetHeight()
+    end
+    -- CHAT_SYSTEM(x..' / '..y..' | '..maxWidth..' / '..maxHeight..' => '..movex..' / '..movey)
+    -- 移動
+    frame:SetOffset(movex, movey)
+  end
 
   -- === 公開関数 === --
   -- 全フレームを読み込む
@@ -207,7 +228,7 @@ function g.new(self)
     frame:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
     local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
-    frame:MoveIntoClientRegion(frameX, frameY)
+    MyMoveIntoClientRegion(frame, frameX, frameY)
     frame:EnableMove(math.abs(lockstate - 1))
     -- スロット作成
     DESTROY_CHILD_BYNAME(frame, 'slotset')
@@ -282,7 +303,7 @@ function g.new(self)
     frame:SetLayerLevel(999)
     frame:SetSkinName('test_frame_low')
     frame:Resize(250, 200)
-    frame:MoveIntoClientRegion(x, y)
+    MyMoveIntoClientRegion(frame, x, y)
     -- タイトル
     local titlelabel = frame:CreateOrGetControl('richtext', 'titlelabel', 0, 14, 0, 0)
     titlelabel:SetFontName('white_16_ol')
