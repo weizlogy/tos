@@ -1,0 +1,8 @@
+local s = {}
+---
+s['size'] = 13
+s['color'] = '#FFFFFF'
+s['ptsize'] = 12
+s['ptcolor'] = '#CCCCCC'
+---
+return s
