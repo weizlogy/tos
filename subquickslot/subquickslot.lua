@@ -27,6 +27,7 @@ function g.new(self)
   local __CONFIG_SLOTSET_LOCK = 'lock'
   local __CONFIG_SLOTSET_POS = 'pos'
   local __CONFIG_SLOTSET_MAGNI = 'magnification'
+  local __CONFIG_SLOTSET_NOTIFY_CLASSID = 'nofifyclassid'
   local __COMMON_CONFIG_FILENAME = 'commonConfig'
 
   -- === 内部データ === --
@@ -228,7 +229,7 @@ function g.new(self)
     frame:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
     local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
-    MyMoveIntoClientRegion(frame, frameX, frameY)
+    frame:SetOffset(frameX, frameY)
     frame:EnableMove(math.abs(lockstate - 1))
     -- スロット作成
     DESTROY_CHILD_BYNAME(frame, 'slotset')
@@ -302,7 +303,7 @@ function g.new(self)
     frame:SetEventScript(ui.LOST_FOCUS, "SUBQUICKSLOT_ON_LOSTFOCUSOPTION")
     frame:SetLayerLevel(999)
     frame:SetSkinName('test_frame_low')
-    frame:Resize(250, 200)
+    frame:Resize(250, 220)
     MyMoveIntoClientRegion(frame, x, y)
     -- タイトル
     local titlelabel = frame:CreateOrGetControl('richtext', 'titlelabel', 0, 14, 0, 0)
@@ -342,6 +343,13 @@ function g.new(self)
     lockcheck:SetText('Lock')
     lockcheck:SetTextTooltip('If you check, the slot is lock.')
     lockcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_LOCK] or '0'))
+    -- ID通知
+    local notifyidcheck = frame:CreateOrGetControl('checkbox', 'notifyidcheck', 10, 165, 0, 0)
+    tolua.cast(notifyidcheck, 'ui::CCheckBox')
+    notifyidcheck:SetFontName('white_16_ol')
+    notifyidcheck:SetText('Notify ClassID')
+    notifyidcheck:SetTextTooltip('If you check, notify ClassID with SystemChat when set on slot.')
+    notifyidcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_NOTIFY_CLASSID] or '0'))
 
     frame:ShowWindow(1)
   end
@@ -364,6 +372,7 @@ function g.new(self)
     magni = math.min(tonumber(magni) or 100, 100)
     magni = math.max(tonumber(magni) or 50, 50)
     local lock = GET_CHILD(frame, 'lockcheck', 'ui::CCheckBox'):IsChecked()
+    local notifyid = GET_CHILD(frame, 'notifyidcheck', 'ui::CCheckBox'):IsChecked()
     -- 再描画判定
     local configKey = GetConfigByFrameKey(frameIndex)
     local redraw =
@@ -372,6 +381,7 @@ function g.new(self)
       or __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
       or __config[configKey][__CONFIG_SLOTSET_MAGNI] ~= magni
       or __config[configKey][__CONFIG_SLOTSET_LOCK] ~= lock
+      or __config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] ~= notifyid
       -- 設定保存
     __config[configKey][__CONFIG_SLOTSET_SIZE] = size
     self:Dbg('size='..size)
@@ -383,6 +393,9 @@ function g.new(self)
     self:Dbg('magni='..magni)
     __config[configKey][__CONFIG_SLOTSET_LOCK] = lock
     self:Dbg('lock='..lock)
+    __config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] = notifyid
+    self:Dbg('notifyid='..notifyid)
+    -- 永続化
     self:Serialize(__cid, __config)
     -- フレーム非表示
     frame:ShowWindow(0)
@@ -534,9 +547,11 @@ function g.new(self)
           'Map',
           questIES[CONVERT_STATE(SCR_QUEST_CHECK_Q(SCR_QUESTINFO_GET_PC(), questIES.ClassName)) .. 'Map'],
           'Name')
+      local tooltiptext = zoneName..' - '..questIES.Name
       local icon = CreateIcon(slot)
       icon:Set('questinfo_return', 'WarpAction', type, 0, 0)
-      icon:SetTextTooltip(zoneName..' - '..questIES.Name)
+      icon:SetTextTooltip(tooltiptext)
+      slot:SetEventScriptArgString(ui.RBUTTONUP, tooltiptext)
       SET_SLOT_COUNT_TEXT(slot, zoneName, '{s10}{ol}{b}', 'left', 'bottom', 0, 0)
     end
   end
@@ -667,6 +682,20 @@ function g.new(self)
     self:Serialize(__cid, __config)
   end
 
+  -- クラスID通知
+  members.NofityClassIDInChat = function(self, frame, liftIconInfo)
+    local configKey = GetConfigByFrameKey(frame:GetUserValue(__USERVALUE_FRAME_INDEX))
+    if (tonumber(__config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID]) ~= 1 or not liftIconInfo) then
+      return
+    end
+    local targetClass =
+      GetClassByType(liftIconInfo.category, liftIconInfo.type)
+    if (not targetClass) then
+      return
+    end
+    self:Log(string.format('%s -> %s', targetClass.Name, targetClass.ClassID))
+  end
+
   -- デストラクター
   members.Destroy = function(self)
   end
@@ -734,6 +763,8 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
     g.instance:RemoveFromSubSlot(parent:GetSlotByIndex(info.fromIndex))
   end
   g.instance:SaveSlot(parent:GetTopParentFrame(), slot:GetSlotIndex(), info, info.fromIndex)
+  -- クラスID通知
+  g.instance:NofityClassIDInChat(parent:GetTopParentFrame(), info)
 end
 function SUBQUICKSLOT_ON_POPSLOT(parent, slot, str, num)
   local liftIcon = ui.GetLiftIcon()
@@ -762,7 +793,26 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
   elseif (category == 'Pose') then
     control.Pose(GetClassByType('Pose', num).ClassName)
   elseif (category == 'WarpAction') then
-    QUESTION_QUEST_WARP(parent, slot, str, num)
+    local menuTitle = 'SubQuickSlot WarpAction'
+    local context = ui.CreateContextMenu(
+      'CONTEXT_SUBQUICKSLOT_WARPACTION', menuTitle..'{nl}'..str, 0, 0, string.len(menuTitle) * 12, 100)
+
+    SUBQUICKSLOT_ON_MENU_WARPACTION_WARP = function()
+      QUESTION_QUEST_WARP(parent, slot, str, num)
+    end
+    SUBQUICKSLOT_ON_MENU_WARPACTION_SHARE = function(questID, wheretogo)
+      party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", questID)
+      REQUEST_SHARED_QUEST_PROGRESS(questID)
+      UPDATE_ALLQUEST(ui.GetFrame("quest"))
+      g.instance:Log('Successfully shared : '..wheretogo)
+    end
+
+    -- 画面表示
+    ui.AddContextMenuItem(context, 'Warp', 'SUBQUICKSLOT_ON_MENU_WARPACTION_WARP')
+    ui.AddContextMenuItem(context, 'Share',
+      string.format('SUBQUICKSLOT_ON_MENU_WARPACTION_SHARE(%d, "%s")', num, str))
+    ui.AddContextMenuItem(context, 'Cancel', 'None')
+    ui.OpenContextMenu(context)
   end
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()

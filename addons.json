@@ -281,7 +281,7 @@
     "name" : "SubQuickSlot",
     "file" : "subquickslot",
     "extension" : "ipf",
-    "fileVersion" : "v1.2.1",
+    "fileVersion" : "v1.3.0",
     "releaseTag" : "subquickslot",
     "unicode" : "📖",
     "description" : "任意のサイズのクイックスロットを任意の数だけ追加します。",
