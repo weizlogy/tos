@@ -79,7 +79,10 @@ function SaveQuest.new(self)
     -- ファイルから設定を読み込む
     self.questShortCutInfo = {};
     local cid = info.GetCID(session.GetMyHandle());
-    dofile(string.format(self.pathShortCutLoc, cid));
+    local s, e = pcall(dofile, string.format(self.pathShortCutLoc, cid))
+    if (not s) then
+      return
+    end
     -- ショートカットの数だけ生成処理
     for k, v in pairs(self.questShortCutInfo) do
       -- 任意のレイヤーレベルを設定
