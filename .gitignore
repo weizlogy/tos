@@ -1,0 +1,3 @@
+# ipfは無視するけどaddon_d.ipfは無視しない
+*.ipf
+!addon_d.ipf/

@@ -1,8 +1,10 @@
 local s = {}
 ---
 s['size'] = 13
-s['color'] = '#FFFFFF'
-s['ptsize'] = 12
+s['color'] = '#CC3333'
+s['spcolor'] = '#3333CC'
+s['ptsize'] = 11
 s['ptcolor'] = '#CCCCCC'
+s['ptspcolor'] = '#CCCCCC'
 ---
 return s

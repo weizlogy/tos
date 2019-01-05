@@ -1,11 +1,10 @@
 ## Release Note.
 
-## v1.1.0
+## v1.1.1
 
 ### 変更内容
 
-- フォントサイズ、カラーを設定可能に
-- PTメンバー表示対応
+- HP/SPでカラーを個別設定可能に
 
 ### 何をするもの？
 
@@ -20,9 +19,11 @@ settings.txt
 local s = {}
 ---
 s['size'] = 13            -- 自キャラフォントサイズ
-s['color'] = '#FFFFFF'    -- 自キャラフォントカラー
+s['color'] = '#FFFFFF'    -- 自キャラHPフォントカラー
+s['spcolor'] = '#FFFFFF'    -- 自キャラSPフォントカラー
 s['ptsize'] = 12          -- PTメンバーフォントサイズ
-s['ptcolor'] = '#CCCCCC'  -- PTメンバーフォントカラー
+s['ptcolor'] = '#CCCCCC'  -- PTメンバーHPフォントカラー
+s['ptspcolor'] = '#CCCCCC'  -- PTメンバーSPフォントカラー
 ---
 return s
 ```
@@ -32,7 +33,7 @@ return s
 フォントサイズを変更します。最大値はだいたい20くらいで見切れてくると思います。
 デフォルトは11です。
 
-- color / ptcolor
+- color / ptcolor / spcolor / ptspcolor
 
 フォントカラーを変更します。「# + RGB」の形式です。
 デフォルトは #FFFFFF です。（白）
