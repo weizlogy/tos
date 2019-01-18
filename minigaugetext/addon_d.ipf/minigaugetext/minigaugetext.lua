@@ -63,6 +63,20 @@ function g.new(self)
     if (checkStaGauge ~= nil) then
       sptext:SetOffset(sp:GetX(), sp:GetY() + 19)
     end
+    -- ギルド名とちょっとかぶるので...
+    local guildinfo = frame:GetChild('guildName')
+    if (guildinfo ~= nil) then
+      MINIGAUGETEXT_ON_UPDATE_GUILDINFO = function(ctrl)
+        local parent = ctrl:GetTopParentFrame()
+        local emblem = parent:GetChild('guildEmblem')
+        emblem:SetOffset(parent:GetChild("pcSpGauge"):GetX() - 30, emblem:GetY())
+        local edge = parent:GetChild('guildEmblem_edge')
+        edge:SetOffset(emblem:GetX() - 1, emblem:GetY() - 1)
+        ctrl:SetOffset(0, emblem:GetY() + emblem:GetHeight() - 20)
+        return 1
+      end
+      guildinfo:RunUpdateScript('MINIGAUGETEXT_ON_UPDATE_GUILDINFO')
+    end 
   end
 
   members.LoadConfig = function(self)
