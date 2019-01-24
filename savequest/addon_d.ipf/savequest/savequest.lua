@@ -8,11 +8,14 @@ function SaveQuest.new(self)
 
   members.path = "../addons/savequest/quests_%s.txt";
   members.pathShortCutLoc = "../addons/savequest/quests_scl_%s.txt";
+  members.pathGlobalConfing = "../addons/savequest/settings.txt";
   members.savemark = "{ol}saved."
   members.questInfo = {};
 
   members.framePrefix = "savequest_";
   members.questShortCutInfo = {};
+
+  members.globalConfig = {};
 
   -- save questInfo contents to local.
   members.SaveQuest = function(self)
@@ -189,6 +192,9 @@ function SaveQuest.new(self)
     end
 
     ui.AddContextMenuItem(context, "FlattenLayerLv", string.format("saqu:FlattenLayerLv(%d)", questID));
+
+    local fixedWidth = tonumber(self.globalConfig['fixedwidth']) or 0
+    ui.AddContextMenuItem(context, fixedWidth == 0 and "FixedWidth" or "UnFixedWidth", "saqu:ToggleFixedWidth()");
 
     ui.AddContextMenuItem(context, "Remove", string.format("SAVEQUEST_REMOVE_SHORTCUT(%d)", questID));
     ui.AddContextMenuItem(context, "Cancel", "None");
@@ -376,6 +382,9 @@ function SaveQuest.new(self)
 
     local sharePartyIconSpace = 12;
     frame:Resize(mapInfo:GetWidth() + 35 + sharePartyIconSpace, 20);
+    if ((tonumber(self.globalConfig['fixedwidth']) or 0) == 1) then
+      frame:Resize(#zoneName / 7 * fontSize + 30 + sharePartyIconSpace, 20);
+    end
     frame:ShowWindow(1);
 
     DESTROY_CHILD_BYNAME(frame, 'SHARE_PARTY')
@@ -423,6 +432,29 @@ function SaveQuest.new(self)
     CHAT_SYSTEM('[savequest] change to ' .. layerlevel)
     self:LoadShortCutLoc(layerlevel)
     CHAT_SYSTEM('[savequest] flatten layer level end.')
+  end
+
+  -- ショートカットの幅を固定するか否か
+  members.ToggleFixedWidth = function(self)
+    -- 初回は 0 -> 1 で固定幅化
+    local s, e = pcall(dofile, self.pathGlobalConfing)
+    if (not s) then
+      self.globalConfig['fixedwidth'] = 0
+    else
+      self.globalConfig['fixedwidth'] = tonumber(e)
+    end
+    local state = self.globalConfig['fixedwidth']
+    self.globalConfig['fixedwidth'] = math.abs(state - 1)
+    -- 保存
+    local f, e = io.open(self.pathGlobalConfing, "w");
+    if (f == nil) then
+      return;
+    end
+    f:write(string.format('return %d', self.globalConfig['fixedwidth']))
+    f:flush();
+    f:close();
+    -- 再描画
+    self:LoadShortCutLoc(0)
   end
 
   -- recover addon state.
