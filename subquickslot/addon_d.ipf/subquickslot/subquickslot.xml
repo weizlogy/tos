@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="subquickslot" x="10" y="10" width="0" height="0" >
+  <frame title="" snapclient="false" snapframe="false" />
+  <option visible="true" alwaysVisible="false" closebutton="false" autoopen="false" hideable="false" />
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true" />
+  <layer layerlevel="31" />
+  <draw blend="100" drawtitlebar="false" drawframe="true" />
+  <controls>
+  </controls>
+</uiframe>
