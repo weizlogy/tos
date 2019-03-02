@@ -219,15 +219,20 @@ function STATUS_ACHIEVE_INIT(frame)
             local eachAchiveDescTitle = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_desctitle')
             local eachAchiveReward = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_reward')
             local eachAchiveGauge = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_gauge')
+            local eachAchiveStaticAccomplishment = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_static_accomplishment')
+            local eachAchiveAccomplishment = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_accomplishment')
             local eachAchiveStaticDesc = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_static_desc')
             local eachAchiveDesc = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_desc')
             local eachAchiveName = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'achieve_name')
             local eachAchiveReqBtn = GET_CHILD_RECURSIVELY(eachAchiveCSet, 'req_reward_btn')
+
+            --조건과 칭호의 위치를 텍스트 길이가 가장 긴 "달성도" 기준으로 맞춘다
             eachAchiveReqBtn:ShowWindow(0);
-            eachAchiveDesc:SetOffset(eachAchiveStaticDesc:GetX() + eachAchiveStaticDesc:GetWidth() + 10, eachAchiveDesc:GetY())
-            eachAchiveGauge:SetOffset(eachAchiveStaticDesc:GetX() + eachAchiveStaticDesc:GetWidth() + 10, eachAchiveGauge:GetY())
-            eachAchiveGauge:Resize(eachAchiveGBox:GetWidth() - eachAchiveStaticDesc:GetWidth() -50, eachAchiveGauge:GetHeight())
-            eachAchiveGauge:SetTextTooltip("(" .. nowpoint .. "/" .. cls.NeedCount .. ")")
+            eachAchiveDesc:SetOffset(eachAchiveStaticDesc:GetX() + eachAchiveStaticAccomplishment:GetWidth() + 10, eachAchiveDesc:GetY())
+            eachAchiveAccomplishment:SetOffset(eachAchiveStaticAccomplishment:GetX() + eachAchiveStaticAccomplishment:GetWidth() + 10, eachAchiveAccomplishment:GetY())
+            eachAchiveGauge:SetOffset(eachAchiveStaticAccomplishment:GetX() + eachAchiveStaticAccomplishment:GetWidth() + 10, eachAchiveGauge:GetY())
+            eachAchiveGauge:Resize(eachAchiveGBox:GetWidth() - eachAchiveStaticAccomplishment:GetWidth() -50, eachAchiveGauge:GetHeight())
+            eachAchiveAccomplishment:SetText("(" .. nowpoint .. "/" .. cls.NeedCount .. ")")
 
             local isHasAchieve = 0;
             if HAVE_ACHIEVE_FIND(cls.ClassID) == 1 and nowpoint >= cls.NeedCount then
@@ -236,9 +241,9 @@ function STATUS_ACHIEVE_INIT(frame)
 
             if isHasAchieve == 1 then
                 if equipAchieveName ~= 'None' and equipAchieveName == cls.Name then
-                    eachAchiveDescTitle:SetText('{@stx2}' .. cls.DescTitle .. ScpArgMsg('Auto__(SayongJung)'));
+                    eachAchiveDescTitle:SetText(cls.DescTitle .. ScpArgMsg('Auto__(SayongJung)'));
                 else
-                    eachAchiveDescTitle:SetText('{@stx2}' .. cls.DescTitle);
+                    eachAchiveDescTitle:SetText(cls.DescTitle);
                 end
                 eachAchiveGBox:SetSkinName(HAVE_SKIN)
             -- 追加 start
@@ -257,10 +262,13 @@ function STATUS_ACHIEVE_INIT(frame)
             eachAchiveReward:SetTextByKey('reward', cls.Reward);
 
             if isHasAchieve == 1 then
-                eachAchiveGauge:ShowWindow(0)
-                -- eachAchiveCSet:SetEventScript(ui.LBUTTONDOWN, "ACHIEVE_EQUIP");
-                -- eachAchiveCSet:SetEventScriptArgNumber(ui.LBUTTONDOWN, cls.ClassID);
-                -- eachAchiveCSet:SetTextTooltip(ScpArgMsg('YouCanEquipAchieve'));
+                eachAchiveGauge:ShowWindow(0);
+                eachAchiveStaticAccomplishment:ShowWindow(0);
+                eachAchiveAccomplishment:ShowWindow(0);
+
+                eachAchiveStaticDesc:SetOffset(eachAchiveStaticDesc:GetX(), eachAchiveStaticAccomplishment:GetY())
+                eachAchiveDesc:SetOffset(eachAchiveDesc:GetX(), eachAchiveStaticDesc:GetY())
+               
                 local etcObjValue = TryGetProp(etcObj, 'AchieveReward_' .. cls.ClassName);
                 -- if etcObj['AchieveReward_' .. cls.ClassName] == 0 then
                 if etcObjValue ~= nil and etcObjValue == 0 then
@@ -268,9 +276,8 @@ function STATUS_ACHIEVE_INIT(frame)
                 end
             else
                 eachAchiveGauge:ShowWindow(1)
-                -- eachAchiveDesc:SetText(' ' .. cls.Desc);
-                -- eachAchiveCSet:SetEventScript(ui.LBUTTONDOWN, "None");
-                -- eachAchiveCSet:SetTextTooltip('');
+                eachAchiveStaticAccomplishment:ShowWindow(1);
+                eachAchiveAccomplishment:ShowWindow(1);
             end
 
             local suby = eachAchiveDesc:GetY() + eachAchiveDesc:GetHeight() + 10;
@@ -301,78 +308,13 @@ function STATUS_ACHIEVE_INIT(frame)
         end
     end
 
-    local customizingGBox = GET_CHILD_RECURSIVELY(frame, 'customizingGBox')
-    DESTROY_CHILD_BYNAME(customizingGBox, "hairColor_");
 
-    local pc = GetMyPCObject()
-    local etc = GetMyEtcObject();
-    local nowAllowedColor = etc['AllowedHairColor']
+    local customizingGBox =  GET_CHILD_RECURSIVELY(frame, 'customizingGBox')
 
-    local nowheadindex = item.GetHeadIndex()
-
-    local Rootclasslist = imcIES.GetClassList('HairType');
-    local Selectclass = Rootclasslist:GetClass(pc.Gender);
-    local Selectclasslist = Selectclass:GetSubClassList();
-
-    local nowhaircls = Selectclasslist:GetByIndex(nowheadindex - 1);
-    if nil == nowhaircls then
-        return;
-    end
-    local nowengname = imcIES.GetString(nowhaircls, 'EngName')
-    local nowcolor = imcIES.GetString(nowhaircls, 'ColorE')
-    nowcolor = string.lower(nowcolor)
-
-    -- 헤어 컬러가 많아질 경우 UI 벽을 뚫게 된다. row, col로 나눔.
-    local max_width = customizingGBox:GetWidth()
-    local row = 1
-    local col = 0
-    -- 아래 하드코딩 되어 있던 것들 이쪽으로 이동.
-    local row_top_margin = 20
-    local col_left_margin = 30
-    local height = 35
-    local width = 35
-    local select_margin = row_top_margin - 10
-
-    for i = 0, Selectclasslist:Count() do
-        local eachcls = Selectclasslist:GetByIndex(i);
-        if eachcls ~= nil then
-            local eachengname = imcIES.GetString(eachcls, 'EngName')
-            if eachengname == nowengname then
-
-                local eachColorE = imcIES.GetString(eachcls, 'ColorE')
-                local eachColor = imcIES.GetString(eachcls, 'Color')
-                eachColorE = string.lower(eachColorE)
-
-                -- 업적 받으면 헤어 컬러 사라지는 현상이 있다고 해서 HairColor 프로퍼티 값으로도 확인
-                if TryGetProp(etc, "HairColor_" .. eachColorE) == 1 then
-                    -- row 변경 조건 검사
-                    local temp_offset_x = col_left_margin + width * col;
-                    local temp_max_width = temp_offset_x + width;
-                    if temp_max_width >= max_width then
-                        row = row +1
-                        col = 0
-                    end
-
-                    local eachhairimg = customizingGBox:CreateOrGetControl('picture', 'hairColor_' .. eachColorE, col_left_margin + (width * col), row_top_margin +  (height * row), width, height);
-                    tolua.cast(eachhairimg, "ui::CPicture");
-
-                    local colorimgname = GET_HAIRCOLOR_IMGNAME_BY_ENGNAME(eachColorE)
-                    eachhairimg:SetImage(colorimgname);
-                    eachhairimg:SetTextTooltip(eachColor)
-                    eachhairimg:SetEventScript(ui.LBUTTONDOWN, "REQ_CHANGE_HAIR_COLOR");
-                    eachhairimg:SetEventScriptArgString(ui.LBUTTONDOWN, eachColorE);
-
-                    if nowcolor == eachColorE then
-                        local selectedimg = customizingGBox:CreateOrGetControl('picture', 'hairColor_Selected', col_left_margin + width * col, select_margin +  (height * row), width, height);
-                        tolua.cast(selectedimg, "ui::CPicture");
-                        selectedimg:SetImage('color_check');
-                    end
-                    col = col +1
-                end
-            end
-        end
-    end
-   
+    -- 가발 염색 목록 보여주기.
+    STATUS_ACHIEVE_INIT_HAIR_COLOR(customizingGBox)
+  
+  
     DESTROY_CHILD_BYNAME(customizingGBox, "ACHIEVE_RICHTEXT_");
     local index = 0;
     local x = 40;
