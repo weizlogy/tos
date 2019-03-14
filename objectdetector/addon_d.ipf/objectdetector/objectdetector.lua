@@ -280,6 +280,9 @@ end
 
 -- check object handler.
 function DETECTOR_UPDATE(frame, msg, str, handle)
+  if UI_CHECK_NOT_PVP_MAP() == 0 then
+    return
+  end
   obde:Update(frame, msg, str, handle);
 end
 
