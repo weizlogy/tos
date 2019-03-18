@@ -42,15 +42,23 @@ function ObjectDetector.new(self)
   members.ShowDetectorObject = function(self, frame, actor, iesObj)
     -- check object info.
     local oi = self:GetDetectObjectInfo(actor, iesObj);
-    if (oi.isVisible ~= 1) then
-      return;
-    end
     local handle = actor:GetHandleVal();
     local pos = actor:GetPos();
     -- create icon on maps.
     local picName = "icon_"..handle;
     if (frame:GetChild(picName) ~= nil) then
+      -- 非表示対象で描画済みなら明示的に消さないとだめ
+      if (oi.isVisible ~= 1) then
+        frame:GetChild(picName):ShowWindow(0);
+        return;
+      end
+      -- 表示対象で描画済み
       frame:GetChild(picName):ShowWindow(1);
+      return;
+    end
+
+    -- 非表示対象で描画済みでなければ描画処理をスキップ
+    if (oi.isVisible ~= 1) then
       return;
     end
 
@@ -165,6 +173,16 @@ function ObjectDetector.new(self)
       oi.isVisible = self.config.pc.isVisible;
       oi.tooltipText = string.format("[Lv.%s]%s %s",
        actor:GetLv(), actor:GetName(), actor:GetPCApc():GetFamilyName());
+      -- check cloaking.
+      local handle = actor:GetHandleVal();
+      local buffCount = info.GetBuffCount(handle);
+			for i = 0, buffCount - 1 do
+				local buff = info.GetBuffIndexed(handle, i);
+        local cls = GetClassByType("Buff", buff.buffID);
+        if (cls.Keyword == "Cloaking") then
+          oi.isVisible = 0;
+        end
+			end
 --[[
     elseif (objType == GT_END) then
       oi.color = self.config.end.color;
@@ -202,7 +220,7 @@ function ObjectDetector.new(self)
     axis.x = axis.x - frame:GetWidth() / 2;
     axis.y = axis.y - frame:GetHeight() / 2;
     frame:SetOffset(axis.x, axis.y);
-    frame:ShowWindow(1);
+    -- frame:ShowWindow(1); -- 大丈夫かな...
     return 1;
   end
   -- calculate axis for map.
@@ -242,6 +260,7 @@ function ObjectDetector.new(self)
     DESTROY_CHILD_BYNAME(ui.GetFrame('map'), "icon_");
     DESTROY_CHILD_BYNAME(ui.GetFrame('minimap'), "icon_");
   end
+
   -- destroy.
   members.Destroy = function(self)
     UI_CHAT = obde.UI_CHAT;
