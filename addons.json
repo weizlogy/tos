@@ -116,6 +116,17 @@
     ]
   },
   {
+    "name" : "Kaywa DE Queer",
+    "file" : "kaywadequeer",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "kaywadequeer",
+    "unicode" : "📖",
+    "description" : "NPCに話しかけられない状態を解消してくれるかもしれない。",
+    "tags" : [
+    ]
+  },
+  {
     "name" : "Mini Gauge Text",
     "file" : "minigaugetext",
     "extension" : "ipf",
