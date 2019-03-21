@@ -23,6 +23,29 @@ function g.new(self)
     KAYWADEQUEER_ON_EXEC_LBU = function(parent, ctrl, str, num)
       debug.ReloadAddOnScp()
       debug.ReloadUIEvent()
+
+      KAYWADEQUEER_HIDE_SWAP = function()
+        local swap = ui.GetFrame('weaponswap_tempimage')
+        if (swap ~= nil) then
+          swap:ShowWindow(0)
+        end
+      end
+      DebounceScript('KAYWADEQUEER_HIDE_SWAP', 1.0)
+
+      KAYWADEQUEER_RECOVER_CHAT = function()
+        -- chat.lua より
+        UI_CHAT = function(msg)
+          ui.Chat(msg);
+          if g_uiChatHandler ~= nil then
+            local func = _G[g_uiChatHandler];
+            if func ~= nil then
+              func(msg);
+            end
+          end
+        end
+      end
+      DebounceScript('KAYWADEQUEER_RECOVER_CHAT', 1.0)
+
     end
     exec:SetEventScript(ui.LBUTTONUP, 'KAYWADEQUEER_ON_EXEC_LBU')
   end
