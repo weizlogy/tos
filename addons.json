@@ -116,17 +116,6 @@
     ]
   },
   {
-    "name" : "Kaywa DE Queer",
-    "file" : "kaywadequeer",
-    "extension" : "ipf",
-    "fileVersion" : "v1.0.1",
-    "releaseTag" : "kaywadequeer",
-    "unicode" : "📖",
-    "description" : "NPCに話しかけられない状態を解消してくれるかもしれない。",
-    "tags" : [
-    ]
-  },
-  {
     "name" : "Mini Gauge Text",
     "file" : "minigaugetext",
     "extension" : "ipf",
@@ -268,10 +257,10 @@
     "name" : "Summon Counter",
     "file" : "summoncounter",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.5",
+    "fileVersion" : "v2.0.0",
     "releaseTag" : "summoncounter",
     "unicode" : "📖",
-    "description" : "クイックスロットに召喚物の個体数を表示します。",
+    "description" : "クイックスロットに召喚物の個体数を表示します。召喚物の個体数やHPをUI上に表示します。召喚物がしゃべります――!?",
     "tags" : [
       "summon",
       "quickslot"
