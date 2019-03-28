@@ -1,30 +1,76 @@
 suco.config = {
-  Bokor_Zombify = {
-    mode = "hpbar",
-    loc_frame = { x = 450, y = 80 },
-    loc_bar = { x = 0, y = 0 }
+  Cryomancer_FrostPillar = {
+    mode = "None",
   },
+
+  Bokor_Zombify = {
+    mode = "party",
+  },
+
   Necromancer_RaiseDead = {
-    mode = "icon1",
-    loc  = "left",
-    loc1 = { x = 0, y = 30 },
-    loc2 = { x = 0, y = 70 },
-    loc3 = { x = 0, y = 110 },
-    loc4 = { x = -40, y = 50 },
-    loc5 = { x = -40, y = 90 }
+    mode = "party",
+    talk = {
+      data = "list_dicid.txt",
+      format = 'dicid',
+      freq = 10
+    }
   },
   Necromancer_RaiseSkullarcher = {
-    mode = "icon1",
-    loc  = "right",
-    loc1 = { x = 0, y = 30 },
-    loc2 = { x = 0, y = 70 },
-    loc3 = { x = 0, y = 110 },
-    loc4 = { x = 40, y = 50 },
-    loc5 = { x = 40, y = 90 }
+    mode = "party",
+  },
+  Necromancer_RaiseSkullwizard = {
+    mode = "party",
   },
   Necromancer_CreateShoggoth = {
-    mode = "icon2",
-    loc  = "down",
-    loc1 = { x = 0, y = 0 }
-  }
+    mode = "party"
+  },
+  Necromancer_CorpseTower = {
+    mode = "party"
+  },
+
+  Sorcerer_Summoning = {
+    mode = "party"  -- できません
+  },
+  Sorcerer_SummonSalamion = {
+    mode = "party",
+    title = "サラミオン",
+    talk = {
+      data = "waganeko.txt",
+      format = 'custom',
+      freq = 5
+    }
+  },
+  Sorcerer_SummonServant = {
+    mode = "None",
+    title = "ロシアンブルー"
+  },
+
+  Featherfoot_BonePointing = {
+    mode = "hpbar",
+    loc_frame = { x = 450, y = 80 },
+  },
+
+  Onmyoji_FireFoxShikigami = {
+    mode = "hpbar",
+  },
+
+  Dievdirbys_CarveZemina = {
+    mode = "hpbar",
+  },
+  Dievdirbys_CarveLaima = {
+    mode = "hpbar"
+  },
+  Dievdirbys_CarveOwl = {
+    mode = "hpbar"
+  },
+  Dievdirbys_CarveAustrasKoks = {
+    mode = "hpbar"
+  },
+  Dievdirbys_CarveAusirine = {
+    mode = "hpbar"
+  },
+
+  Druid_Carnivory = {
+    mode = "None"  -- オーナーを特定できないので表示できない
+  },
 };
