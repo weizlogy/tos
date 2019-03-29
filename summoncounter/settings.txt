@@ -48,6 +48,7 @@ suco.config = {
   Featherfoot_BonePointing = {
     mode = "hpbar",
     loc_frame = { x = 450, y = 80 },
+    move = 0
   },
 
   Onmyoji_FireFoxShikigami = {

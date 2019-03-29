@@ -17,7 +17,7 @@ function ModeParty.new(self)
   members.Execute = function(self, __frame, config, skillConfig)
     local frameName = 'summoncounter_party_'..self.Key
     local frame = ui.GetFrame(frameName) or ui.CreateNewFrame('summoncounter', frameName)
-    frame:EnableMove(1)
+    frame:EnableMove(tonumber(config['move'] or '1'))
     frame:EnableHitTest(1)
     frame:EnableHittestFrame(1)
     frame:SetLayerLevel(32) -- クエスト一覧より高く
