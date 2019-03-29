@@ -1,5 +1,17 @@
 ## Latest Release Note.
 
+### v2.0.1
+
+#### パーティー表示とHPバー表示のUIロック設定追加
+
+```lua
+Featherfoot_BonePointing = {
+  mode = "hpbar",
+  loc_frame = { x = 450, y = 80 },
+  move = 0  -- 0 にするとマウス移動しなくなり、1 や未設定なら動きます。
+},
+```
+
 ### v2.0.0
 
 #### 管理対象追加
