@@ -30,13 +30,17 @@ function g.new(self)
 
   -- チェックボックス生成/更新
   members.CreateOrUpdateFilterControls = function(self, frame, curtabIndex)
-    g.instance:Dbg('CreateOrUpdateFilterControls called.')
+    g.instance:Dbg('CreateOrUpdateFilterControls called. ')
+    g.instance:Dbg('frame = '..frame:GetName())
+    g.instance:Dbg('curtabIndex = '..tostring(curtabIndex))
+
     if (curtabIndex ~= 1) then
       DESTROY_CHILD_BYNAME(frame, addonName..'_')
       return
     end
+
     local fontType = 'brown_16_b'
-    local script = 'ACHIVEFILTER_REFRESH_LIST'
+    local script = 'ACHIEVEFILTER_REFRESH_LIST'
     local complete = frame:CreateOrGetControl('checkbox', addonName..'_optionComplete', 10, 128, 90, 30)
     tolua.cast(complete, "ui::CCheckBox")
     complete:SetCheck(__checkedStates.complete.state)
@@ -75,11 +79,15 @@ function g.new(self)
 
   -- 業績フィルター処理（ついでにカウントもする）
   members.Filter = function(self, classType, have)
-    local achive = GetClassByType('Achieve', classType)
-    if (achive == nil) then
+    g.instance:Dbg('Filter called. ')
+    g.instance:Dbg('classType = '..tostring(classType))
+    g.instance:Dbg('have = '..tostring(have))
+
+    local achieve = GetClassByType('Achieve', classType)
+    if (achieve == nil) then
       return 0
     end
-    local isComplete = GetAchievePoint(GetMyPCObject(), achive.NeedPoint) >= achive.NeedCount
+    local isComplete = GetAchievePoint(GetMyPCObject(), achieve.NeedPoint) >= achieve.NeedCount
 
     local filterResult = 0
 
@@ -93,21 +101,21 @@ function g.new(self)
     end
     -- 未確認 = 隠れている and 完成してない
     -- どうやら過去イベの称号なんかは隠してしまうらしいので完成してると拾っちゃう
-    if (achive.Hidden == 'YES' and not isComplete) then
+    if (achieve.Hidden == 'YES' and not isComplete) then
       __checkedStates.unknown.count = __checkedStates.unknown.count + 1
       if (__checkedStates.unknown.state == 1) then
         filterResult = 2
       end
     end
     -- 未完成 = 隠れてない and 完成してない
-    if (achive.Hidden == 'NO' and not isComplete) then
+    if (achieve.Hidden == 'NO' and not isComplete) then
       __checkedStates.incomplete.count = __checkedStates.incomplete.count + 1
       if (__checkedStates.incomplete.state == 1) then
         filterResult = 3
       end
     end
 
-    -- self:Dbg(achive.Name..' - '..achive.Hidden..' - '..tostring(isComplete)..' - '..have..' - '..filterResult)
+    -- self:Dbg(achieve.Name..' - '..achieve.Hidden..' - '..tostring(isComplete)..' - '..have..' - '..filterResult)
     return filterResult
   end
 
@@ -162,8 +170,11 @@ function ACHIEVEFILTER_ON_INIT(addon, frame)
   end
 end
 
-function ACHIVEFILTER_REFRESH_LIST(parent, ctrl)
-  g.instance:Dbg('ACHIVEFILTER_REFRESH_LIST called.')
+function ACHIEVEFILTER_REFRESH_LIST(parent, ctrl)
+  g.instance:Dbg('ACHIEVEFILTER_REFRESH_LIST called.')
+  g.instance:Dbg('parent = '..parent:GetName())
+  g.instance:Dbg('ctrl = '..ctrl:GetName())
+
   g.instance:SaveCheckedState(ctrl)
   ACHIEVE_RESET(parent)
 end
@@ -175,9 +186,9 @@ end
 g.instance = g()
 
 
---- status.luaのSTATUS_ACHIEVE_INITを書き換え
-function STATUS_ACHIEVE_INIT(frame)
-
+--- status.luaの STATUS_ACHIEVE_INIT を書き換え
+function STATUS_ACHIEVE_INIT()
+    local frame = ui.GetFrame("status");
     local achieveGbox = frame:GetChild('achieveGbox');
     local internalBox = achieveGbox:GetChild("internalBox");
 
