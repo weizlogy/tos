@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<uiframe name="fixlostchatwindow" x="0" y="0" width="130" height="70">
+  <frame title="Fix Lost Chat Window" snapclient="false" snapframe="false" layout_gravity="center center"/>
+  <option visible="true" alwaysVisible="false" closebutton="false" autoopen="false" hideable="true"/>
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
+  <layer layerlevel="100"/>
+  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <controls>
+  </controls>
+</uiframe>
