@@ -154,6 +154,18 @@
     ]
   },
   {
+    "name" : "PartyInfoEx",
+    "file" : "partyinfoex",
+    "extension" : "ipf",
+    "fileVersion" : "v1.1.1",
+    "releaseTag" : "partyinfoex",
+    "unicode" : "📖",
+    "description" : "PTメンバーの所在地を表示します。",
+    "tags" : [
+      "party"
+    ]
+  },
+  {
     "name" : "Pick-Item Info",
     "file" : "pickiteminfo",
     "extension" : "ipf",
