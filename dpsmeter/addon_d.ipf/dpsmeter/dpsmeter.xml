@@ -4,7 +4,7 @@
   <option closebutton="false" hideable="false"/>
   <input hittest="true"/>
   <layer layerlevel="31" />
-  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <draw blend="100" drawtitlebar="false" drawframe="true"/>
   <controls>
     <richtext name="dummy" />
   </controls>

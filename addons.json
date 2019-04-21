@@ -55,7 +55,7 @@
     "name" : "DPS Meter",
     "file" : "dpsmeter",
     "extension" : "ipf",
-    "fileVersion" : "v1.3.1",
+    "fileVersion" : "v2.0.0",
     "releaseTag" : "dpsmeter",
     "unicode" : "📖",
     "description" : "DPS計測します。",
