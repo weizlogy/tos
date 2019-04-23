@@ -148,8 +148,26 @@ function g.new(self)
       dataMerged[unit]['total_damage'] =
         (dataMerged[unit]['total_damage'] or 0) + tonumber(dpsInfo:GetStrDamage())
       -- ヒット回数
-      dataMerged[unit]['damage_count'] = (dataMerged[unit]['damage_count'] or 0) + 1
+      -- 時間をみてDPSになるようにヒット数を調整する
+      local isAddedHitCount = 0
+      local beforeTime = dataMerged[unit]['temp_time']
+      local currentTime = dpsInfo:GetTime().wMilliseconds
+      -- CHAT_SYSTEM(i..') '..unit..' - '..tostring(beforeTime)..' <= '..tostring(currentTime))
+      if (beforeTime == nil) then
+        isAddedHitCount = 1
+        dataMerged[unit]['temp_time'] = currentTime
+      else
+        if (beforeTime <= currentTime) then
+          isAddedHitCount = 1
+          dataMerged[unit]['temp_time'] = currentTime
+        end
+      end
+      if (isAddedHitCount == 1) then
+        dataMerged[unit]['damage_count'] = (dataMerged[unit]['damage_count'] or 0) + 1
+      end
     end
+
+    tolua.cast(frame:GetChild('bg'), 'ui::CGroupBox'):DeleteAllControl()
 
     local bg = tolua.cast(frame:GetChild('bg'), 'ui::CGroupBox')
     local titleName = bg:CreateOrGetControl('richtext', 'title_name', 10, 0, 100, 25)
