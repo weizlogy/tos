@@ -27,11 +27,18 @@ function g.new(self)
   -- 1: enable
   local __minimize = 0
 
+  -- データ継続保持関連
+  local __preserve = 0
+  local __preserveCount = 0
+  local __preservingData = {}
+
   local __UpdateToggleButtonText = function(ctrl)
     ctrl:SetText('Count'..((__isCounting == 0) and 'Start' or 'End'))
   end
 
   members.CreateUI = function(self)
+    __isCounting = 0
+
     local frame = ui.GetFrame('dpsmeter')
     frame:SetLayerLevel(1)
     frame:SetSkinName('downbox')
@@ -40,6 +47,7 @@ function g.new(self)
     frame:SetOffset(__config['pos']['x'], __config['pos']['y'])
     frame:EnableMove(1)
     frame:ShowWindow(1)
+    frame:SetLayerLevel(1)
     frame:SetEventScript(ui.LBUTTONUP, 'DPSMETER_ON_ENDMOVE')
 
     local bg = frame:CreateOrGetControl('groupbox', 'bg', 0, 0, 0, 0)
@@ -52,8 +60,8 @@ function g.new(self)
 
     DPSMETER_ON_TOGGLE_LCLICK = function(frame, ctrl, str, num)
       if (__isCounting == 0) then
-        session.dps.SendStartDpsMsg()
         __isCounting = 1
+        session.dps.SendStartDpsMsg()
         frame:RunUpdateScript('DPSMETER_UPDATE', 0, 0, 0, 1)
       else
         session.dps.SendStopDpsMsg()
@@ -80,6 +88,10 @@ function g.new(self)
     dpsclear:SetEventScript(ui.LBUTTONUP, 'DPSMETER_ON_CLEAR_LCLICK')
 
     DPSMETER_SELECT_ON_TOGGLE_MODE = function()
+      if (__preserve == 1) then
+        self:Log('Cant change mode with Preserving.' )
+        return
+      end
       if (__mode == 0) then
         __mode = 1
       elseif (__mode == 1) then
@@ -99,6 +111,12 @@ function g.new(self)
       end
       self:Serialize()
     end
+    DPSMETER_SELECT_ON_TOGGLE_PRESERVE = function()
+      __preserve = __preserve == 0 and 1 or 0
+      for k in next, __preservingData do rawset(__preservingData, k, nil) end
+      __preserveCount = 0
+      self:Serialize()
+    end
 
     DPSMETER_ON_MODESELECT_LCLICK = function(frame, ctrl, str, num)
       local menuTitle = 'DPSMeter'
@@ -111,11 +129,19 @@ function g.new(self)
       elseif (__mode == 1) then
         nextModeText = 'ToSkillAndTargetByMode'
       end
+      if (__preserve == 1) then
+        nextModeText = string.gsub(nextModeText, 'To', '*')
+      end
       ui.AddContextMenuItem(
         context, nextModeText, 'DPSMETER_SELECT_ON_TOGGLE_MODE')
+      -- 描画領域
       ui.AddContextMenuItem(
         context, __minimize == 0 and 'Minimize' or 'Maximize',
           'DPSMETER_SELECT_ON_TOGGLE_FRAMESIZE')
+      -- データ保持
+      ui.AddContextMenuItem(
+        context, __preserve == 0 and 'Preserve' or 'Un-Preserve',
+          'DPSMETER_SELECT_ON_TOGGLE_PRESERVE')
 
       ui.AddContextMenuItem(context, 'Cancel', 'None')
       ui.OpenContextMenu(context)
@@ -134,9 +160,12 @@ function g.new(self)
       return 0
     end
 
-    local dataMerged = {}
-    for i = 1, session.dps.Get_allDpsInfoSize() do
-      local dpsInfo = session.dps.Get_alldpsInfoByIndex(i - 1)
+    local dpsInfoSize = session.dps.Get_allDpsInfoSize()
+
+    local dataMerged = __preserve == 1 and __preservingData or {}
+
+    for i = (__preserve == 1 and __preserveCount or 0), dpsInfoSize - 1 do
+      local dpsInfo = session.dps.Get_alldpsInfoByIndex(i)
       local unit = dpsInfo:GetName()
       if (__mode == 1) then
         unit = GetClassByType('Skill', dpsInfo:GetSkillID()).Name
@@ -166,6 +195,8 @@ function g.new(self)
         dataMerged[unit]['damage_count'] = (dataMerged[unit]['damage_count'] or 0) + 1
       end
     end
+
+    __preserveCount = dpsInfoSize
 
     tolua.cast(frame:GetChild('bg'), 'ui::CGroupBox'):DeleteAllControl()
 
@@ -219,7 +250,7 @@ function g.new(self)
     local frame = ui.GetFrame('dpsmeter')
     __config = {
       ['pos'] = { x = frame:GetX(), y = frame:GetY() },
-      ['state'] = { mode = __mode, minimize = __minimize },
+      ['state'] = { mode = __mode, minimize = __minimize, preserve = __preserve },
     }
 
     f:write('local s = {}\n')
@@ -238,7 +269,7 @@ function g.new(self)
 	members.Deserialize = function(self)
     __config = {
       ['pos'] = { x = 100, y = 100 },
-      ['state'] = { mode = 0, minimize = 0 },
+      ['state'] = { mode = 0, minimize = 0, preserve = 0 },
     }
     local filePath = string.format(
 			'%s/%s', __ADDON_DIR, __CONFIG_FILENAME)
@@ -257,6 +288,7 @@ function g.new(self)
 
     __mode = __config['state']['mode']
     __minimize = __config['state']['minimize']
+    __preserve = __config['state']['preserve']
   end
 
   -- ログ出力
