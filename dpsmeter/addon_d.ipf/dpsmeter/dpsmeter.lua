@@ -79,6 +79,7 @@ function g.new(self)
     DPSMETER_ON_CLEAR_LCLICK = function(frame, ctrl, str, num)
       session.dps.Clear_allDpsInfo()
       tolua.cast(frame:GetChild('bg'), 'ui::CGroupBox'):DeleteAllControl()
+      for k in next, __preservingData do rawset(__preservingData, k, nil) end
     end
 
     local dpsclear = frame:CreateOrGetControl(
