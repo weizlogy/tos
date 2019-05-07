@@ -161,9 +161,12 @@ function g.new(self)
       return 0
     end
 
+    local cid = info.GetCID(session.GetMyHandle())
+
     local dpsInfoSize = session.dps.Get_allDpsInfoSize()
 
     local dataMerged = __preserve == 1 and __preservingData or {}
+    dataMerged[cid] = dataMerged[cid] or {}
 
     for i = (__preserve == 1 and __preserveCount or 0), dpsInfoSize - 1 do
       local dpsInfo = session.dps.Get_alldpsInfoByIndex(i)
@@ -173,27 +176,30 @@ function g.new(self)
       elseif (__mode == 2) then
         unit = dpsInfo:GetName()..'{nl}　<- '..GetClassByType('Skill', dpsInfo:GetSkillID()).Name
       end
-      dataMerged[unit] = dataMerged[unit] or {}
+      dataMerged[cid][unit] = dataMerged[cid][unit] or {}
       -- 総ダメージ
-      dataMerged[unit]['total_damage'] =
-        (dataMerged[unit]['total_damage'] or 0) + tonumber(dpsInfo:GetStrDamage())
+      dataMerged[cid][unit]['total_damage'] =
+        (dataMerged[cid][unit]['total_damage'] or 0) + tonumber(dpsInfo:GetStrDamage())
+      -- 総ヒット数
+      dataMerged[cid][unit]['total_hit_count'] =
+        (dataMerged[cid][unit]['total_hit_count'] or 0) + 1
       -- ヒット回数
       -- 時間をみてDPSになるようにヒット数を調整する
       local isAddedHitCount = 0
-      local beforeTime = dataMerged[unit]['temp_time']
+      local beforeTime = dataMerged[cid][unit]['temp_time']
       local currentTime = dpsInfo:GetTime().wMilliseconds
       -- CHAT_SYSTEM(i..') '..unit..' - '..tostring(beforeTime)..' <= '..tostring(currentTime))
       if (beforeTime == nil) then
         isAddedHitCount = 1
-        dataMerged[unit]['temp_time'] = currentTime
+        dataMerged[cid][unit]['temp_time'] = currentTime
       else
         if (beforeTime <= currentTime) then
           isAddedHitCount = 1
-          dataMerged[unit]['temp_time'] = currentTime
+          dataMerged[cid][unit]['temp_time'] = currentTime
         end
       end
       if (isAddedHitCount == 1) then
-        dataMerged[unit]['damage_count'] = (dataMerged[unit]['damage_count'] or 0) + 1
+        dataMerged[cid][unit]['damage_count'] = (dataMerged[cid][unit]['damage_count'] or 0) + 1
       end
     end
 
@@ -205,15 +211,18 @@ function g.new(self)
     local titleName = bg:CreateOrGetControl('richtext', 'title_name', 10, 0, 100, 25)
     titleName:SetFontName('white_14_ol')
     titleName:SetText('Name')
-    local titleTotal = bg:CreateOrGetControl('richtext', 'title_total', 300, 0, 100, 25)
+    local titleTotal = bg:CreateOrGetControl('richtext', 'title_total', 270, 0, 100, 25)
     titleTotal:SetFontName('white_14_ol')
     titleTotal:SetText('TOTAL')
-    local titleDPS = bg:CreateOrGetControl('richtext', 'title_dps', 400, 0, 100, 25)
+    local titleDPS = bg:CreateOrGetControl('richtext', 'title_dps', 370, 0, 100, 25)
     titleDPS:SetFontName('white_14_ol')
     titleDPS:SetText('DPS')
+    local titleHPS = bg:CreateOrGetControl('richtext', 'title_hps', 440, 0, 100, 25)
+    titleHPS:SetFontName('white_14_ol')
+    titleHPS:SetText('HPS')
 
     local line = 0
-    for k, v in orderedPairs(dataMerged) do
+    for k, v in orderedPairs(dataMerged[cid]) do
       local height = (20 + ((__mode == 0 or __mode == 1) and 0 or 15)) * line + 20
       local name = bg:CreateOrGetControl(
         'richtext', k, 10, height, 100, 25)
@@ -225,14 +234,21 @@ function g.new(self)
       damage:SetFontName('white_14_ol')
       damage:SetText(GET_COMMAED_STRING(v['total_damage']))
       damage:SetGravity(ui.RIGHT, ui.TOP)
-      damage:SetOffset(150, height)
+      damage:SetOffset(180, height)
 
       local dps = bg:CreateOrGetControl(
         'richtext', 'dps_'..k, 0, height, 100, 25)
       dps:SetFontName('white_14_ol')
       dps:SetText(GET_COMMAED_STRING(string.format('%d', v['total_damage'] / v['damage_count'])))
       dps:SetGravity(ui.RIGHT, ui.TOP)
-      dps:SetOffset(50, height)
+      dps:SetOffset(90, height)
+
+      local hps = bg:CreateOrGetControl(
+        'richtext', 'hps_'..k, 0, height, 100, 25)
+      hps:SetFontName('white_14_ol')
+      hps:SetText(GET_COMMAED_STRING(string.format('%d', v['total_hit_count'] / v['damage_count'])))
+      hps:SetGravity(ui.RIGHT, ui.TOP)
+      hps:SetOffset(30, height)
 
       line = line + 1
     end
