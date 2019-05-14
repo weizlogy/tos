@@ -26,6 +26,16 @@ function g.new(self)
   -- 0: disable
   -- 1: enable
   local __minimize = 0
+  -- 0: disable
+  -- 1: enable
+  local __lock = 0
+  -- 0: disable
+  -- 1: enable
+  local __option = 0
+  -- 10 - 100
+  local __alpha = 80
+  -- def: 300
+  local __listheight = 300
 
   -- データ継続保持関連
   local __preserve = 0
@@ -36,16 +46,22 @@ function g.new(self)
     ctrl:SetText('Count'..((__isCounting == 0) and 'Start' or 'End'))
   end
 
-  members.CreateUI = function(self)
-    __isCounting = 0
+  local __OptionHeight = function()
+    return __listheight + 150
+  end
 
+  members.ClearCountingState = function(self)
+    __isCounting = 0
+  end
+
+  members.CreateUI = function(self)
     local frame = ui.GetFrame('dpsmeter')
     frame:SetLayerLevel(1)
     frame:SetSkinName('downbox')
-    frame:Resize(500, __minimize == 0 and 300 or 60)
-    frame:SetAlpha(80)
+    frame:Resize(500, __option == 1 and __OptionHeight() or (__minimize == 0 and __listheight or 60))
+    frame:SetAlpha(__alpha)
     frame:SetOffset(__config['pos']['x'], __config['pos']['y'])
-    frame:EnableMove(1)
+    frame:EnableMove(math.abs(__lock - 1))
     frame:ShowWindow(1)
     frame:SetLayerLevel(1)
     frame:SetEventScript(ui.LBUTTONUP, 'DPSMETER_ON_ENDMOVE')
@@ -53,7 +69,7 @@ function g.new(self)
     local bg = frame:CreateOrGetControl('groupbox', 'bg', 0, 0, 0, 0)
     tolua.cast(bg, 'ui::CGroupBox')
     bg:SetSkinName('None')
-    bg:Resize(frame:GetWidth() - 10, 300 - 60)
+    bg:Resize(frame:GetWidth() - 10, __listheight - 60)
     bg:SetOffset(0, 40)
     bg:EnableScrollBar(1)
     bg:EnableHittestGroupBox(false)
@@ -108,8 +124,22 @@ function g.new(self)
       if (__minimize == 1) then
         frame:Resize(frame:GetWidth(), 60)
       else
-        frame:Resize(frame:GetWidth(), 300)
+        frame:Resize(frame:GetWidth(), __option == 1 and __OptionHeight() or __listheight)
       end
+      self:Serialize()
+    end
+    DPSMETER_SELECT_ON_TOGGLE_OPTIONVIEW = function()
+      __option = __option == 0 and 1 or 0
+      if (__option == 1) then
+        __minimize = 0  -- 最小化状態は強制解除
+        frame:Resize(frame:GetWidth(), __OptionHeight())
+      else
+        frame:Resize(frame:GetWidth(), __listheight)
+      end
+    end
+    DPSMETER_SELECT_ON_TOGGLE_LOCK = function()
+      __lock = __lock == 0 and 1 or 0
+      frame:EnableMove(math.abs(__lock - 1))
       self:Serialize()
     end
     DPSMETER_SELECT_ON_TOGGLE_PRESERVE = function()
@@ -139,6 +169,12 @@ function g.new(self)
       ui.AddContextMenuItem(
         context, __minimize == 0 and 'Minimize' or 'Maximize',
           'DPSMETER_SELECT_ON_TOGGLE_FRAMESIZE')
+      ui.AddContextMenuItem(
+        context, __option == 0 and 'ShowOption' or 'HideOption',
+          'DPSMETER_SELECT_ON_TOGGLE_OPTIONVIEW')
+      ui.AddContextMenuItem(
+        context, __lock == 0 and 'Lock' or 'UnLock',
+          'DPSMETER_SELECT_ON_TOGGLE_LOCK')
       -- データ保持
       ui.AddContextMenuItem(
         context, __preserve == 0 and 'Preserve' or 'Un-Preserve',
@@ -153,6 +189,54 @@ function g.new(self)
     modeselect:SetFontName('white_14_ol')
     modeselect:SetText('≡')
     modeselect:SetEventScript(ui.LBUTTONUP, 'DPSMETER_ON_MODESELECT_LCLICK')
+
+    -- 隠されたオプション群
+    local optiontitle = frame:CreateOrGetControl('richtext', 'optiontitle', 10, __listheight, 0, 0)
+    optiontitle:SetFontName('white_14_ol')
+    optiontitle:SetText('Options')
+
+    -- 不透明度
+    local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, __listheight + 30, 0, 0)
+    alphalabel:SetFontName('white_14_ol')
+    alphalabel:SetText('Alpha')
+    alphalabel:SetTextTooltip('Input alpha channel which ranged between 10 and 100. Fromat: number. Ex: 50.')
+    local alphainput = frame:CreateOrGetControl('edit', 'alphainput', 85, alphalabel:GetY() - 4, 50, 25)
+    tolua.cast(alphainput, 'ui::CEditControl')
+		alphainput:SetFontName('white_14_ol')
+    alphainput:SetSkinName('test_weight_skin')
+    alphainput:SetTextAlign('center', 'center')
+    alphainput:SetText(__alpha)
+    -- リスト高
+    local listheightlabel = frame:CreateOrGetControl('richtext', 'listheightlabel', 10, __listheight + 50, 0, 0)
+    listheightlabel:SetFontName('white_14_ol')
+    listheightlabel:SetText('ListHeight')
+    listheightlabel:SetTextTooltip('Input dps-list height which is required 100 or above. Fromat: number. Ex: 300.')
+    local listheightinput =
+      frame:CreateOrGetControl('edit', 'listheightinput', 85, listheightlabel:GetY() - 4, 50, 25)
+    tolua.cast(listheightinput, 'ui::CEditControl')
+		listheightinput:SetFontName('white_14_ol')
+    listheightinput:SetSkinName('test_weight_skin')
+    listheightinput:SetTextAlign('center', 'center')
+    listheightinput:SetText(__listheight)
+
+    DPSMETER_ON_SAVEOPTION_LCLICK = function(frame, ctrl, str, num)
+      local alpha = alphainput:GetText()
+      alpha = math.min(tonumber(alpha) or 100, 100)
+      alpha = math.max(tonumber(alpha) or 10, 10)
+      __alpha = alpha
+
+      local listheight = listheightinput:GetText()
+      listheight = math.max(tonumber(listheight) or 100, 100)
+      __listheight = listheight
+
+      self:Serialize()
+      self:CreateUI()
+    end
+    local saveoption = frame:CreateOrGetControl(
+      'button', 'saveoption', 10, __listheight + 100, 100, 25)
+    saveoption:SetFontName('white_14_ol')
+    saveoption:SetText('Save')
+    saveoption:SetEventScript(ui.LBUTTONUP, 'DPSMETER_ON_SAVEOPTION_LCLICK')
   end
 
   members.Update = function(self, frame)
@@ -267,7 +351,8 @@ function g.new(self)
     local frame = ui.GetFrame('dpsmeter')
     __config = {
       ['pos'] = { x = frame:GetX(), y = frame:GetY() },
-      ['state'] = { mode = __mode, minimize = __minimize, preserve = __preserve },
+      ['state'] = { mode = __mode, minimize = __minimize, preserve = __preserve, lock = __lock },
+      ['option'] = { alpha = __alpha, listheight = __listheight },
     }
 
     f:write('local s = {}\n')
@@ -286,7 +371,8 @@ function g.new(self)
 	members.Deserialize = function(self)
     __config = {
       ['pos'] = { x = 100, y = 100 },
-      ['state'] = { mode = 0, minimize = 0, preserve = 0 },
+      ['state'] = { mode = 0, minimize = 0, preserve = 0, lock = 0 },
+      ['option'] = { alpha = 80, listheight = 300 },
     }
     local filePath = string.format(
 			'%s/%s', __ADDON_DIR, __CONFIG_FILENAME)
@@ -301,11 +387,18 @@ function g.new(self)
     if (not s) then
       self:Err(e)
     end
-    __config = e
+    __config['pos'] = e['pos'] or __config['pos']
+    __config['state'] = e['state'] or __config['state']
+    -- v2.1.1-vu対応
+    __config['option'] = e['option'] or __config['option']
+    __config['state']['lock'] = __config['state']['lock'] or 0
 
     __mode = __config['state']['mode']
     __minimize = __config['state']['minimize']
     __preserve = __config['state']['preserve']
+    __lock = __config['state']['lock']
+    __alpha = __config['option']['alpha']
+    __listheight = __config['option']['listheight']
   end
 
   -- ログ出力
@@ -331,6 +424,7 @@ setmetatable(g, {__call = g.new});
 -- frame initialize.
 function DPSMETER_ON_INIT(addon, frame)
   g.instance:Deserialize()
+  g.instance:ClearCountingState()
   g.instance:CreateUI()
 end
 
