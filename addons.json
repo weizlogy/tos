@@ -215,6 +215,18 @@
     ]
   },
   {
+    "name" : "Repeatery PuzzleCraft",
+    "file" : "repeaterypuzzlecraft",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "repeaterypuzzlecraft",
+    "unicode" : "📖",
+    "description" : "マグナムオーパスを指定した回数、自動実行します。",
+    "tags" : [
+      "puzzlecraft"
+    ]
+  },
+  {
     "name" : "Save Quest",
     "file" : "savequest",
     "extension" : "ipf",
