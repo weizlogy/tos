@@ -94,7 +94,7 @@
     "name" : "Fix Lost Chat Window",
     "file" : "fixlostchatwindow",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.0.1",
     "releaseTag" : "fixlostchatwindow",
     "unicode" : "📖",
     "description" : "追加チャットウィンドウが消えてしまう問題が発生しても、自動的に以前の状態に復元します。",
