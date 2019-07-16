@@ -48,6 +48,7 @@ function g.new(self)
 	end
 
 	members.Serialize = function(self)
+  	self:Dbg('Saving...')
 	  local f, e = io.open(string.format(
 			'%s/%s%d.txt', __ADDON_DIR, __CONFIG_FILENAME, GetServerGroupID()), 'w')
     if (e) then
@@ -70,6 +71,7 @@ function g.new(self)
 	end
 
 	members.Deserialize = function(self)
+  	self:Dbg('Loading...')
     local filePath = string.format(
 			'%s/%s%d.txt', __ADDON_DIR, __CONFIG_FILENAME, GetServerGroupID())
     local f, e = io.open(filePath, 'r')
@@ -146,7 +148,7 @@ function FIXLOSTCHATWINDOW_ON_INIT(addon, frame)
   end
   session.chat.AddMainFramePopupConfig = function(key, width, height, x, y, value)
     g.instance.session_chat_AddMainFramePopupConfig(key, width, height, x, y, value)
-		g.instance:AddMainFramePopupConfig(key, width, height, x, y, value)
+		g.instance:AddMainFramePopupConfig(tostring(key), width, height, x, y, value)
   end
   -- 削除
 	if (g.instance.session_chat_RemoveMainFramePopupConfig == nil) then
@@ -154,7 +156,7 @@ function FIXLOSTCHATWINDOW_ON_INIT(addon, frame)
   end
   session.chat.RemoveMainFramePopupConfig = function(key)
     g.instance.session_chat_RemoveMainFramePopupConfig(key)
-		g.instance:RemoveMainFramePopupConfig(key)
+		g.instance:RemoveMainFramePopupConfig(tostring(key))
   end
   -- 更新
 	if (g.instance.session_chat_UpdateMainFramePopupConfig == nil) then
@@ -162,7 +164,7 @@ function FIXLOSTCHATWINDOW_ON_INIT(addon, frame)
   end
   session.chat.UpdateMainFramePopupConfig = function(key, width, height, x, y, value)
     g.instance.session_chat_UpdateMainFramePopupConfig(key, width, height, x, y, value)
-		g.instance:UpdateMainFramePopupConfig(key, width, height, x, y, value)
+		g.instance:UpdateMainFramePopupConfig(tostring(key), width, height, x, y, value)
   end
 end
 
