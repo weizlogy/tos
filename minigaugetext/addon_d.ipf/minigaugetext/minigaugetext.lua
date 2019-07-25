@@ -63,9 +63,14 @@ function g.new(self)
     if (checkStaGauge ~= nil) then
       sptext:SetOffset(sp:GetX(), sp:GetY() + 19)
     end
+    -- 称号
+    local achieve = frame:GetChild('achieveName')
+    if (achieve:GetText() ~= "None") then
+      achieve:SetMargin(0, 46 + 12, 0, 0)
+    end
     -- ギルド名とちょっとかぶるので...
     local guildinfo = frame:GetChild('guildName')
-    if (guildinfo ~= nil) then
+    if (guildinfo:GetText() ~= "None") then
       MINIGAUGETEXT_ON_UPDATE_GUILDINFO = function(ctrl)
         local parent = ctrl:GetTopParentFrame()
         local emblem = parent:GetChild('guildEmblem')
