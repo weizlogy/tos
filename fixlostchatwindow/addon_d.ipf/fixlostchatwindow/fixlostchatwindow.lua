@@ -131,6 +131,9 @@ function g.new(self)
 		if (g.instance.session_chat_UpdateMainFramePopupConfig ~= nil) then
 			session.chat.UpdateMainFramePopupConfig = g.instance.session_chat_UpdateMainFramePopupConfig
 		end
+		if (g.instance.DO_CLOSE_MAINCHATPOPUP ~= nil) then
+			DO_CLOSE_MAINCHATPOPUP = g.instance.DO_CLOSE_MAINCHATPOPUP
+		end
   end
   -- おまじない
   return setmetatable(members, {__index = self});
@@ -156,7 +159,15 @@ function FIXLOSTCHATWINDOW_ON_INIT(addon, frame)
   end
   session.chat.RemoveMainFramePopupConfig = function(key)
     g.instance.session_chat_RemoveMainFramePopupConfig(key)
-		g.instance:RemoveMainFramePopupConfig(tostring(key))
+		-- g.instance:RemoveMainFramePopupConfig(tostring(key))
+  end
+	-- 閉じる処理
+	if (g.instance.DO_CLOSE_MAINCHATPOPUP == nil) then
+    g.instance.DO_CLOSE_MAINCHATPOPUP = DO_CLOSE_MAINCHATPOPUP
+  end
+  DO_CLOSE_MAINCHATPOPUP = function(parent, ctrl)
+    g.instance.DO_CLOSE_MAINCHATPOPUP(parent, ctrl)
+		g.instance:RemoveMainFramePopupConfig(string.sub(parent:GetTopParentFrame():GetName(), 11))
   end
   -- 更新
 	if (g.instance.session_chat_UpdateMainFramePopupConfig == nil) then
