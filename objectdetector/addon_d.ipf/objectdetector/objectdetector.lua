@@ -25,10 +25,15 @@ function ObjectDetector.new(self)
     self.objectList = {};
     local list, count = SelectBaseObject(GetMyPCObject(), self.range, "ALL");
     for i = 1 , count do
+      -- CHAT_SYSTEM(i.." / "..count)
       local obj = list[i];
       local iesObj = GetBaseObjectIES(obj);
+      -- CHAT_SYSTEM(iesObj.ClassName.." - "..type(obj))
       local actor = tolua.cast(obj, "CFSMActor");
-      local handle = actor:GetHandleVal();
+      -- CHAT_SYSTEM(" ->CFSMActor: "..tostring(actor))
+      local error, handle = pcall(actor.GetHandleVal, actor)
+      -- CHAT_SYSTEM(" ->handle: "..tostring(handle).." - "..tostring(error))
+
       self.objectList[handle] = 1;
       -- do nothing for my pc.
       if (myhandle ~= handle) then
@@ -191,8 +196,9 @@ function ObjectDetector.new(self)
     elseif (objType == GT_ITEM) then
       oi.color = self.config.item.color;
       oi.isVisible = self.config.item.isVisible;
-      oi.tooltipText = string.format("[Lv.%s]%s",
-       GET_ITEM_LEVEL(iesObj), actor:GetName());
+      -- Hey, GET_ITEM_LEVEL is something wrong?
+      -- oi.tooltipText = string.format("[Lv.%s]%s", GET_ITEM_LEVEL(iesObj), actor:GetName());
+      oi.tooltipText = string.format("[Lv.%s]%s", " - ", actor:GetName());
     else
       -- CHAT_SYSTEM("unknown object type. => "..objType);
     end
