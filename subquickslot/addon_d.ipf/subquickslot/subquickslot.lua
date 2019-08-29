@@ -649,8 +649,8 @@ function g.new(self)
       -- LALTで共有
       if (keyboard.IsKeyPressed('LALT') == 1) then
         party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", questID)
-        REQUEST_SHARED_QUEST_PROGRESS(questID)
-        UPDATE_ALLQUEST(ui.GetFrame("quest"))
+        REQUEST_QUEST_SHARE_PARTY_PROGRESS(questID)
+        QUEST_UPDATE_ALL(ui.GetFrame("quest"))
         self:Log('Successfully shared : '..wheretogo)
         return
       end

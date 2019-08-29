@@ -239,17 +239,16 @@ function SaveQuest.new(self)
 
   members.ShareWithParty = function(self, questID)
     party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", questID);
-    REQUEST_SHARED_QUEST_PROGRESS(questID)
-    UPDATE_ALLQUEST(ui.GetFrame("quest"));
+    REQUEST_QUEST_SHARE_PARTY_PROGRESS(questID)
+    QUEST_UPDATE_ALL(ui.GetFrame("quest"));
     -- create share party icon.
     local frame = ui.GetFrame(saqu:GetFrameNameFromQuestID(questID));
     self:CreateSharePartyIcon(frame);
   end
 
   members.UnShareWithParty = function(self, questID)
-    party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", 0);
-    party.ReqChangeMemberProperty(PARTY_NORMAL, "Shared_Quest", -1);
-    UPDATE_ALLQUEST(ui.GetFrame("quest"));
+    CANCEL_QUEST_SHARE_PARTY_MEMBER()
+    QUEST_UPDATE_ALL(ui.GetFrame("quest"));
 
     local frame = ui.GetFrame(saqu:GetFrameNameFromQuestID(questID));
     frame:RemoveChild("SHARE_PARTY");
@@ -257,15 +256,7 @@ function SaveQuest.new(self)
 
   -- check share with party.
   members.IsPartySharedQuest = function(self, questID)
-    local myInfo = session.party.GetMyPartyObj(PARTY_NORMAL);
-    local isSharedQuest = false;
-    if myInfo ~= nil then
-      local obj = GetIES(myInfo:GetObject());
-      if tostring(obj.Shared_Quest) == questID then
-        isSharedQuest = true;
-      end
-    end
-    return isSharedQuest;
+    return IS_SHARED_QUEST(questID)
   end
 
   -- save quest to local.
@@ -303,13 +294,13 @@ function SaveQuest.new(self)
   members.UpdateQuestListUI = function(self, questCtrl, classID)
     DESTROY_CHILD_BYNAME(questCtrl, "savemark");
     local saveQuest = self.questInfo[""..classID];
-    --CHAT_SYSTEM(""..classID.." - "..saveQuest);
+    -- CHAT_SYSTEM(""..classID.." - "..tostring(saveQuest));
     if (saveQuest == 1) then
       -- show saved mark.
       local savemark = questCtrl:CreateOrGetControl('richtext', "savemark", 0, 0, 20, 10);
       tolua.cast(savemark, "ui::CRichText");
       savemark:SetText(self.savemark);
-      savemark:SetOffset(20, 0);
+      savemark:SetOffset(340, 0);
     end
     local questIES = GetClassByType("QuestProgressCheck", classID);
     if (self:IsWarpableQuest(questIES) == 1) then
@@ -321,6 +312,7 @@ function SaveQuest.new(self)
       --CHAT_SYSTEM(questCtrl:GetName().." - "..questIES.ClassID)
       -- create warp icon.
       local picture = self:CreateStatePicture(questCtrl, questIES);
+      picture:SetOffset(380, 5);
     end
   end
 
@@ -461,8 +453,9 @@ function SaveQuest.new(self)
   members.Destroy = function(self)
     UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
     saqu.UPDATE_QUESTINFOSET_2 = nil;
-    Q_CTRL_BASIC_SET = saqu.Q_CTRL_BASIC_SET;
-    saqu.Q_CTRL_BASIC_SET = nil;
+    if (saqu.UPDATE_QUEST_CTRL ~= nil) then
+      UPDATE_QUEST_CTRL = saqu.UPDATE_QUEST_CTRL;
+      end
     SHARE_QUEST_WITH_PARTY = saqu.SHARE_QUEST_WITH_PARTY;
     saqu.SHARE_QUEST_WITH_PARTY = nil;
     CANCEL_SHARE_QUEST_WITH_PARTY = saqu.CANCEL_SHARE_QUEST_WITH_PARTY;
@@ -491,12 +484,12 @@ function SAVEQUEST_ON_INIT(addon, frame)
   end
 
   -- override open quest list savemark.
-  if (saqu.Q_CTRL_BASIC_SET == nil) then
-    saqu.Q_CTRL_BASIC_SET = Q_CTRL_BASIC_SET;
+  if (saqu.UPDATE_QUEST_CTRL == nil) then
+    saqu.UPDATE_QUEST_CTRL = UPDATE_QUEST_CTRL;
   end
-  Q_CTRL_BASIC_SET = function(Quest_Ctrl, classID, isNew)
-    saqu.Q_CTRL_BASIC_SET(Quest_Ctrl, classID, isNew);
-    saqu:UpdateQuestListUI(Quest_Ctrl, classID);
+  UPDATE_QUEST_CTRL = function(ctrl, questInfo)
+    saqu.UPDATE_QUEST_CTRL(ctrl, questInfo);
+    saqu:UpdateQuestListUI(ctrl, questInfo.QuestClassID);
   end
 
   -- override (un)share party process.
