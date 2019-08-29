@@ -13,7 +13,7 @@ function Console.new(self)
     io.output("console.txt");
     self:Out("[_G]", -1);
     for k, v in pairs(_G) do
-      if (k ~= "_G") and (k ~= "io") and (k ~= "DEVLOADER") then
+      if (k ~= "_G") and (k ~= "io") and (k ~= "file") and (k ~= "DEVLOADER") then
         self:Search(nil, k, v, 0);
         io.flush();
       end
