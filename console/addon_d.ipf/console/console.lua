@@ -12,13 +12,21 @@ function Console.new(self)
 
     io.output("console.txt");
     self:Out("[_G]", -1);
-    for k, v in pairs(_G) do
+
+    -- ordered by key
+    local tkeys = {}
+    for k in pairs(_G) do table.insert(tkeys, k) end
+    table.sort(tkeys)
+    
+    for _, k in ipairs(tkeys) do
+      local v = _G[k]
       if (k ~= "_G") and (k ~= "io") and (k ~= "file") and (k ~= "DEVLOADER") then
         self:Search(nil, k, v, 0);
         io.flush();
       end
     end
     io.output();
+    io.flush();
 
     CHAT_SYSTEM("Console search end.");
   end
@@ -48,11 +56,22 @@ function Console.new(self)
         self:Out("["..key.."]".." = "..type(value).." is skipped.", depth);
         return;
       end
-      self:Out("["..key.."]".." = "..type(value).." {", depth);
+      self:Out("["..key.."]".." = "..type(value).."("..#value..")".." {", depth);
+
+      -- remove duplication
+      if #value > 1 then
+        value = { value[1] }
+      end
+
       depth = depth + 1;
-      --table.sort(value);
-      for k, v in pairs(value) do
-        self:Search(key, k, v, depth);
+
+      -- ordered by key
+      local tkeys = {}
+      for k in pairs(value) do table.insert(tkeys, k) end
+      table.sort(tkeys)
+
+      for _, k in ipairs(tkeys) do
+        self:Search(key, k, value[k], depth);
       end
       depth = depth - 1;
       self:Out("} //".."["..key.."]", depth);
