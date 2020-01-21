@@ -230,7 +230,6 @@ function MonsterStatus.new(self)
     curHeight = curHeight + typeCtrl:GetHeight();
 
     -- set numerology.
-    --[[
     curHeight = curHeight + bufHeight;
     local numero = self:GetNumerology(monster.SET);
     local numeroCtrl = frame:CreateOrGetControl(
@@ -238,7 +237,6 @@ function MonsterStatus.new(self)
     numeroCtrl:SetText(string.format(
       "{s14}{ol} NUMEROLOGY{nl}   GEMA - %d / NOTA - %d", numero.gema, numero.nota));
     curHeight = curHeight + numeroCtrl:GetHeight();
-    ]]
 
     -- set journals.
     curHeight = curHeight + bufHeight;
@@ -260,16 +258,19 @@ function MonsterStatus.new(self)
     DESTROY_CHILD_BYNAME(frame, "drop_");
     frame:Resize(frame:GetWidth(), droptitle:GetY() + droptitle:GetHeight() + 5);
     if (next(journals.drops)) then
+      local index = 1
       for i, item in ipairs(journals.drops) do
         -- 未鑑定品を除く！
         local needAppraisal = TryGetProp(item[1], "NeedAppraisal")
         if (needAppraisal ~= 0) then
           local drop = frame:CreateOrGetControl(
-            "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * i), frame:GetWidth(), ctrlHeight);
-          drop:SetText(string.format("{s14}{ol}%s - %.2f %%", item[1].Name, item[2]));
+            "richtext", "drop_"..i, 10, curHeight + (ctrlHeight * index), frame:GetWidth(), ctrlHeight);
+          drop:SetText(string.format(
+            "{s12}{ol}%s - %d/%d", item[1].Name, item[2].current, item[2].max));
           drop:SetTooltipType('wholeitem');
           drop:SetTooltipArg('', item[1].ClassID, 0);
           frame:Resize(frame:GetWidth(), drop:GetY() + drop:GetHeight() + 5);
+          index = index + 1;
         end
       end
     end
@@ -292,17 +293,18 @@ function MonsterStatus.new(self)
       return value;
     end
     value.kills.max = journal.Count1;
-    --[[
+--[[
     if (self:IsJpServer()) then
       value = self:GetJournalsAtJpServer(monster, value);
     else
       value = self:GetJournalsAtNonJpServer(monster, value);
     end
-    ]]
+]]
     value = self:GetJournalsAtNonJpServer(monster, value);
     return value;
   end
 
+--[[
   members.GetJournalsAtJpServer = function(self, monster, value)
     -- get wiki.
     local wiki = GetWikiByName(monster.ClassName)
@@ -328,6 +330,7 @@ function MonsterStatus.new(self)
     end
     return value;
   end
+]]
 
   members.GetJournalsAtNonJpServer = function(self, monster, value)
     -- get kill count.
@@ -341,10 +344,14 @@ function MonsterStatus.new(self)
         local curPoint = _GET_ADVENTURE_BOOK_POINT_ITEM(item.ItemType == 'Equip', itemObtainCount);
         local pts = itemObtainCount;
         local maxPts = curPoint;
-        local ratio = math.floor(pts * 100 / maxPts);
-        if maxPts <= 0 then
-          ratio = 0;
-        end
+        -- local ratio = math.floor(pts * 100 / maxPts);
+        -- if maxPts <= 0 then
+        --   ratio = 0;
+        -- end
+        local ratio = {
+          current = itemObtainCount,
+          max = maxPts
+        }
         table.insert(value.drops, {item, ratio});
       end
     end
