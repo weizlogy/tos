@@ -129,6 +129,19 @@
     ]
   },
   {
+    "name" : "HP Monitor",
+    "file" : "hpmonitor",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.1",
+    "releaseTag" : "hpmonitor",
+    "unicode" : "📖",
+    "description" : "ボスのHPを監視して、指定パーセント付近で音とチャットを流します。常時モンスターのHPバーにパーセンテージ表示を追加します。",
+    "tags" : [
+      "hp",
+      "monitor"
+    ]
+  },
+  {
     "name" : "Mini Gauge Text",
     "file" : "minigaugetext",
     "extension" : "ipf",
@@ -144,7 +157,7 @@
     "name" : "Monster Status",
     "file" : "monsterstatus",
     "extension" : "ipf",
-    "fileVersion" : "v3.0.3",
+    "fileVersion" : "v3.0.4",
     "releaseTag" : "monsterstatus",
     "unicode" : "📖",
     "description" : "ターゲット中のモンスターのステータスを表示します。シンプルなv2系もあります。",
