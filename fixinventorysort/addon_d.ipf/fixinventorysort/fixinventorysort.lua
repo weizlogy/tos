@@ -183,7 +183,7 @@ function g.new(self)
            end; ", key, key, rmprelogic, key, key)
         sortFuncDynamicaly = sortFuncDynamicaly..logic
       end
-      sortFunc = assert(loadstring(string.format(sortFuncTemplate, sortFuncDynamicaly)))()
+      sortFunc = assert(load(string.format(sortFuncTemplate, sortFuncDynamicaly)))()
     end
     return sortFunc
   end
@@ -227,7 +227,7 @@ function g.new(self)
         if (sortType == -1) then
           msgPrefix = ''
         end
-        ui.AddContextMenuItem(context, loadstring(string.format('return ScpArgMsg("%s%s")', msgPrefix, config:gsub('^%l', string.upper)))(), scpScp)
+        ui.AddContextMenuItem(context, load(string.format('return ScpArgMsg("%s%s")', msgPrefix, config:gsub('^%l', string.upper)))(), scpScp)
       else
         config.Id = self:ToSortType(i)
         self:Dbg(config.Id..' - '..config.Desc)
@@ -246,13 +246,13 @@ function g.new(self)
 
   members.ToSortType = function(self, value)
     if (type(value) == 'string') then
-      local s, e = pcall(loadstring('return BY_'..value:upper()))
+      local s, e = pcall(load('return BY_'..value:upper()))
       if (not s or e == nil) then
         self:Dbg(tostring(e))
         return -1
       end
       return e
-      -- return loadstring('return BY_'..value:upper())()
+      -- return load('return BY_'..value:upper())()
     end
     return value + __extendSortStartIndex  -- Index値から勝手にIDを捏造
   end
