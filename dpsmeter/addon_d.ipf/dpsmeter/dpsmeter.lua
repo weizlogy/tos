@@ -77,10 +77,10 @@ function g.new(self)
     DPSMETER_ON_TOGGLE_LCLICK = function(frame, ctrl, str, num)
       if (__isCounting == 0) then
         __isCounting = 1
-        session.dps.SendStartDpsMsg()
+        session.dps.ReqStartDpsPacket()
         frame:RunUpdateScript('DPSMETER_UPDATE', 0, 0, 0, 1)
       else
-        session.dps.SendStopDpsMsg()
+        session.dps.ReqStopDps()
         __isCounting = 0
       end
       __UpdateToggleButtonText(ctrl)
