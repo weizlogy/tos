@@ -22,8 +22,10 @@ function g.new(self)
   local __ADDON_DIR = '../addons/'..addonName
   local __FILE_SLOTSET_NAME_LIST = 'SlotsetNameList.txt'
   local __FILE_SLOTSET_LAST_SELECTED = 'LastSelected.txt'
+  local __FILE_COMMON_CONFIG = 'Settings.txt'
 
   -- === 内部データ === --
+  local __config = {};
   local __slotsetNames = {};
   local __lastSelected = -1
 
@@ -114,6 +116,10 @@ function g.new(self)
 
     local tempLastSelected = self:Deserialize(cid..'_'..__FILE_SLOTSET_LAST_SELECTED)
     __lastSelected = tempLastSelected ~= nil and tempLastSelected['1'] or -1
+
+    __config = self:Deserialize(__FILE_COMMON_CONFIG) or {
+      ['labelX'] = 0, ['labelY'] = 0,
+    }
   end
 
   --* 描画
@@ -128,6 +134,8 @@ function g.new(self)
       labelX = 0
       labelY = 25
     end
+    labelX = labelX + __config['labelX']
+    labelY = labelY + __config['labelY']
     -- 基準点
     local refreshBtn = GET_CHILD(_frame, "refreshBtn", "ui::CButton")
     -- メニューボタン
@@ -143,7 +151,7 @@ function g.new(self)
     mqsQCName:SetText(
       string.format('<%s>', __lastSelected == -1 and '' or __slotsetNames[__lastSelected]))
     mqsQCName:EnableHitTest(1)
-    mqsQCName:SetEventScript(ui.LBUTTONUP, 'MULTIPLEQUICKSLOT_ON_OPEN_SLOTSET_LIST')
+    mqsQCName:SetEventScript(ui.RBUTTONUP, 'MULTIPLEQUICKSLOT_ON_OPEN_SLOTSET_LIST')
   end
 
   --* クイックスロット復元
@@ -169,6 +177,10 @@ function g.new(self)
       end
     end
     __lastSelected = index
+
+    -- キーアサイン復元
+    QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME(frame)
+
     self:Log('Loading '..slotsetName..' Successfully.')
   end
 
@@ -305,6 +317,7 @@ function MULTIPLEQUICKSLOT_ON_OPEN_MENU(frame, ctrl, str, num)
 
   ui.AddContextMenuItem(context, 'AddNew', 'MULTIPLEQUICKSLOT_ON_INPUTNEWSLOTNAME')
   ui.AddContextMenuItem(context, 'Delete', 'MULTIPLEQUICKSLOT_ON_DELETESLOTSET')
+  ui.AddContextMenuItem(context, 'Reload', 'MULTIPLEQUICKSLOT_ON_RELOAD')
   ui.AddContextMenuItem(context, 'ClearAll', 'MULTIPLEQUICKSLOT_ON_CLEARALL')
 
   ui.AddContextMenuItem(context, 'Cancel', 'None')
@@ -335,6 +348,12 @@ function MULTIPLEQUICKSLOT_ON_DELETESLOTSET()
   end
   INPUT_STRING_BOX_CB(
     ui.GetFrame('quickslotnexpbar'), 'Input quickslot-set name that you want to delete.', "MULTIPLEQUICKSLOT_ON_DELETE", "", nil, 0, 50)
+end
+
+function MULTIPLEQUICKSLOT_ON_RELOAD()
+  g.i:LoadConfig()
+  g.i:DrawUI(ui.GetFrame('quickslotnexpbar'))
+  g.i:DrawUI(ui.GetFrame('joystickquickslot'))
 end
 
 function MULTIPLEQUICKSLOT_ON_CLEARALL()
