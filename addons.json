@@ -157,7 +157,7 @@
     "name" : "Multiple Quickslot",
     "file" : "multiplequickslot",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.0.1",
     "releaseTag" : "multiplequickslot",
     "unicode" : "📖",
     "description" : "クイックスロットの保存、復元ができるようになります。",

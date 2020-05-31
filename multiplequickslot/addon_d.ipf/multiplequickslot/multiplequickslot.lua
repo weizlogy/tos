@@ -111,7 +111,9 @@ function g.new(self)
   members.LoadConfig = function(self)
     local cid = info.GetCID(session.GetMyHandle())
     __slotsetNames = self:Deserialize(cid..'_'..__FILE_SLOTSET_NAME_LIST) or {}
-    __lastSelected = self:Deserialize(cid..'_'..__FILE_SLOTSET_LAST_SELECTED)['1'] or -1
+
+    local tempLastSelected = self:Deserialize(cid..'_'..__FILE_SLOTSET_LAST_SELECTED)
+    __lastSelected = tempLastSelected ~= nil and tempLastSelected['1'] or -1
   end
 
   --* 描画
