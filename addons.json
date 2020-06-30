@@ -132,7 +132,7 @@
     "name" : "HP Monitor",
     "file" : "hpmonitor",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.1",
+    "fileVersion" : "v1.0.2",
     "releaseTag" : "hpmonitor",
     "unicode" : "📖",
     "description" : "ボスのHPを監視して、指定パーセント付近で音とチャットを流します。常時モンスターのHPバーにパーセンテージ表示を追加します。",

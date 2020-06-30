@@ -17,6 +17,7 @@ function g.new(self)
   
   local __config = {}
   local __monitorByHandle = {}
+  local __monitorMode = 1
 
   -- ログ出力
   members.Dbg = function(self, msg)
@@ -53,6 +54,10 @@ function g.new(self)
   end
 
   members.GetInfo = function(self, handle)
+    if (__monitorMode == 0) then
+      return nil
+    end
+
     if (__monitorByHandle[handle] == nil) then
       local monster = GetClass("Monster", info.GetMonsterClassName(handle))
       __monitorByHandle[handle] = __config[monster.ClassName]
@@ -90,6 +95,16 @@ function g.new(self)
     UI_CHAT(msg)
   end
 
+  members.ChangeMode = function(self, mode)
+    if (mode == 'on') then
+      __monitorMode = 1
+      self:Log('hpmonitor is on.')
+    elseif (mode == 'off') then
+      __monitorMode = 0
+      self:Log('hpmonitor is off.')
+    end
+  end
+
   -- デストラクター
   members.Destroy = function(self)
     if (g.instance.TARGETINFO_TRANS_HP_VALUE ~= nil) then
@@ -99,6 +114,10 @@ function g.new(self)
     if (g.instance.TARGETINFOTOBOSS_TARGET_SET ~= nil) then
       TARGETINFOTOBOSS_TARGET_SET = g.instance.TARGETINFOTOBOSS_TARGET_SET
       g.instance.TARGETINFOTOBOSS_TARGET_SET = nil
+    end
+    if (g.instance.UI_CHAT ~= nil) then
+      UI_CHAT = g.instance.UI_CHAT
+      g.instance.UI_CHAT = nil
     end
   end
   -- おまじない
@@ -132,6 +151,21 @@ function HPMONITOR_ON_INIT(addon, frame)
     end
     local playdata = g.instance:Check(handle, monitor)
     g.instance:Play(playdata)
+  end
+
+  if (g.instance.UI_CHAT == nil) then
+    g.instance.UI_CHAT = UI_CHAT
+  end
+  UI_CHAT = function(msg)
+    local temp = msg
+    temp = string.gsub(temp, '/g ', '')
+    temp = string.gsub(temp, '/p ', '')
+    temp = string.gsub(temp, '/y ', '')
+    if (string.find(temp, "/hpm", 1, true) == 1) then
+      local mode = string.match(temp, "^/hpm (.+)$")
+      g.instance:ChangeMode(mode)
+    end
+    g.instance.UI_CHAT(msg)
   end
 
   g.instance:Deserialize()
