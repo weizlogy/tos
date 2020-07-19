@@ -167,14 +167,13 @@ function g.new(self)
       self:Dbg(string.format('slotInfo-%d -> %s %s %s',
         i, slotInfo.category, slotInfo.type, slotInfo.iesid))
       if (slotInfo.category == 'None') then
-        slot:ClearIcon()
         slot:ClearText()
-        QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
-        SET_QUICKSLOT_OVERHEAT(slot)
+        CLEAR_QUICKSLOT_SLOT(slot, 0, true)
       else
         SET_QUICK_SLOT(
           frame, slot, slotInfo.category, slotInfo.type, slotInfo.iesid, 0, true, true)
       end
+      slot:Invalidate()
     end
     __lastSelected = index
 
@@ -361,17 +360,18 @@ function MULTIPLEQUICKSLOT_ON_CLEARALL()
     local frame = ui.GetFrame('quickslotnexpbar')
     for i = 1, MAX_QUICKSLOT_CNT do
       local slot = GET_CHILD_RECURSIVELY(frame, "slot"..i, "ui::CSlot")
-      slot:ClearIcon()
       slot:ClearText()
-      QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
+      CLEAR_QUICKSLOT_SLOT(slot, 0, true)
+      slot:Invalidate()
     end
     local frame2 = ui.GetFrame('joystickquickslot')
     for i = 1, MAX_QUICKSLOT_CNT do
       local slot = GET_CHILD_RECURSIVELY(frame2, "slot"..i, "ui::CSlot")
-      slot:ClearIcon()
       slot:ClearText()
-      QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
+      CLEAR_QUICKSLOT_SLOT(slot, 0, true)
+      slot:Invalidate()
     end
+    QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME(frame)
   end
   ui.MsgBox('All current quickslot will REMOVED. Are you sure?',
     'MULTIPLEQUICKSLOT_ON_CLEARALL_EXECUTE', 'None')
