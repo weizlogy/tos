@@ -118,7 +118,7 @@ function g.new(self)
     __lastSelected = tempLastSelected ~= nil and tempLastSelected['1'] or -1
 
     __config = self:Deserialize(__FILE_COMMON_CONFIG) or {
-      ['labelX'] = 0, ['labelY'] = 0,
+      ['labelX'] = 0, ['labelY'] = 0, ['PadLabelX'] = 0, ['PadLabelY'] = 0,
     }
   end
 
@@ -126,16 +126,14 @@ function g.new(self)
   members.DrawUI = function(self, _frame)
     local menuX = 0
     local menuY = -30
-    local labelX = 30
-    local labelY = -160
+    local labelX = 30 + __config['labelX']
+    local labelY = -160 + __config['labelY']
     if (_frame:GetName() == 'joystickquickslot') then
       menuX = -26
       menuY = 1
-      labelX = 0
-      labelY = 25
+      labelX = 0 + __config['PadLabelX']
+      labelY = 25 + __config['PadLabelY']
     end
-    labelX = labelX + __config['labelX']
-    labelY = labelY + __config['labelY']
     -- 基準点
     local refreshBtn = GET_CHILD(_frame, "refreshBtn", "ui::CButton")
     -- メニューボタン

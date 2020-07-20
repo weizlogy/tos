@@ -51,8 +51,10 @@ labelX、labelY の数値を変えつつ、◆メニューのReloadで反映さ�
 
 ```lua
 local s = {
-  ['labelX'] = '0',  -- ラベルのX座標を調整する
-  ['labelY'] = '0',  -- ラベルのY座標を調整する
+  ['labelX'] = '0',  -- （PADモード以外の）ラベルのX座標を調整する
+  ['labelY'] = '0',  -- （PADモード以外の）ラベルのY座標を調整する
+  ['PadLabelX'] = '0',  -- （PADモードの）ラベルのX座標を調整する
+  ['PadLabelY'] = '0',  -- （PADモードの）ラベルのY座標を調整する
 }
 return s
 ```
