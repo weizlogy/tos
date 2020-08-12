@@ -14,6 +14,7 @@ function g.new(self)
 
   -- === 公開定数 === --
   members.GLOBALVALUE_LIFTICON_CATEGORY = 'category-lifticon'
+  members.GLOBALVALUE_LIFTICON_TYPE = 'type-lifticon'
   members.GLOBALVALUE_LIFTICON_FROMINDEX = 'fromindex-lifticon'
 
   -- === 定数 === --
@@ -21,6 +22,7 @@ function g.new(self)
   local __OPTION_FRAME_NAME = addonName..'_option'
   local __USERVALUE_FRAME_INDEX = 'frameindex'
   local __USERVALUE_SLOT_CATEGORY = 'category'
+  local __USERVALUE_SLOT_TYPE = 'type'
   local __CONFIG_FRAME_INDEXIES = 'frameindexies'
   local __CONFIG_SLOT_CATEGORY = 'category'
   local __CONFIG_SLOT_TYPE = 'type'
@@ -545,13 +547,14 @@ function g.new(self)
     -- ドロップ情報を取得
     local category = GetCategoryFromLiftIconInfo(liftIconInfo)
     local mytype = liftIconInfo.type
-    local iesid = liftIconInfo:GetIESID()
-    self:Dbg(string.format('%s - %s - %s', category, mytype, liftIconInfo:GetIESID()))
+    local iesid = liftIconInfo.GetIESID and liftIconInfo:GetIESID() or 0
+    self:Dbg(string.format('%s - %s - %s', category, mytype, iesid))
 
     tolua.cast(slot, "ui::CSlot")
     slot:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SLOTRUP')
     slot:SetEventScriptArgNumber(ui.RBUTTONUP, mytype)
     slot:SetUserValue(__USERVALUE_SLOT_CATEGORY, category)
+    slot:SetUserValue(__USERVALUE_SLOT_TYPE, mytype)
     -- OH用のゲージ作成するものの一旦消しておく
     QUICKSLOT_MAKE_GAUGE(slot)
     QUICKSLOT_SET_GAUGE_VISIBLE(slot, 0)
@@ -592,6 +595,13 @@ function g.new(self)
       icon:SetTextTooltip(pose.Name)
       slot:ClearText()
 
+    elseif (category == 'Motion') then
+      local icon = CreateIcon(slot)
+      icon:SetImage(mytype)
+      icon:SetColorTone('FFFFFFFF')
+      icon:SetTextTooltip(mytype)
+      slot:ClearText()
+
     elseif (category == 'Ability') then
       local abilClass = GetClassByType("Ability", mytype)
       local icon = CreateIcon(slot)
@@ -622,6 +632,7 @@ function g.new(self)
   -- スロットクリックアクション
   members.SlotClickAction = function(self, parent, slot, str, num)
     local category = self:GetCategoryFromSlot(slot)
+    local mytype = self:GetTypeFromSlot(slot)
 
     if (category == 'Item') then
       SLOT_ITEMUSE_BY_TYPE(parent, slot, str, num)
@@ -635,6 +646,9 @@ function g.new(self)
 
     elseif (category == 'Pose') then
       control.Pose(GetClassByType('Pose', num).ClassName)
+
+    elseif (category == 'Motion') then
+      CHAT_EMOTICON_SELECT(parent, slot)
     
     elseif (category == 'Ability') then
       local icon = slot:GetIcon()
@@ -723,11 +737,9 @@ function g.new(self)
   end
 
   -- ポーズD&D事前加工
-  members.ModifyForPose = function(self, liftIcon)
-    self:Dbg('ModifyForPose called.')
+  members.ModifyForPose = function(self, info, poseid)
+    self:Dbg('ModifyForPose called. poseid='..poseid)
 
-    local info = liftIcon:GetInfo()
-    local poseid = liftIcon:GetUserValue('POSEID')
     if (poseid == 'None') then
       return info
     end
@@ -750,6 +762,12 @@ function g.new(self)
     local category = slot:GetUserValue(__USERVALUE_SLOT_CATEGORY)
     self:Dbg('GetCategoryFromSlot called. category='..category)
     return category
+  end
+  -- スロットからTYPE情報を復元
+  members.GetTypeFromSlot = function(self, slot)
+    local mytype = slot:GetUserValue(__USERVALUE_SLOT_TYPE)
+    self:Dbg('GetTypeFromSlot called. mytype='..mytype)
+    return mytype
   end
 
   -- スロット情報を保存
@@ -874,8 +892,16 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   -- POP時の情報を復元する
   info.category = g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY]
   info.fromIndex = g.instance[g.instance.GLOBALVALUE_LIFTICON_FROMINDEX]
+  -- 本来lifticon.typeは数値のみなので、Motion特別仕様に変更する
+  if (info.category == 'Motion') then
+    local dummy = {}
+    dummy.category = info.category
+    dummy.fromIndex = info.fromIndex
+    dummy.type = g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE]
+    info = dummy
+  end
   -- ポーズはオリジナルにはないので特殊処理で復元
-  info = g.instance:ModifyForPose(liftIcon)
+  info = g.instance:ModifyForPose(info, liftIcon:GetUserValue('POSEID'))
   -- スロットに入れる
   g.instance:SetSubSlot(slot, info)
   -- ドラッグ開始とドラッグ終了が同じ場所の場合は消したらいけない
@@ -903,9 +929,16 @@ function SUBQUICKSLOT_ON_POPSLOT(parent, slot, str, num)
   -- Re:BuildでLiftIconに情報を保持できなくなったのでグローバルでなんとかする
   -- 同時ドラッグ数は1だから大丈夫だと思う...
   -- スロットからドラッグ開始するとcategoryが抜けるので予め保持したものを持ってくる
-  g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] = g.instance:GetCategoryFromSlot(slot)
+  local category = g.instance:GetCategoryFromSlot(slot)
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] = category
   -- ドロップ時に消せるようにliftIconInfoにIndexをもたせる
   g.instance[g.instance.GLOBALVALUE_LIFTICON_FROMINDEX] = slot:GetSlotIndex()
+
+  if (category == 'Motion') then
+    -- D&D対応してない絵文字用特殊処理
+    g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = g.instance:GetTypeFromSlot(slot)
+  end
+
 end
 function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
   g.instance:SlotClickAction(parent, slot, str, num)
