@@ -791,7 +791,8 @@ function g.new(self)
       __config[configKey][key] = __config[configKey][key] or {}
       __config[configKey][key][__CONFIG_SLOT_CATEGORY] = GetCategoryFromLiftIconInfo(liftIconInfo)
       __config[configKey][key][__CONFIG_SLOT_TYPE] = liftIconInfo.type
-      __config[configKey][key][__CONFIG_SLOT_IESID] = liftIconInfo:GetIESID()
+      __config[configKey][key][__CONFIG_SLOT_IESID] =
+        liftIconInfo.GetIESID and liftIconInfo:GetIESID() or 0
     end
 
     self:Serialize(__cid, __config)
@@ -894,7 +895,7 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
   local liftIcon = ui.GetLiftIcon()
   local info = liftIcon:GetInfo()
   -- POP時の情報を復元する
-  info.category = g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY]
+  info.category = g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] or info.category
   info.fromIndex = g.instance[g.instance.GLOBALVALUE_LIFTICON_FROMINDEX]
   -- 本来lifticon.typeは数値のみなので、Motion特別仕様に変更する
   if (info.category == 'Motion') then
@@ -904,6 +905,10 @@ function SUBQUICKSLOT_ON_DROPSLOT(parent, slot, str, num)
     dummy.type = g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE]
     info = dummy
   end
+  -- グローバルに保存した情報は使ったら破棄しましょうね
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] = nil
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_FROMINDEX] = nil
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = nil
   -- ポーズはオリジナルにはないので特殊処理で復元
   info = g.instance:ModifyForPose(info, liftIcon:GetUserValue('POSEID'))
   -- スロットに入れる
@@ -942,7 +947,6 @@ function SUBQUICKSLOT_ON_POPSLOT(parent, slot, str, num)
     -- D&D対応してない絵文字用特殊処理
     g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = g.instance:GetTypeFromSlot(slot)
   end
-
 end
 function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
   g.instance:SlotClickAction(parent, slot, str, num)
