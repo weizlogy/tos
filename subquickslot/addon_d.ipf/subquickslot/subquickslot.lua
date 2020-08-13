@@ -224,15 +224,15 @@ function g.new(self)
     return e
   end
 
-  -- ログ出力
+  --* ログ出力
   members.Dbg = function(self, msg)
-    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+    -- CHAT_SYSTEM(string.format('{#666666}[%s] <Dbg> %s', addonName, msg))
   end
   members.Log = function(self, msg)
     CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
   end
   members.Err = function(self, msg)
-    CHAT_SYSTEM(string.format('[%s] <Err> %s', addonName, msg))
+    CHAT_SYSTEM(string.format('{#FF0000}[%s] <Err> %s', addonName, msg))
   end
 
   -- フレーム作成
@@ -352,8 +352,7 @@ function g.new(self)
     titlelabel:SetGravity(ui.CENTER_HORZ, ui.TOP)
     titlelabel:SetText(string.format('SubQuickSlot-%s Options', frameIndex))
     CreateLabeledEditCtrl(
-      frame, 'size', 'VxH  ', 10, 45, 'Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.')
-        :SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
+      frame, 'size', 'VxH  ', 10, 45, 'Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.'):SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
     -- 不透明度
     local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, 75, 0, 0)
     alphalabel:SetFontName('white_16_ol')
@@ -468,8 +467,13 @@ function g.new(self)
       ui.AddContextMenuItem(context, 'CreateNew', string.format('SUBQUICKSLOT_ON_MENU_CREATENEW(%s)', frameIndex))
       ui.AddContextMenuItem(context, 'CommonConfig', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG')
     else
-      ui.AddContextMenuItem(context, 'Delete', string.format('SUBQUICKSLOT_ON_MENU_DELETE(%s)', frameIndex))
+      ui.AddContextMenuItem(context, 'Delete',
+        string.format('SUBQUICKSLOT_ON_MENU_DELETE(%s)', frameIndex))
     end
+
+    ui.AddContextMenuItem(context, 'EmoticonList',
+      string.format('SUBQUICKSLOT_ON_MENU_ADDEMOTICON(%s, %d, %d)', frameIndex, frame:GetX(), frame:GetY()))
+
     ui.AddContextMenuItem(context, 'Cancel', 'None')
     ui.OpenContextMenu(context)
   end
@@ -973,6 +977,82 @@ function SUBQUICKSLOT_ON_UPDATE_OVERHEAT(frame, ctrl, num, str, time)
 end
 function SUBQUICKSLOT_ON_RESET_ABILITY_ACTIVE(frame, msg, argStr, argNum)
   g.instance:RedrawSkillAbilityFrames(argStr)
+end
+function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
+  local GetEmoticonImageName = function(className)
+    local namelist = StringSplit(className, "motion_");
+    local imageName = namelist[1];
+    if 1 < #namelist then
+      imageName = namelist[2];
+    end
+    return imageName
+  end
+
+  -- 画面表示
+  local etc = GetMyEtcObject()
+  local list, listCnt = GetClassList("chat_emoticons")
+  local slotw = 6
+  local sloth = listCnt / slotw + 1
+  local slotsize = 48
+
+  local frame = ui.CreateNewFrame(addonName, addonName..'-Emoticon')
+  frame:SetSkinName('downbox')
+  frame:Resize(310, 350)
+  frame:SetOffset(x + 10, y + 10)
+  frame:SetLayerLevel(999)
+  frame:EnableMove(1)
+  -- 閉じるボタン
+  local close = frame:CreateOrGetControl('button', 'close', frame:GetWidth() - 20, 0, 20, 20)
+  close:SetText('ｘ')
+  close:SetFontName('white_14_ol')
+  SUBQUICKSLOT_CLOSE_ADDEMOTICON = function(f, c, s, n)
+    f:ShowWindow(0)
+  end
+  close:SetEventScript(ui.LBUTTONUP, 'SUBQUICKSLOT_CLOSE_ADDEMOTICON')
+  -- スクロール用のGBOX
+  local bg = frame:CreateOrGetControl('groupbox', 'bg', 0, 0, 0, 0)
+  tolua.cast(bg, 'ui::CGroupBox')
+  bg:SetSkinName('None')
+  bg:Resize(frame:GetWidth() - 0, frame:GetHeight() - 20)
+  bg:SetOffset(0, 20)
+  bg:EnableScrollBar(1)
+  bg:EnableHittestGroupBox(false)
+  -- スロット作成
+  DESTROY_CHILD_BYNAME(bg, 'slotset')
+  local slotset = bg:CreateOrGetControl('slotset', 'slotset', 0, 0, 0, 0)
+  tolua.cast(slotset, 'ui::CSlotSet')
+  slotset:SetSlotSize(slotsize, slotsize)  -- スロットの大きさ
+  slotset:EnablePop(1)
+  slotset:EnableDrag(1)
+  slotset:EnableDrop(0)
+  slotset:SetColRow(slotw, sloth)  -- スロットの配置と個数
+  slotset:SetSpc(0, 0)
+  slotset:SetSkinName('invenslot')
+  slotset:SetEventScript(ui.POP, 'SUBQUICKSLOT_ON_EMOTICON_POPSLOT')
+  slotset:EnableSelection(0)
+  slotset:CreateSlots()
+
+  for i = 0 , listCnt - 1 do
+    local cls = GetClassByIndexFromList(list, i)
+    local haveEmoticon = 1
+    if cls.CheckServer == 'YES' then
+      haveEmoticon = TryGetProp(etc, 'HaveEmoticon_' .. cls.ClassID)
+    end
+    local slot = slotset:GetSlotByIndex(i)
+    local icon = CreateIcon(slot)
+    icon:SetImage(GetEmoticonImageName(cls.ClassName))
+    local tooltipText = string.format( "%s%s(%s)" , "/" ,cls.IconTokken, icon:GetInfo():GetImageName())
+    icon:SetTextTooltip(tooltipText)
+    if (haveEmoticon <= 0) then
+      -- slot:SetAlpha(25)
+      icon:SetColorTone('11FFFFFF')
+    end
+    slot:ShowWindow(1)
+  end
+end
+function SUBQUICKSLOT_ON_EMOTICON_POPSLOT(parent, slot, str, num)
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] = 'Motion'
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = slot:GetIcon():GetInfo():GetImageName()
 end
 
 -- インスタンス作成
