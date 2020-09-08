@@ -37,8 +37,11 @@ function g.new(self)
   -- findhfn  オーナーハンドル取得関数
     local findfn = className
     local findhfn = 'Common_MySession'
+    local findhfnCustom = self[className..'_FindHandle']
     local maxCountfn = self[className..'_MaxCount']
-
+    if (findhfnCustom ~= nil) then
+      findhfn = className..'_FindHandle'
+    end
     if (maxCountfn == nil) then
       return
     end
@@ -148,7 +151,7 @@ function g.new(self)
     return 1
   end
 
-  -- サモニングの召喚物を判定する
+  -- サラミオンの召喚物を判定する
   members.Sorcerer_SummonSalamion = function(name)
     return name == 'Saloon'
   end
@@ -156,7 +159,7 @@ function g.new(self)
     return 1
   end
 
-  -- サモニングの召喚物を判定する
+  -- サモンサーバントの召喚物を判定する
   members.Sorcerer_SummonServant = function(name)
     return name == 'russianblue'
   end
@@ -174,6 +177,32 @@ function g.new(self)
   end
   members.Featherfoot_BonePointing_MaxCount = function(slv)
     return 1
+  end
+
+  -- ******************************************** --
+  -- ***             ウォーロック             *** --
+  -- ******************************************** --
+
+  -- ダークサージまたはインヴォケーションの召喚物を判定する
+  -- ていうか区別できない
+  --
+  members.Warlock_DarkTheurge = function(name)
+    return name == 'pcskill_Warlock_DarkTheurge'
+  end
+  members.Warlock_DarkTheurge_MaxCount = function(slv)
+    return 5
+  end
+  members.Warlock_DarkTheurge_FindHandle = function()
+    return 0
+  end
+  members.Warlock_Invocation = function(name)
+    return name == 'pcskill_Warlock_DarkTheurge_red' or name == 'pcskill_Warlock_DarkTheurge'
+  end
+  members.Warlock_Invocation_MaxCount = function(slv)
+    return 10
+  end
+  members.Warlock_Invocation_FindHandle = function()
+    return 0
   end
 
   -- ******************************************** --
@@ -215,7 +244,7 @@ function g.new(self)
     return name == 'pcskill_wood_owl2'
   end
   members.Dievdirbys_CarveOwl_MaxCount = function(slv)
-    return 2
+    return 5
   end
 
   -- 世界樹の彫刻の召喚物を判定する
@@ -286,6 +315,8 @@ function g.new(self)
         modeLogic = ModeIcon2()
       elseif (config.mode == 'party') then
         modeLogic = ModeParty()
+      elseif (config.mode == 'extend') then
+        modeLogic = ModeExtend()
       end
 
       -- 実行する
@@ -359,15 +390,15 @@ function g.new(self)
     return e
   end
 
-   -- ログ出力
+  --* ログ出力
   members.Dbg = function(self, msg)
-    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+    -- CHAT_SYSTEM(string.format('{#666666}[%s] <Dbg> %s', addonName, msg))
   end
   members.Log = function(self, msg)
     CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
   end
   members.Err = function(self, msg)
-    CHAT_SYSTEM(string.format('[%s] <Err> %s', addonName, msg))
+    CHAT_SYSTEM(string.format('{#FF0000}[%s] <Err> %s', addonName, msg))
   end
 
   -- デストラクター
@@ -382,7 +413,6 @@ setmetatable(g, {__call = g.new});
 -- 自フレーム初期化処理
 function SUMMONCOUNTER_ON_INIT(addon, frame)
   addon:RegisterMsg('GAME_START_3SEC', 'SUMMONCOUNTER_REFRESH_KICKER')
-  -- addon:RegisterMsg('GAME_START_3SEC', 'SUMMONCOUNTER_LOAD_AT_ONCE')
 end
 
 -- 設定ファイル読み込み
@@ -430,6 +460,9 @@ function SUMMONCOUNTER_UPDATE(slot)
     local actor = tolua.cast(obj, 'CFSMActor')
     local handle = actor:GetHandleVal()
     local ownerHandle = info.GetOwner(handle)
+
+    -- suco:Dbg(iesObj.ClassName .. ' - OWNER -> ' .. ownerHandle)
+
     if (ownerHandle == suco[findhfunc]() and suco[findfunc](iesObj.ClassName)) then
       summons = summons + 1
       suco:PutHandle(handle, findfunc)

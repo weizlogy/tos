@@ -319,7 +319,7 @@
     "name" : "Summon Counter",
     "file" : "summoncounter",
     "extension" : "ipf",
-    "fileVersion" : "v2.0.1",
+    "fileVersion" : "v2.0.2",
     "releaseTag" : "summoncounter",
     "unicode" : "📖",
     "description" : "クイックスロットに召喚物の個体数を表示します。召喚物の個体数やHPをUI上に表示します。召喚物がしゃべります――!?",
