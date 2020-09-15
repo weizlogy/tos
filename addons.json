@@ -142,19 +142,6 @@
     ]
   },
   {
-    "name" : "Ignore Lifetime-item when Put AccountWarehouse",
-    "file" : "ignorelifetimewhenputaw",
-    "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
-    "releaseTag" : "ignorelifetimewhenputaw",
-    "unicode" : "📖",
-    "description" : "チーム倉庫に期間限定アイテムを入れるときに出る警告をなくします。",
-    "tags" : [
-      "accountwarehouse",
-      "lifetime"
-    ]
-  },
-  {
     "name" : "Mini Gauge Text",
     "file" : "minigaugetext",
     "extension" : "ipf",
