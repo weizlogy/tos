@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <uiframe name="hpmonitor" x="10" y="10" width="100" height="100">
   <frame title="HPMonitor" snapclient="false" snapframe="false"/>
-  <option visible="true" alwaysVisible="false" closebutton="false" autoopen="true" hideable="false"/>
-  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true"/>
+  <option visible="false" alwaysVisible="false" closebutton="false" autoopen="true" hideable="true"/>
+  <input hittest="true" movable="true" moveintitlebar="false" hittestframe="true" resize="true" resizerange="100 50 800 600"/>
   <layer layerlevel="31"/>
-  <draw blend="100" drawtitlebar="false" drawframe="false"/>
+  <draw blend="100" drawtitlebar="false" drawframe="true"/>
+  <script ResizeScp="_HPMONITOR_RESIZE"/>
   <controls>
+    <button name="resize" rect="0 0 30 30" margin="0 3 -1 0" layout_gravity="right top" MouseOffAnim="btn_mouseoff" MouseOnAnim="btn_mouseover" image="button_chat_scale" oversound="button_over" resizeframe="true" texttooltip=""/>
   </controls>
 </uiframe>
