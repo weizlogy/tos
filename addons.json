@@ -132,13 +132,26 @@
     "name" : "HP Monitor",
     "file" : "hpmonitor",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.2",
+    "fileVersion" : "v1.1.1",
     "releaseTag" : "hpmonitor",
     "unicode" : "📖",
     "description" : "ボスのHPを監視して、指定パーセント付近で音とチャットを流します。常時モンスターのHPバーにパーセンテージ表示を追加します。",
     "tags" : [
       "hp",
       "monitor"
+    ]
+  },
+  {
+    "name" : "Ignore Lifetime-item when Put AccountWarehouse",
+    "file" : "ignorelifetimewhenputaw",
+    "extension" : "ipf",
+    "fileVersion" : "v1.0.0",
+    "releaseTag" : "ignorelifetimewhenputaw",
+    "unicode" : "📖",
+    "description" : "チーム倉庫に期間限定アイテムを入れるときに出る警告をなくします。",
+    "tags" : [
+      "accountwarehouse",
+      "lifetime"
     ]
   },
   {
@@ -319,7 +332,7 @@
     "name" : "Summon Counter",
     "file" : "summoncounter",
     "extension" : "ipf",
-    "fileVersion" : "v2.0.2",
+    "fileVersion" : "v2.0.3",
     "releaseTag" : "summoncounter",
     "unicode" : "📖",
     "description" : "クイックスロットに召喚物の個体数を表示します。召喚物の個体数やHPをUI上に表示します。召喚物がしゃべります――!?",
