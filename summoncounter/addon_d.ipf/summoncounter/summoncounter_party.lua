@@ -45,7 +45,7 @@ function ModeParty.new(self)
       leaderMark:ShowWindow(0)
       -- 名前
       local nameRichText = tolua.cast(partyInfoCtrlSet:GetChild('name_text'), "ui::CRichText")
-      nameRichText:SetTextByKey("name", config.title or targetName)
+      nameRichText:SetTextByKey("name", config.title or self.Key)
       -- レベル
       local lvbox = partyInfoCtrlSet:GetChild('lvbox')
       local levelRichText = tolua.cast(lvbox, "ui::CRichText")
