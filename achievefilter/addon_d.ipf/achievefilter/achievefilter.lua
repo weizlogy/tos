@@ -30,30 +30,36 @@ function g.new(self)
 
   -- チェックボックス生成/更新
   members.CreateOrUpdateFilterControls = function(self, frame, curtabIndex)
-    g.instance:Dbg('CreateOrUpdateFilterControls called. ')
-    g.instance:Dbg('frame = '..frame:GetName())
-    g.instance:Dbg('curtabIndex = '..tostring(curtabIndex))
+    self:Dbg('CreateOrUpdateFilterControls called. ')
+    self:Dbg('frame = '..frame:GetName())
+    self:Dbg('curtabIndex = '..tostring(curtabIndex))
 
     if (curtabIndex ~= 1) then
       DESTROY_CHILD_BYNAME(frame, addonName..'_')
       return
     end
 
+    -- achievementtracker連携
+    local margin = 0
+    if (ACHIEVEMENTTRACKER_ON_INIT) then
+      margin = 30
+    end
+
     local fontType = 'brown_16_b'
     local script = 'ACHIEVEFILTER_REFRESH_LIST'
-    local complete = frame:CreateOrGetControl('checkbox', addonName..'_optionComplete', 10, 128, 90, 30)
+    local complete = frame:CreateOrGetControl('checkbox', addonName..'_optionComplete', 10, 128 + margin, 90, 30)
     tolua.cast(complete, "ui::CCheckBox")
     complete:SetCheck(__checkedStates.complete.state)
     complete:SetFontName(fontType)
     complete:SetEventScript(ui.LBUTTONUP, script)
     complete:SetText('完成('..__checkedStates.complete.count..')')
-    local unknown = frame:CreateOrGetControl('checkbox', addonName..'_optionUnknown', 170, 128, 90, 30)
+    local unknown = frame:CreateOrGetControl('checkbox', addonName..'_optionUnknown', 170, 128 + margin, 90, 30)
     tolua.cast(unknown, "ui::CCheckBox")
     unknown:SetCheck(__checkedStates.unknown.state)
     unknown:SetFontName(fontType)
     unknown:SetEventScript(ui.LBUTTONUP, script)
     unknown:SetText('未確認('..__checkedStates.unknown.count..')')
-    local incomplete = frame:CreateOrGetControl('checkbox', addonName..'_optionInComplete', 370, 128, 90, 30)
+    local incomplete = frame:CreateOrGetControl('checkbox', addonName..'_optionInComplete', 370, 128 + margin, 90, 30)
     tolua.cast(incomplete, "ui::CCheckBox")
     incomplete:SetCheck(__checkedStates.incomplete.state)
     incomplete:SetFontName(fontType)
@@ -72,6 +78,7 @@ function g.new(self)
 
   -- 見たまんま
   members.ClearStateCount = function(self, frame)
+    self:Dbg('ClearStateCount called. ')
     __checkedStates.complete.count = 0
     __checkedStates.unknown.count = 0
     __checkedStates.incomplete.count = 0
@@ -79,9 +86,9 @@ function g.new(self)
 
   -- 業績フィルター処理（ついでにカウントもする）
   members.Filter = function(self, classType, have)
-    g.instance:Dbg('Filter called. ')
-    g.instance:Dbg('classType = '..tostring(classType))
-    g.instance:Dbg('have = '..tostring(have))
+    -- g.instance:Dbg('Filter called. ')
+    -- g.instance:Dbg('classType = '..tostring(classType))
+    -- g.instance:Dbg('have = '..tostring(have))
 
     local achieve = GetClassByType('Achieve', classType)
     if (achieve == nil) then
@@ -162,11 +169,9 @@ function ACHIEVEFILTER_ON_INIT(addon, frame)
     g.instance.ACHIEVE_RESET = ACHIEVE_RESET
   end
   ACHIEVE_RESET = function(frame)
+    g.instance:Dbg('ACHIEVE_RESET called.')
     g.instance:ClearStateCount(frame)
     g.instance.ACHIEVE_RESET(frame)
-    -- 矯正1でもいいけど念の為
-    local curtabIndex = tolua.cast(frame:GetChild('statusTab'), "ui::CTabControl"):GetSelectItemIndex()
-    g.instance:CreateOrUpdateFilterControls(frame, curtabIndex)
   end
 end
 
@@ -188,6 +193,7 @@ g.instance = g()
 
 --- status.luaの STATUS_ACHIEVE_INIT を書き換え
 function STATUS_ACHIEVE_INIT()
+    g.instance:Dbg('STATUS_ACHIEVE_INIT called.')
     local frame = ui.GetFrame("status");
     local achieveGbox = frame:GetChild('achieveGbox');
     local internalBox = achieveGbox:GetChild("internalBox");
@@ -425,5 +431,16 @@ function STATUS_ACHIEVE_INIT()
 	CHANGE_STAT_FONT(frame, 'MSP', currentAchieveCls.MSP_BM, 1)
 				
 	frame:Invalidate();
+
+  -- 追加 start
+  -- 矯正1でもいいけど念の為
+  local curtabIndex = tolua.cast(frame:GetChild('statusTab'), "ui::CTabControl"):GetSelectItemIndex()
+  g.instance:CreateOrUpdateFilterControls(frame, curtabIndex)
+  -- 追加 end
+
+  -- achievementtracker連携
+  if (ACHIEVEMENTTRACKER_ON_INIT) then
+    AT_ACHIEVE()
+  end
 end
 ---
