@@ -119,7 +119,7 @@
     "name" : "Hide Name",
     "file" : "hidename",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.3",
+    "fileVersion" : "v1.0.4",
     "releaseTag" : "hidename",
     "unicode" : "📖",
     "description" : "画面にある自キャラ名とギルド名、エンブレムを消します。",
