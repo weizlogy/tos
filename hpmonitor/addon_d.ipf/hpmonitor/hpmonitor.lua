@@ -79,19 +79,36 @@ function g.new(self)
   members.Check = function(self, handle, monitor)
     local stat = info.GetTargetInfo(handle).stat
     local perHP = (stat.HP / stat.maxHP) * 100
-    -- self:Dbg(perHP)
+
+    self:Dbg(perHP)
 
     local sound = ""
     local sendmsg = ""
+    local comment = ""
     local matchedIndex = -1
     for i, _ in ipairs(monitor) do
       local m = monitor[i]
-      self:Dbg(m.limit..' -> '..m.msg)
       -- limit <= perHP <= limit
       if (perHP <= m.limit + 1 and perHP >= m.limit) then
+        self:Dbg(m.limit..' -> '..m.msg)
+        -- 複数ヒットした場合は先に音を鳴らす
+        if (sound ~= "") then
+          imcSound.PlaySoundEvent(sound)
+        end
         sound = m.sound or ""
-        sendmsg = m.msg or ""
-        comment = m.comment or ""
+        -- 複数ヒットした場合はメッセージを連結する
+        if (sendmsg ~= "") then
+          sendmsg = sendmsg .. "{nl}" .. m.msg or ""
+        else
+          sendmsg = m.msg or ""
+        end
+        -- 複数ヒットした場合はCommentModeのチェックだけ先にやらせる
+        if (m.comment ~= "") then
+          self:ChangeCommentMode(m.comment)
+          comment = m.comment or ""
+        else
+          comment = (comment .. "{nl}" .. m.comment) or ""
+        end
         m.limit = -100 -- 一度ヒットしたものはヒットさせないようにする
       end
     end
@@ -104,12 +121,15 @@ function g.new(self)
     local msg = playdata.msg
     local comment = playdata.comment
 
-    if (sound ~= nil) then
+    self:Dbg(string.format('playdata = [%s] [%s] [%s]', sound, msg, comment))
+
+    if (sound ~= "") then
+      self:Dbg('play sound.')
       imcSound.PlaySoundEvent(sound)
     end
     UI_CHAT(msg)
 
-    if (comment ~= nil) then
+    if (comment ~= "") then
       self:ChangeCommentMode(comment)  -- on, offの指定があれば行う
       __currentComment = comment
     end
@@ -127,6 +147,8 @@ function g.new(self)
   end
   --* 
   members.ChangeCommentMode = function(self, mode)
+    self:Dbg('ChangeCommentMode ' .. mode)
+
     if (mode == 'on') then
       __commentMode = 1
       self:Log('comment function is on.')
@@ -142,6 +164,8 @@ function g.new(self)
 
   --*
   members.InitCommentFrame = function(self)
+    self:Dbg('InitCommentFrame start.')
+
     self:LoadLocation()
 
     local frame = ui.GetFrame(addonName)
@@ -171,6 +195,8 @@ function g.new(self)
       return 1
     end
     frame:RunUpdateScript('HPMONITOR_COMMENT_WATCHER', 0, 0, 0, 0.9)
+
+    self:Dbg('InitCommentFrame end.')
   end
 
   --*
@@ -268,10 +294,14 @@ function g.new(self)
       TARGETINFO_TRANS_HP_VALUE = g.instance.TARGETINFO_TRANS_HP_VALUE
       g.instance.TARGETINFO_TRANS_HP_VALUE = nil
     end
-    if (g.instance.TARGETINFOTOBOSS_TARGET_SET ~= nil) then
-      TARGETINFOTOBOSS_TARGET_SET = g.instance.TARGETINFOTOBOSS_TARGET_SET
-      g.instance.TARGETINFOTOBOSS_TARGET_SET = nil
-    end
+    -- if (g.instance.TARGETINFOTOBOSS_TARGET_SET ~= nil) then
+    --   TARGETINFOTOBOSS_TARGET_SET = g.instance.TARGETINFOTOBOSS_TARGET_SET
+    --   g.instance.TARGETINFOTOBOSS_TARGET_SET = nil
+    -- end
+    -- if (g.instance.TGTINFO_TARGET_SET ~= nil) then
+    --   TGTINFO_TARGET_SET = g.instance.TGTINFO_TARGET_SET
+    --   g.instance.TGTINFO_TARGET_SET = nil
+    -- end
     if (g.instance.UI_CHAT ~= nil) then
       UI_CHAT = g.instance.UI_CHAT
       g.instance.UI_CHAT = nil
@@ -291,24 +321,46 @@ function HPMONITOR_ON_INIT(addon, frame)
     g.instance.TARGETINFO_TRANS_HP_VALUE = TARGETINFO_TRANS_HP_VALUE
   end
   TARGETINFO_TRANS_HP_VALUE = function(handle, hp, fontStyle)
+    -- 
+    local monitor = g.instance:GetInfo(handle)
+    if (monitor ~= nil) then
+      local playdata = g.instance:Check(handle, monitor)
+      g.instance:Play(playdata)
+    end
+    -- HP監視本体
     local perHP = g.instance:GetPerHP(handle)
     return g.instance.TARGETINFO_TRANS_HP_VALUE(handle, hp, fontStyle)
       ..string.format('(%.2f%%)', perHP)
   end
 
-  if (g.instance.TARGETINFOTOBOSS_TARGET_SET == nil) then
-    g.instance.TARGETINFOTOBOSS_TARGET_SET = TARGETINFOTOBOSS_TARGET_SET
-  end
-  TARGETINFOTOBOSS_TARGET_SET = function(frame, msg, argStr, argNum)
-    g.instance.TARGETINFOTOBOSS_TARGET_SET(frame, msg, argStr, argNum)
-    local handle = argNum
-    local monitor = g.instance:GetInfo(handle)
-    if (monitor == nil) then
-      return
-    end
-    local playdata = g.instance:Check(handle, monitor)
-    g.instance:Play(playdata)
-  end
+  -- if (g.instance.TARGETINFOTOBOSS_TARGET_SET == nil) then
+  --   g.instance.TARGETINFOTOBOSS_TARGET_SET = TARGETINFOTOBOSS_TARGET_SET
+  -- end
+  -- TARGETINFOTOBOSS_TARGET_SET = function(frame, msg, argStr, argNum)
+  --   g.instance.TARGETINFOTOBOSS_TARGET_SET(frame, msg, argStr, argNum)
+  --   local handle = session.GetTargetHandle()
+  --   local monitor = g.instance:GetInfo(handle)
+  --   if (monitor == nil) then
+  --     return
+  --   end
+  --   local playdata = g.instance:Check(handle, monitor)
+  --   g.instance:Play(playdata)
+  -- end
+
+  -- -- テスト用にボスじゃなくても動くように
+  -- if (g.instance.TGTINFO_TARGET_SET == nil) then
+  --   g.instance.TGTINFO_TARGET_SET = TGTINFO_TARGET_SET
+  -- end
+  -- TGTINFO_TARGET_SET = function(frame, msg, argStr, argNum)
+  --   g.instance.TGTINFO_TARGET_SET(frame, msg, argStr, argNum)
+  --   local handle = session.GetTargetHandle()
+  --   local monitor = g.instance:GetInfo(handle)
+  --   if (monitor == nil) then
+  --     return
+  --   end
+  --   local playdata = g.instance:Check(handle, monitor)
+  --   g.instance:Play(playdata)
+  -- end
 
   if (g.instance.UI_CHAT == nil) then
     g.instance.UI_CHAT = UI_CHAT
