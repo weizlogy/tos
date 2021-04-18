@@ -992,8 +992,12 @@ function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
     return imageName
   end
 
+  -- 絵文字チーム共通化で保持状態確認先が変わるんだよ
+  local etc = GetMyAccountObj();
+  if TryGetProp(cls, 'HaveUnit', 'None') == 'PC' then
+    etc = GetMyEtcObject()
+  end
   -- 画面表示
-  local etc = GetMyEtcObject()
   local list, listCnt = GetClassList("chat_emoticons")
   local slotw = 6
   local sloth = listCnt / slotw + 1
