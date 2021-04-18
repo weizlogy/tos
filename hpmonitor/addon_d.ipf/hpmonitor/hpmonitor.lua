@@ -86,6 +86,7 @@ function g.new(self)
     local sendmsg = ""
     local comment = ""
     local matchedIndex = -1
+
     for i, _ in ipairs(monitor) do
       local m = monitor[i]
       -- limit <= perHP <= limit
@@ -98,20 +99,21 @@ function g.new(self)
         sound = m.sound or ""
         -- 複数ヒットした場合はメッセージを連結する
         if (sendmsg ~= "") then
-          sendmsg = sendmsg .. "{nl}" .. m.msg or ""
+          sendmsg = sendmsg .. " / " .. (m.msg or "")
         else
           sendmsg = m.msg or ""
         end
         -- 複数ヒットした場合はCommentModeのチェックだけ先にやらせる
-        if (m.comment ~= "") then
+        if (comment ~= "") then
           self:ChangeCommentMode(m.comment)
           comment = m.comment or ""
         else
-          comment = (comment .. "{nl}" .. m.comment) or ""
+          comment = comment .. "{nl}" .. (m.comment or "")
         end
         m.limit = -100 -- 一度ヒットしたものはヒットさせないようにする
       end
     end
+
     return { msg = sendmsg, sound = sound, comment = comment }
   end
 
@@ -120,6 +122,8 @@ function g.new(self)
     local sound = playdata.sound
     local msg = playdata.msg
     local comment = playdata.comment
+
+CHAT_SYSTEM(tostring(msg))
 
     self:Dbg(string.format('playdata = [%s] [%s] [%s]', sound, msg, comment))
 
@@ -381,7 +385,6 @@ function HPMONITOR_ON_INIT(addon, frame)
       local mode = string.match(temp, "^/hpm (.+)$")
       g.instance:ChangeMode(mode)
     end
-
     g.instance.UI_CHAT(msg)
   end
 
