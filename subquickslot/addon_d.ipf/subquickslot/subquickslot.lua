@@ -1000,11 +1000,6 @@ function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
     return imageName
   end
 
-  -- 絵文字チーム共通化で保持状態確認先が変わるんだよ
-  local etc = GetMyAccountObj();
-  if TryGetProp(cls, 'HaveUnit', 'None') == 'PC' then
-    etc = GetMyEtcObject()
-  end
   -- 画面表示
   local list, listCnt = GetClassList("chat_emoticons")
   local slotw = 6
@@ -1050,6 +1045,11 @@ function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
 
   for i = 0 , listCnt - 1 do
     local cls = GetClassByIndexFromList(list, i)
+    -- 絵文字チーム共通化で保持状態確認先が変わるんだよ
+    local etc = GetMyAccountObj();
+    if TryGetProp(cls, 'HaveUnit', 'None') == 'PC' then
+      etc = GetMyEtcObject()
+    end
     local haveEmoticon = 1
     if cls.CheckServer == 'YES' then
       haveEmoticon = TryGetProp(etc, 'HaveEmoticon_' .. cls.ClassID)
