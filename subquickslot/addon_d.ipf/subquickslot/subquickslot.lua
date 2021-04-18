@@ -600,8 +600,9 @@ function g.new(self)
       slot:ClearText()
 
     elseif (category == 'Motion') then
+      local image, _ = string.match(mytype, '^(.-)%s(.-)$')
       local icon = CreateIcon(slot)
-      icon:SetImage(mytype)
+      icon:SetImage(image)
       icon:SetColorTone('FFFFFFFF')
       icon:SetTextTooltip(mytype)
       slot:ClearText()
@@ -652,6 +653,13 @@ function g.new(self)
       control.Pose(GetClassByType('Pose', num).ClassName)
 
     elseif (category == 'Motion') then
+      -- モーション判定してグループを強制する
+      local image, icongroup = string.match(mytype, '^(.-)%s(.-)$')
+      if (icongroup == 'Motion') then
+        ui.GetFrame('chat_emoticon'):SetUserValue("EMOTICON_GROUP", 'Motion');
+      else
+        ui.GetFrame('chat_emoticon'):SetUserValue("EMOTICON_GROUP", '');
+      end
       CHAT_EMOTICON_SELECT(parent, slot)
     
     elseif (category == 'Ability') then
@@ -1055,12 +1063,18 @@ function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
       -- slot:SetAlpha(25)
       icon:SetColorTone('11FFFFFF')
     end
+    local icongroup = 'Normal'
+    local tempTokken = dictionary.ReplaceDicIDInCompStr(cls.IconTokken)
+    if (string.match(tempTokken, 'モーション') or string.match(tempTokken, 'motion')) then
+      icongroup = 'Motion';
+    end
+    slot:SetUserValue('icongroup', icongroup)
     slot:ShowWindow(1)
   end
 end
 function SUBQUICKSLOT_ON_EMOTICON_POPSLOT(parent, slot, str, num)
   g.instance[g.instance.GLOBALVALUE_LIFTICON_CATEGORY] = 'Motion'
-  g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = slot:GetIcon():GetInfo():GetImageName()
+  g.instance[g.instance.GLOBALVALUE_LIFTICON_TYPE] = slot:GetIcon():GetInfo():GetImageName() .. ' ' .. slot:GetUserValue('icongroup')
 end
 
 -- インスタンス作成
