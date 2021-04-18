@@ -1,5 +1,24 @@
 # Release Note.
 
+## v1.1.3
+
+### 動かなくなってたのを修正 その２
+
+## v1.1.2
+
+### 動かなくなってたのを修正
+
+## v1.1.1
+
+### コメント機能追加
+
+チャットで"/hpm comment on"または"/hpm comment off"で、コメント表示UIのON/OFFができます。
+
+settings.txtにおいても、"comment='on'"または"comment='off'"で表示状態をHPで切り替えられます。
+"comment='任意の文字列'"をHPに応じて表示できます。
+
+改行( {nl} )、色付け( {#FF0000} )なども対応できます。
+
 ## v1.0.2
 
 ### 一時的なON/OFF機能の追加
@@ -39,10 +58,10 @@ s['boss_AmissDog'] = {
   [2] = { limit = 50, msg = '/p 50%です' },
 }
 s['ID_boss_Rambandgad_red'] = {
-  [1] = { limit = 80, msg = '/p 89', sound = 'button_click_stats_up' },
+  [1] = { limit = 80, msg = '/p 89', sound = 'button_click_stats_up', comment='on' },
   [2] = { limit = 79, msg = '/p 87%です' },
-  [3] = { limit = 78, msg = '/p 86%です' },
-  [4] = { limit = 77, msg = '/p 85%です' },
+  [3] = { limit = 78, msg = '/p 86%です', comment='test{nl}test2{#FF0000}color?' },
+  [4] = { limit = 77, msg = '/p 85%です', comment='off' },
 }
 ---
 return s
