@@ -123,8 +123,6 @@ function g.new(self)
     local msg = playdata.msg
     local comment = playdata.comment
 
-CHAT_SYSTEM(tostring(msg))
-
     self:Dbg(string.format('playdata = [%s] [%s] [%s]', sound, msg, comment))
 
     if (sound ~= "") then
