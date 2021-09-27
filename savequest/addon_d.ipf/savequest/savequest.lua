@@ -1,5 +1,7 @@
-SaveQuest = {}
-SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL = 'SAVEQUEST_LAYERLEVEL'
+_G["SAVEQUEST"]=_G["SAVEQUEST"] or {}
+local SaveQuest = _G["SAVEQUEST"]["SAVEQUEST"] or {}
+SaveQuest.FRAME_SHORTCUT_USERVALUE_LAYERLEVEL = "SAVEQUEST_LAYERLEVEL"
+local saqu=_G["SAVEQUEST"]["SAQU"]
 
 -- constructor.
 function SaveQuest.new(self)
@@ -470,6 +472,13 @@ setmetatable(SaveQuest, {__call = SaveQuest.new});
 
 -- frame initialize.
 function SAVEQUEST_ON_INIT(addon, frame)
+  -- remove old state.
+	if (saqu ~= nil) then
+		saqu:Destroy()
+	end
+	-- create instance.
+	saqu = SaveQuest()
+	_G["SAVEQUEST"]["SAQU"]=saqu
   -- override quest update event.
   if (saqu.UPDATE_QUESTINFOSET_2 == nil) then
     saqu.UPDATE_QUESTINFOSET_2 = UPDATE_QUESTINFOSET_2;
@@ -608,9 +617,7 @@ function SAVEQUEST_END_WHEEL(frame, ctrl, delta, argNum)
   frame:SetLayerLevel(level)
 end
 
--- remove old state.
-if (saqu ~= nil) then
-  saqu:Destroy();
-end
--- create instance.
-saqu = SaveQuest();
+-- いる？
+
+_G["SAVEQUEST"]["SAQU"]=saqu
+_G["SAVEQUEST"]["SAVEQUEST"] =SaveQuest
