@@ -470,6 +470,13 @@ setmetatable(SaveQuest, {__call = SaveQuest.new});
 
 -- frame initialize.
 function SAVEQUEST_ON_INIT(addon, frame)
+  addon:RegisterMsg('GAME_START_3SEC', 'SAVEQUEST_GAME_START_3SEC');
+  addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
+end
+
+function SAVEQUEST_GAME_START_3SEC()
+  local frame = ui.GetFrame('savequest');
+
   -- override quest update event.
   if (saqu.UPDATE_QUESTINFOSET_2 == nil) then
     saqu.UPDATE_QUESTINFOSET_2 = UPDATE_QUESTINFOSET_2;
@@ -516,7 +523,6 @@ function SAVEQUEST_ON_INIT(addon, frame)
     saqu.EXEC_ABANDON_QUEST(questID)
     SAVEQUEST_RELEASE(questID)
   end
-  addon:RegisterMsg("TARGET_SET", "SAVEQUEST_REMOVE_NPC");
 end
 
 -- remove npc event handler.
