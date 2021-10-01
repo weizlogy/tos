@@ -259,6 +259,12 @@ function STATUS_ACHIEVE_INIT()
                     desc_title:SetText(cls.DescTitle);
                 end
                 gbox:SetSkinName(HAVE_SKIN);
+
+            -- 追加 start
+            elseif filterResult == 2 then  -- 未確認はDISABLE_SKINを適用させたい
+              desc_title:SetText(cls.DescTitle);
+              gbox:SetSkinName('test_skin_gary_01')
+            -- 追加 end
             else
                 desc_title:SetText(cls.DescTitle);
                 gbox:SetSkinName(NORMAL_SKIN);
@@ -283,6 +289,12 @@ function STATUS_ACHIEVE_INIT()
                 gauge:ShowWindow(1);
                 static_accomplishment:ShowWindow(1);
                 accomplishment:ShowWindow(1);
+                -- -- 追加 start
+                -- local value = TryGetProp(accObj, "AchieveReward_"..cls.ClassName);
+                -- if value ~= nil and value == 0 then
+                --     req_btn:ShowWindow(1);
+                -- end
+                -- -- 追加 end
             end
 
             local suby = desc:GetY() + desc:GetHeight() + 10;
