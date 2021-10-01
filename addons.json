@@ -3,7 +3,7 @@
     "name" : "Achieve Filter",
     "file" : "achievefilter",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.3",
+    "fileVersion" : "v1.0.4",
     "releaseTag" : "achievefilter",
     "unicode" : "📖",
     "description" : "業績一覧をコレクション一覧みたいにフィルタリングできるようにします。",
