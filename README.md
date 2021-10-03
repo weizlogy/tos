@@ -2,8 +2,6 @@
 
 ## available addons description.
 
-[http://www.weizlogy.gq/categories/tos-addon/](http://www.weizlogy.gq/categories/tos-addon/)
-
 ## common installation.
 
 ### for jtos.
