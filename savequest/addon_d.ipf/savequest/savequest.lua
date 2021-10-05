@@ -451,17 +451,26 @@ function SaveQuest.new(self)
 
   -- recover addon state.
   members.Destroy = function(self)
-    UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
-    saqu.UPDATE_QUESTINFOSET_2 = nil;
+    if (saqu.UPDATE_QUESTINFOSET_2 ~= nil) then
+      UPDATE_QUESTINFOSET_2 = saqu.UPDATE_QUESTINFOSET_2;
+      saqu.UPDATE_QUESTINFOSET_2 = nil;
+    end
     if (saqu.UPDATE_QUEST_CTRL ~= nil) then
       UPDATE_QUEST_CTRL = saqu.UPDATE_QUEST_CTRL;
-      end
-    SHARE_QUEST_WITH_PARTY = saqu.SHARE_QUEST_WITH_PARTY;
-    saqu.SHARE_QUEST_WITH_PARTY = nil;
-    CANCEL_SHARE_QUEST_WITH_PARTY = saqu.CANCEL_SHARE_QUEST_WITH_PARTY;
-    saqu.CANCEL_SHARE_QUEST_WITH_PARTY = nil;
-    EXEC_ABANDON_QUEST = saqu.EXEC_ABANDON_QUEST;
-    saqu.EXEC_ABANDON_QUEST = nil;
+      saqu.UPDATE_QUEST_CTRL = nil;
+    end
+    if (saqu.SHARE_QUEST_WITH_PARTY ~= nil) then
+      SHARE_QUEST_WITH_PARTY = saqu.SHARE_QUEST_WITH_PARTY;
+      saqu.SHARE_QUEST_WITH_PARTY = nil;
+    end
+    if (saqu.CANCEL_SHARE_QUEST_WITH_PARTY ~= nil) then
+      CANCEL_SHARE_QUEST_WITH_PARTY = saqu.CANCEL_SHARE_QUEST_WITH_PARTY;
+      saqu.CANCEL_SHARE_QUEST_WITH_PARTY = nil;
+    end
+    if (saqu.EXEC_ABANDON_QUEST ~= nil) then
+      EXEC_ABANDON_QUEST = saqu.EXEC_ABANDON_QUEST;
+      saqu.EXEC_ABANDON_QUEST = nil;
+    end
   end
   return setmetatable(members, {__index = self});
 end
