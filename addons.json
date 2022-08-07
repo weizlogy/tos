@@ -1,22 +1,9 @@
 [
   {
-    "name" : "Achieve Filter",
-    "file" : "achievefilter",
-    "extension" : "ipf",
-    "fileVersion" : "v1.0.5",
-    "releaseTag" : "achievefilter",
-    "unicode" : "📖",
-    "description" : "業績一覧をコレクション一覧みたいにフィルタリングできるようにします。",
-    "tags" : [
-      "achieve",
-      "filter"
-    ]
-  },
-  {
     "name" : "Compact Heads Up Display",
     "file" : "compactheadsupdisplay",
     "extension" : "ipf",
-    "fileVersion" : "v1.0.0",
+    "fileVersion" : "v1.0.1",
     "releaseTag" : "compactheadsupdisplay",
     "unicode" : "📖",
     "description" : "Heads Up Display（自ジョブアイコン、HPなどがあるフレーム）からHPバーを取り去り、コンパクトにします。（ジョブアイコンとレベルだけにします）",
