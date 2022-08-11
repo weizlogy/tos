@@ -44,6 +44,15 @@ function g.new(self)
     WING = { JP = '　　　　翼', use = 1, unequip = 'NoOuter'},
     SPECIALCOSTUME = { JP = '　スペコス', use = 1, unequip = 'NoOuter'},
     EFFECTCOSTUME = { JP = 'エフェクト', use = 1, unequip = 'NoOuter'},
+    SEAL = { JP = '背中', use = 1, unequip = 'NoOuter'},
+    DOLL = { JP = '人形', use = 1, unequip = 'NoOuter'},
+    ARK = { JP = 'アーク', use = 0, unequip = 'NoOuter'},
+    TRINKET = { JP = 'トリンケット', use = 0, unequip = 'NoOuter'},
+    RELIC = { JP = 'レリック', use = 0, unequip = 'NoOuter'},
+    RH_SUB = { JP = '　右手サブ', use = 0, unequip = 'NoWeapon'},
+    LH_SUB = { JP = '　左手サブ', use = 0, unequip = 'NoWeapon'},
+    EARRING = { JP = 'イヤリング', use = 1, unequip = 'NoOuter'},
+    BELT = { JP = 'ベルト', use = 0, unequip = 'NoOuter'},
     HAIRCOLOR = { JP = 'ヘアカラー', use = 1, unequip = '', fnEq = 'EquipHairColor'},
     ACHIEVE = { JP = '　　　称号', use = 1, unequip = 'None', fnEq = 'EquipAchieve'},
     -- 変換処理
@@ -84,6 +93,7 @@ function g.new(self)
 
   -- システムメニューのインベントリボタンをカスタマイズ
   members.CustomSysMenu = function(self)
+    self:Dbg('CustomSysMenu called.')
     local sysmenuInv = ui.GetFrame('sysmenu'):GetChild('inven')
     sysmenuInv = tolua.cast(sysmenuInv, 'ui::CButton')
     sysmenuInv:SetEventScript(ui.RBUTTONUP, 'COSTUMEPLAY_ON_INVEN_SELECT_MENU')
@@ -119,47 +129,41 @@ function g.new(self)
     for index, equip in ipairs(equips) do
       -- 装備対象だけ
       if (equip.use == 1) then
-        useCount = useCount + 1
+        useCount = index + 0.1
         local spotkey = __EQUIP_SPOT_DATA:NormalizeSpot(equip)
         self[__EQUIP_SPOT_DATA:Equip(spotkey)](self, spotkey, equip, useCount)
       end
     end
+    DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 1.0)
+  end
+
+  members.wait = function(self, seconds)
+    local start = os.clock()
+    repeat until os.clock() > start + seconds
   end
 
   -- 通常装備品変更ロジック
   members.EquipNormal = function(self, spotkey, equip, useCount)
     local itemCls = GetClassByType('Item', equip.id)
     local className = itemCls.ClassName
+    -- (Un)Equip関数がインベントリのインデックスを参照するので順次処理せざるを得ない
+    -- そのため、装備後にwaitを加えている。若干固まる
     -- 装備解除の場合
     if (__EQUIP_SPOT_DATA:UnEquipClass(spotkey) == className) then
-      -- 動的に装備関数を作ってDebounceScriptで一定時間後に呼び出すことで
-      -- 時間差でお着替えさせる
-      local tempFuncName = 'COSTUMEPLAY_ON_UNEQUIP'..spotkey
-      _G[tempFuncName] = function()
-        self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..className)
+        self:Log('UnEquip ' .. __EQUIP_SPOT_DATA:Convert(spotkey))
         item.UnEquip(equip.slot)
-        _G[tempFuncName] = nil
-        DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
-      end
-      DebounceScript(tempFuncName, useCount / 2)
+        self:wait(0.075)
       return
     end
     -- 装備の場合
-    local tempFuncName = 'COSTUMEPLAY_ON_EQUIP'..spotkey
-    _G[tempFuncName] = function()
-      -- インベントリにあるものだけ
-      local invItem = session.GetInvItemByName(className)
-      if (invItem == nil) then
-        return
-      end
-      self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..itemCls.Name)
-      item.Equip(spotkey, invItem.invIndex)
-      _G[tempFuncName] = nil
-      -- 装備完了ログ出力用の動的関数
-      -- DebounceScriptで同名関数は時間を上書きするので最後の一回のみ呼ばれる
-      DebounceScript('COSTUMEPLAY_ON_EQUIP_END', 3.0)
+    -- インベントリにあるものだけ
+    local invItem = session.GetInvItemByName(className)
+    if (invItem == nil) then
+      return
     end
-    DebounceScript(tempFuncName, useCount / 2)
+    self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..itemCls.Name)
+    item.Equip(spotkey, invItem.invIndex)
+    self:wait(0.075)
   end
 
   -- ヘアカラー変更ロジック
@@ -173,6 +177,10 @@ function g.new(self)
     self:Log('Equip '..__EQUIP_SPOT_DATA:Convert(spotkey)..' -> '..equip.name)
     if (__EQUIP_SPOT_DATA:UnEquipClass(spotkey) == equip.name) then
       session.EquipAchieve(0)
+      return
+    end
+    -- 既に設定済みなら変更しなくていい
+    if (pc.GetEquipAchieveName() == equip.name) then
       return
     end
     local clslist, clscnt = GetClassList("Achieve")
@@ -241,7 +249,7 @@ function g.new(self)
     -- インベントリの横に5px開けて付ける
     -- frame:GetX()としたいところだが、inventoryがopen=pip指定のため定まらないっぽい
     costumeplay:Resize(350, 500)
-    costumeplay:SetOffset(1430 - costumeplay:GetWidth() - 5, frame:GetY())
+    costumeplay:SetOffset(1420 - costumeplay:GetWidth() - 5, frame:GetY())
     costumeplay:SetSkinName('test_frame_low')
     costumeplay:EnableMove(0)
     -- 保存するコスチューム名の入力欄
@@ -337,20 +345,23 @@ function g.new(self)
   members.__CollectEquipData = function(self)
     local data = {}
     local equiplist = session.GetEquipItemList()
-    for i = 0, equiplist:Count() - 1 do
+    local count = equiplist:Count()
+    for i = 0, count - 1 do
       local equipInfo = {}
-      local equipItem = equiplist:Element(i)
-      local itemCls = GetIES(equipItem:GetObject())
-      self:Dbg(item.GetEquipSpotName(equipItem.equipSpot).." - "..itemCls.Name..'('..itemCls.ClassName)
-      equipInfo.slot = equipItem.equipSpot
-      equipInfo.id = itemCls.ClassID
-      equipInfo.use = __EQUIP_SPOT_DATA:IsUse(item.GetEquipSpotName(equipItem.equipSpot))
-      table.insert(data, equipInfo)
+      self:Dbg(i)
+      local equipItem = equiplist:GetEquipItemByIndex(i)
+      if (equipItem ~= nil) then
+        local itemCls = GetIES(equipItem:GetObject())
+        self:Dbg(string.format('(%s/%s)', i, count) .. item.GetEquipSpotName(equipItem.equipSpot).." - "..itemCls.Name..'('..itemCls.ClassName)
+        equipInfo.slot = equipItem.equipSpot
+        equipInfo.id = itemCls.ClassID
+        equipInfo.use = __EQUIP_SPOT_DATA:IsUse(item.GetEquipSpotName(equipItem.equipSpot))
+        table.insert(data, equipInfo)
+      end
     end
     -- ヘアカラー
     -- IDから変換するのが面倒な感じなので仕方なくnameに突っ込む
-    local hairColors = imcIES.GetClassList('HairType'):GetClass(GetMyPCObject().Gender):GetSubClassList()
-    local myHairColor = hairColors:GetByIndex(item.GetHeadIndex() - 1)
+    local myHairColor = SWITCHGENDER_GET_HAIR_CLASS_C(item.GetHeadIndex(), GetMyPCObject().Gender)
     if myHairColor ~= nil then
       local hairColor = {}
       hairColor.slot = 'HAIRCOLOR'
@@ -417,7 +428,7 @@ function g.new(self)
 
   -- ログ出力
   members.Dbg = function(self, msg)
-    -- CHAT_SYSTEM(string.format('[%s] <Dbg> %s', addonName, msg))
+    -- CHAT_SYSTEM(string.format('{#666666}[%s] <Dbg> %s', addonName, msg))
   end
   members.Log = function(self, msg)
     CHAT_SYSTEM(string.format('[%s] <Log> %s', addonName, msg))
@@ -442,7 +453,9 @@ setmetatable(g, {__call = g.new})
 function COSTUMEPLAY_ON_INIT(addon, frame)
   g.instance:Dbg('COSTUMEPLAY_ON_INIT called.')
   g.instance:LoadCostumes()
-  addon:RegisterMsg('GAME_START_3SEC', 'COSTUMEPLAY_GAME_START_3SEC')
+  if (addon ~= nil) then
+    addon:RegisterMsg('GAME_START_3SEC', 'COSTUMEPLAY_GAME_START_3SEC')
+  end
 end
 
 -- 自フレーム初期化処理の続き
@@ -494,6 +507,7 @@ function COSTUMEPLAY_SAVE(frame, ctrl, str, num)
   g.instance:Dbg('COSTUMEPLAY_SAVE called.')
   local title = g.instance:GetSaveTitleOrDefault(frame)
   g.instance:Save(title)
+  g.instance:LoadCostumes()
   g.instance:CreateFrame()
 end
 
