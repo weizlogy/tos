@@ -32,7 +32,10 @@ function Dice.new(self)
 
   -- destroy.
   members.Destroy = function(self)
-    --UI_CHAT = dice.UI_CHAT;
+    if (dice.UI_CHAT ~= nil) then
+      UI_CHAT = dice.UI_CHAT;
+      dice.UI_CHAT = nil
+    end
   end
   return setmetatable(members, {__index = self});
 end
