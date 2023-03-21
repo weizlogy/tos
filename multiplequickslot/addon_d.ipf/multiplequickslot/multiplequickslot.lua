@@ -127,15 +127,18 @@ function g.new(self)
     local menuX = 0
     local menuY = -30
     local labelX = 30 + __config['labelX']
-    local labelY = -160 + __config['labelY']
+    local labelY = -185 + __config['labelY']
+    local baseName = 'slot_lock'
     if (_frame:GetName() == 'joystickquickslot') then
       menuX = -26
       menuY = 1
       labelX = 0 + __config['PadLabelX']
       labelY = 25 + __config['PadLabelY']
+      baseName = 'L2R2'
     end
     -- 基準点
-    local refreshBtn = GET_CHILD(_frame, "refreshBtn", "ui::CButton")
+    -- refreshBtn から slot_lock になってるぅぅぅ
+    local refreshBtn = GET_CHILD(_frame, baseName, "ui::CButton")
     -- メニューボタン
     local mqsMenu = _frame:CreateOrGetControl(
       'button', 'mqsMenu', refreshBtn:GetX() + menuX, refreshBtn:GetY() + menuY, 20, 25)
@@ -177,6 +180,9 @@ function g.new(self)
 
     -- キーアサイン復元
     QUICKSLOTNEXPBAR_UPDATE_HOTKEYNAME(frame)
+
+    -- 選択したものに書き換える
+    g.i:DrawUI(frame)
 
     self:Log('Loading '..slotsetName..' Successfully.')
   end
@@ -292,18 +298,21 @@ function MULTIPLEQUICKSLOT_ON_INIT(addon, frame)
   g.i:LoadConfig()
 
   -- クイックスロット上にUI描画
-  g.i:Override('QUICKSLOTNEXPBAR_ON_INIT', function(_addon, _frame)
-    g.i:Override('QUICKSLOTNEXPBAR_ON_INIT')(_addon, _frame)
-    g.i:DrawUI(ui.GetFrame('quickslotnexpbar'))
-  end)
-  g.i:Override('JOYSTICKQUICKSLOT_ON_INIT', function(_addon, _frame)
-    g.i:Override('JOYSTICKQUICKSLOT_ON_INIT')(_addon, _frame)
-    g.i:DrawUI(ui.GetFrame('joystickquickslot'))
-  end)
+  -- g.i:Override('QUICKSLOTNEXPBAR_ON_INIT', function(_addon, _frame)
+  --   g.i:Override('QUICKSLOTNEXPBAR_ON_INIT')(_addon, _frame)
+  --   g.i:DrawUI(ui.GetFrame('quickslotnexpbar'))
+  -- end)
+  -- g.i:Override('JOYSTICKQUICKSLOT_ON_INIT', function(_addon, _frame)
+  --   g.i:Override('JOYSTICKQUICKSLOT_ON_INIT')(_addon, _frame)
+  --   g.i:DrawUI(ui.GetFrame('joystickquickslot'))
+  -- end)
   
   -- テストコード
-  QUICKSLOTNEXPBAR_ON_INIT(addon, ui.GetFrame('quickslotnexpbar'))
-  JOYSTICKQUICKSLOT_ON_INIT(addon, ui.GetFrame('joystickquickslot'))
+  -- QUICKSLOTNEXPBAR_ON_INIT(addon, ui.GetFrame('quickslotnexpbar'))
+  -- JOYSTICKQUICKSLOT_ON_INIT(addon, ui.GetFrame('joystickquickslot'))
+
+  g.i:DrawUI(ui.GetFrame('quickslotnexpbar'))
+  g.i:DrawUI(ui.GetFrame('joystickquickslot'))
 end
 
 --* === イベントハンドラー === --
