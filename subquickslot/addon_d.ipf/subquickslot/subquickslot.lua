@@ -20,9 +20,12 @@ function g.new(self)
   -- === 定数 === --
   local __ADDON_DIR = '../addons/'..addonName
   local __OPTION_FRAME_NAME = addonName..'_option'
+
   local __USERVALUE_FRAME_INDEX = 'frameindex'
   local __USERVALUE_SLOT_CATEGORY = 'category'
   local __USERVALUE_SLOT_TYPE = 'type'
+  local __USERVALUE_FRAME_IS_COMMON = 'iscommon'
+
   local __CONFIG_FRAME_INDEXIES = 'frameindexies'
   local __CONFIG_SLOT_CATEGORY = 'category'
   local __CONFIG_SLOT_TYPE = 'type'
@@ -35,11 +38,14 @@ function g.new(self)
   local __CONFIG_SLOTSET_MAGNI = 'magnification'
   local __CONFIG_SLOTSET_NOTIFY_CLASSID = 'nofifyclassid'
   local __CONFIG_SLOTSET_DIRECT_WARP = 'directwarp'
-  local __COMMON_CONFIG_FILENAME = 'commonConfig'
+  local __CONFIG_SLOTSET_SHOW = 'show'
+
+  local __CONFIG_COMMON_FRAME_FILENAME = 'commonslot'
 
   -- === 内部データ === --
   local __cid = ''
   local __config = {}
+  local __commmon = {}
 
   -- === 内部関数 === --
   local GetConfigByFrameKey = function(index)
@@ -47,6 +53,12 @@ function g.new(self)
   end
   local GetFrameKeyByFrameName = function(frameName)
     return string.match(frameName, '^.-%-(%d+)$')
+  end
+  local GetDataFromFrame = function(frame)
+    if (frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON) == '1') then
+      return __commmon
+    end
+    return __config
   end
   local CreateNotInInventoryItemImage = function(icon, category, type, iesid)
     icon:Set(GET_ITEM_ICON_IMAGE(GetClassByType('Item', type)), category, type, 0, iesid)
@@ -102,24 +114,37 @@ function g.new(self)
   members.CreateFrames = function(self)
     self:Dbg('CreateFrames called.')
 
+    -- CID紐づけ分
     __cid = info.GetCID(session.GetMyHandle())
     __config = self:Deserialize(__cid) or {}
 
     for index in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       self:CreateFrame(index)
     end
+
+    -- 共通分
+    __commmon = self:Deserialize(__CONFIG_COMMON_FRAME_FILENAME) or {}
+
+    for index in string.gmatch(__commmon[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+      self:CreateFrame(index, true)
+    end
   end
 
   -- 全フレームのアイテム数を更新
-  members.RedrawFrames = function(self)
+  members.RedrawFrames = function(self, isCommon)
     self:Dbg('RedrawFrames called.')
 
-    for frameIndex in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+
+    for frameIndex in string.gmatch(target[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       local frame = ui.GetFrame(addonName..'-'..frameIndex)
       self:Dbg('Redrawing... target='..frame:GetName())
       local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
 
-      for k, v in pairs(__config[GetConfigByFrameKey(frameIndex)]) do
+      for k, v in pairs(target[GetConfigByFrameKey(frameIndex)]) do
         local index = string.match(k, 'slot(%d+)')
         local category = v[__CONFIG_SLOT_CATEGORY]
         local type = v[__CONFIG_SLOT_TYPE]
@@ -144,15 +169,20 @@ function g.new(self)
   end
 
   -- 全フレームのスキル特性のON/OFFを更新
-  members.RedrawSkillAbilityFrames = function(self, className)
+  members.RedrawSkillAbilityFrames = function(self, className, isCommon)
     self:Dbg('RedrawSkillAbilityFrames called.')
 
-    for frameIndex in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+
+    for frameIndex in string.gmatch(target[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       local frame = ui.GetFrame(addonName..'-'..frameIndex)
       self:Dbg('Redrawing... target='..frame:GetName()..' ability='..className)
       local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
 
-      for k, v in pairs(__config[GetConfigByFrameKey(frameIndex)]) do
+      for k, v in pairs(target[GetConfigByFrameKey(frameIndex)]) do
         local index = string.match(k, 'slot(%d+)')
         local category = v[__CONFIG_SLOT_CATEGORY]
         local type = v[__CONFIG_SLOT_TYPE]
@@ -236,29 +266,34 @@ function g.new(self)
   end
 
   -- フレーム作成
-  members.CreateFrame = function(self, frameIndex)
+  members.CreateFrame = function(self, frameIndex, isCommon)
     self:Dbg('CreateFrame called. '..frameIndex)
 
+    local config = __config
+    if (isCommon) then
+      config = __commmon
+    end
+
     local configKey = GetConfigByFrameKey(frameIndex)
-    __config[configKey] = __config[configKey]
+    config[configKey] = config[configKey]
     -- 設定がない場合は index == 1 のスロットから設定をいくつか継承する
-    if (not __config[configKey]) then
-      __config[configKey] = {}
+    if (not config[configKey]) then
+      config[configKey] = {}
       local baseConfig = __config[GetConfigByFrameKey(1)]
       if (baseConfig) then
         -- 継承するのは、倍率/透過度2種
-        __config[configKey][__CONFIG_SLOTSET_MAGNI] = baseConfig[__CONFIG_SLOTSET_MAGNI]
-        __config[configKey][__CONFIG_SLOTSET_ALPHA] = baseConfig[__CONFIG_SLOTSET_ALPHA]
-        __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = baseConfig[__CONFIG_SLOTSET_ALPHASLOT]
+        config[configKey][__CONFIG_SLOTSET_MAGNI] = baseConfig[__CONFIG_SLOTSET_MAGNI]
+        config[configKey][__CONFIG_SLOTSET_ALPHA] = baseConfig[__CONFIG_SLOTSET_ALPHA]
+        config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = baseConfig[__CONFIG_SLOTSET_ALPHASLOT]
       end
     end
 
     -- スロットサイズ解析
-    local slotw, sloth = string.match(__config[configKey][__CONFIG_SLOTSET_SIZE] or '1x1', '(%d+)x(%d+)')
+    local slotw, sloth = string.match(config[configKey][__CONFIG_SLOTSET_SIZE] or '1x1', '(%d+)x(%d+)')
     self:Dbg('creating slot => '..slotw..' x '..sloth)
-    local slotsize = 48 * (tonumber(__config[configKey][__CONFIG_SLOTSET_MAGNI] or '100') / 100)
+    local slotsize = 48 * (tonumber(config[configKey][__CONFIG_SLOTSET_MAGNI] or '100') / 100)
     -- ロック状態取得
-    local lockstate = tonumber(__config[configKey][__CONFIG_SLOTSET_LOCK] or '0')
+    local lockstate = tonumber(config[configKey][__CONFIG_SLOTSET_LOCK] or '0')
     self:Dbg('lockstate => '..lockstate)
 
     local frame = ui.CreateNewFrame(addonName, addonName..'-'..frameIndex)
@@ -266,8 +301,8 @@ function g.new(self)
     frame:SetSkinName('downbox')
     frame:SetEventScript(ui.RBUTTONUP, 'SUBQUICKSLOT_ON_SHOWMENU')
     frame:SetEventScript(ui.LBUTTONUP, 'SUBQUICKSLOT_ON_ENDMOVE')
-    frame:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
-    local frameX, frameY = string.match(__config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
+    frame:SetAlpha(string.match(config[configKey][__CONFIG_SLOTSET_ALPHA] or '100', '^(%d+)$'))
+    local frameX, frameY = string.match(config[configKey][__CONFIG_SLOTSET_POS] or '200x200', '(%d+)x(%d+)')
     frame:Resize(slotw * slotsize + 20, sloth * slotsize + 20)
     frame:SetOffset(frameX, frameY)
     frame:EnableMove(math.abs(lockstate - 1))
@@ -286,13 +321,25 @@ function g.new(self)
     slotset:SetEventScript(ui.POP, 'SUBQUICKSLOT_ON_POPSLOT')
   	slotset:EnableSelection(0)
   	slotset:CreateSlots()
+
+    if (isCommon) then
+      -- 共通って分かるようにフラグたて
+      frame:SetUserValue(__USERVALUE_FRAME_IS_COMMON, '1')
+      -- 共通って分かるような見た目
+      local titlelabel = frame:CreateOrGetControl('richtext', 'titlelabel', 0, 0, 0, 0)
+      titlelabel:SetFontName('white_16_ol')
+      titlelabel:SetTextAlign('center', 'center')
+      titlelabel:SetGravity(ui.CENTER_HORZ, ui.TOP)
+      titlelabel:SetText('★')
+    end
+
     self:Dbg('createed slot.')
     for i = 0, slotw * sloth - 1 do
       local slot = slotset:GetSlotByIndex(i)
-      slot:SetAlpha(string.match(__config[configKey][__CONFIG_SLOTSET_ALPHASLOT] or '100', '^(%d+)$'))
+      slot:SetAlpha(string.match(config[configKey][__CONFIG_SLOTSET_ALPHASLOT] or '100', '^(%d+)$'))
     end
     -- スロット復元
-    for k, v in pairs(__config[configKey]) do
+    for k, v in pairs(config[configKey]) do
       local index = string.match(k, 'slot(%d+)')
       if (index) then
         local dummyLiftIconInfo = {}
@@ -304,7 +351,7 @@ function g.new(self)
         -- 設定がバグっても大丈夫なように回避を入れる
         local slot = slotset:GetSlotByIndex(index)
         if (not slot) then
-          __config[configKey][k] = nil
+          config[configKey][k] = nil
         else
           self:SetSubSlot(slot, dummyLiftIconInfo)
         end
@@ -323,23 +370,56 @@ function g.new(self)
     frame:CreateOrGetControl('timer', 'dispeldebufftimer', 0, 0, 0, 0)
     self:Dbg('created timers.')
 
-    frame:ShowWindow(1)
+    frame:ShowWindow(tonumber(config[configKey][__CONFIG_SLOTSET_SHOW] or '1'))
   end
 
   -- フレーム削除
-  members.DeleteFrame = function(self, frameIndex)
+  members.DeleteFrame = function(self, frameIndex, isCommon)
     self:Dbg('DeleteFrame called.')
 
     ui.DestroyFrame(addonName..'-'..frameIndex)
-    __config[GetConfigByFrameKey(frameIndex)] = nil
+
+    if (isCommon) then
+      __commmon[GetConfigByFrameKey(frameIndex)] = nil
+    else
+      __config[GetConfigByFrameKey(frameIndex)] = nil
+    end
   end
 
+  -- フレーム非表示
+  members.HideFrame = function(self, frameIndex, isCommon)
+    self:Dbg('HideFrame called. frameIndex='..frameIndex)
+
+    local frame = ui.GetFrame(addonName..'-'..frameIndex)
+    frame:ShowWindow(0)
+
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+    target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SHOW] = '0'
+
+    if (isCommon) then
+      self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
+    else
+      self:Serialize(__cid, __config)
+    end
+  end
+  
   -- オプションフレーム作成
-  members.CreateOptionFrame = function(self, frameIndex, x, y)
+  members.CreateOptionFrame = function(self, frameIndex, x, y, isCommon)
     self:Dbg('CreateOptionFrame called. index='..frameIndex)
+
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
 
     local frame = ui.CreateNewFrame(addonName, __OPTION_FRAME_NAME)
     frame:SetUserValue(__USERVALUE_FRAME_INDEX, frameIndex)
+    if (isCommon) then
+      frame:SetUserValue(__USERVALUE_FRAME_IS_COMMON, '1')
+    end
     frame:SetEventScript(ui.LOST_FOCUS, "SUBQUICKSLOT_ON_LOSTFOCUSOPTION")
     frame:SetLayerLevel(999)
     frame:SetSkinName('test_frame_low')
@@ -352,7 +432,7 @@ function g.new(self)
     titlelabel:SetGravity(ui.CENTER_HORZ, ui.TOP)
     titlelabel:SetText(string.format('SubQuickSlot-%s Options', frameIndex))
     CreateLabeledEditCtrl(
-      frame, 'size', 'VxH  ', 10, 45, 'Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.'):SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
+      frame, 'size', 'VxH  ', 10, 45, 'Input slot size, what you want. Fromat: <vertial>x<horizon>. Ex: 2x4.'):SetText(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_SIZE] or '1x1')
     -- 不透明度
     local alphalabel = frame:CreateOrGetControl('richtext', 'alphalabel', 10, 75, 0, 0)
     alphalabel:SetFontName('white_16_ol')
@@ -363,39 +443,39 @@ function g.new(self)
 		alphainput:SetFontName('white_16_ol')
     alphainput:SetSkinName('test_weight_skin')
     alphainput:SetTextAlign('center', 'center')
-    alphainput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHA] or '100')
+    alphainput:SetText(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHA] or '100')
     local alphaslotinput =
       frame:CreateOrGetControl('edit', 'alphaslotinput', alphainput:GetX() + alphainput:GetWidth() + 5, alphainput:GetY(), alphainput:GetWidth(), 25)
     tolua.cast(alphaslotinput, 'ui::CEditControl')
 		alphaslotinput:SetFontName('white_16_ol')
     alphaslotinput:SetSkinName('test_weight_skin')
     alphaslotinput:SetTextAlign('center', 'center')
-    alphaslotinput:SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHASLOT] or '100')
+    alphaslotinput:SetText(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_ALPHASLOT] or '100')
     -- 倍率
     CreateLabeledEditCtrl(
       frame, 'magni', 'Magni', 10, 105, 'Input slot magnification which ranged between 50 and 100.')
-        :SetText(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_MAGNI] or '100')
+        :SetText(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_MAGNI] or '100')
     -- ロック状態
     local lockcheck = frame:CreateOrGetControl('checkbox', 'lockcheck', 10, 135, 0, 0)
     tolua.cast(lockcheck, 'ui::CCheckBox')
     lockcheck:SetFontName('white_16_ol')
     lockcheck:SetText('Lock')
     lockcheck:SetTextTooltip('If you check, the slot is lock.')
-    lockcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_LOCK] or '0'))
+    lockcheck:SetCheck(tonumber(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_LOCK] or '0'))
     -- ID通知
     local notifyidcheck = frame:CreateOrGetControl('checkbox', 'notifyidcheck', 10, 165, 0, 0)
     tolua.cast(notifyidcheck, 'ui::CCheckBox')
     notifyidcheck:SetFontName('white_16_ol')
     notifyidcheck:SetText('Notify ClassID')
     notifyidcheck:SetTextTooltip('If you check, notify ClassID with SystemChat when set on slot.')
-    notifyidcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_NOTIFY_CLASSID] or '0'))
+    notifyidcheck:SetCheck(tonumber(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_NOTIFY_CLASSID] or '0'))
     -- ワープ確認ダイアログON/OFF
     local directwarpcheck = frame:CreateOrGetControl('checkbox', 'directwarpcheck', 10, 195, 0, 0)
     tolua.cast(directwarpcheck, 'ui::CCheckBox')
     directwarpcheck:SetFontName('white_16_ol')
     directwarpcheck:SetText('DirectWaap')
     directwarpcheck:SetTextTooltip('If you check, you can warp immediately.')
-    directwarpcheck:SetCheck(tonumber(__config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_DIRECT_WARP] or '1'))
+    directwarpcheck:SetCheck(tonumber(target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_DIRECT_WARP] or '1'))
 
     frame:ShowWindow(1)
   end
@@ -406,6 +486,13 @@ function g.new(self)
 
     local frame = ui.GetFrame(__OPTION_FRAME_NAME)
     local frameIndex = frame:GetUserValue(__USERVALUE_FRAME_INDEX)
+    local isCommon = frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON)
+
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+
     -- 設定取得
     local size = GET_CHILD(frame, 'sizeinput', 'ui::CEditControl'):GetText()
     local alpha = GET_CHILD(frame, 'alphainput', 'ui::CEditControl'):GetText()
@@ -423,30 +510,34 @@ function g.new(self)
     -- 再描画判定
     local configKey = GetConfigByFrameKey(frameIndex)
     local redraw =
-      __config[configKey][__CONFIG_SLOTSET_SIZE] ~= size
-      or __config[configKey][__CONFIG_SLOTSET_ALPHA] ~= alpha
-      or __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
-      or __config[configKey][__CONFIG_SLOTSET_MAGNI] ~= magni
-      or __config[configKey][__CONFIG_SLOTSET_LOCK] ~= lock
-      or __config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] ~= notifyid
-      or __config[configKey][__CONFIG_SLOTSET_DIRECT_WARP] ~= directwarp
+      target[configKey][__CONFIG_SLOTSET_SIZE] ~= size
+      or target[configKey][__CONFIG_SLOTSET_ALPHA] ~= alpha
+      or target[configKey][__CONFIG_SLOTSET_ALPHASLOT] ~= alphaslotinput
+      or target[configKey][__CONFIG_SLOTSET_MAGNI] ~= magni
+      or target[configKey][__CONFIG_SLOTSET_LOCK] ~= lock
+      or target[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] ~= notifyid
+      or target[configKey][__CONFIG_SLOTSET_DIRECT_WARP] ~= directwarp
       -- 設定保存
-    __config[configKey][__CONFIG_SLOTSET_SIZE] = size
+      target[configKey][__CONFIG_SLOTSET_SIZE] = size
     self:Dbg('size='..size)
-    __config[configKey][__CONFIG_SLOTSET_ALPHA] = alpha
+    target[configKey][__CONFIG_SLOTSET_ALPHA] = alpha
     self:Dbg('alpha='..alpha)
-    __config[configKey][__CONFIG_SLOTSET_ALPHASLOT] = alphaslot
+    target[configKey][__CONFIG_SLOTSET_ALPHASLOT] = alphaslot
     self:Dbg('alpha='..alpha)
-    __config[configKey][__CONFIG_SLOTSET_MAGNI] = magni
+    target[configKey][__CONFIG_SLOTSET_MAGNI] = magni
     self:Dbg('magni='..magni)
-    __config[configKey][__CONFIG_SLOTSET_LOCK] = lock
+    target[configKey][__CONFIG_SLOTSET_LOCK] = lock
     self:Dbg('lock='..lock)
-    __config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] = notifyid
+    target[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID] = notifyid
     self:Dbg('notifyid='..notifyid)
-    __config[configKey][__CONFIG_SLOTSET_DIRECT_WARP] = directwarp
+    target[configKey][__CONFIG_SLOTSET_DIRECT_WARP] = directwarp
     self:Dbg('directwarp='..directwarp)
     -- 永続化
-    self:Serialize(__cid, __config)
+    if (isCommon) then
+      self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
+    else
+      self:Serialize(__cid, __config)
+    end
     -- フレーム非表示
     frame:ShowWindow(0)
     return redraw
@@ -457,18 +548,24 @@ function g.new(self)
     self:Dbg('CreateOptionMenu called. index='..frame:GetName())
 
     local frameIndex = frame:GetUserValue(__USERVALUE_FRAME_INDEX)
+    local isCommon = tostring(frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON))
+
     local menuTitle = 'SubQuickSlot-'..frameIndex
     local context = ui.CreateContextMenu(
       'CONTEXT_SUBQUICKSLOT_OPTION', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
     -- 画面表示
-    ui.AddContextMenuItem(context, 'Option', string.format('SUBQUICKSLOT_ON_MENU_SHOWOPTION(%s, %d, %d)', frameIndex, frame:GetX(), frame:GetY()))
+    ui.AddContextMenuItem(context, 'Option', string.format('SUBQUICKSLOT_ON_MENU_SHOWOPTION(%s, %d, %d, %s)', frameIndex, frame:GetX(), frame:GetY(), isCommon))
     ui.AddContextMenuItem(context, 'Redraw', 'SUBQUICKSLOT_ON_MENU_REDRAW')
+    -- 
     if (frameIndex == '1') then
       ui.AddContextMenuItem(context, 'CreateNew', string.format('SUBQUICKSLOT_ON_MENU_CREATENEW(%s)', frameIndex))
-      ui.AddContextMenuItem(context, 'CommonConfig', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG')
+      ui.AddContextMenuItem(context, 'ShowAll', 'SUBQUICKSLOT_ON_MENU_SHOWALL')
     else
       ui.AddContextMenuItem(context, 'Delete',
-        string.format('SUBQUICKSLOT_ON_MENU_DELETE(%s)', frameIndex))
+        string.format('SUBQUICKSLOT_ON_MENU_DELETE(%s, %s)', frameIndex, isCommon))
+      ui.AddContextMenuItem(context, 'Hide',
+        string.format('SUBQUICKSLOT_ON_MENU_HIDE(%s, %s)', frameIndex, isCommon))
+      ui.AddContextMenuItem(context, 'CommonConfig', string.format('SUBQUICKSLOT_ON_MENU_COMMONCONFIG(%s, %s)', frameIndex, isCommon))
     end
 
     ui.AddContextMenuItem(context, 'EmoticonList',
@@ -479,69 +576,78 @@ function g.new(self)
   end
 
   -- 共通設定メニュー作成
-  members.CreateCommonConfigMenu = function(self)
+  members.CreateCommonConfigMenu = function(self, index, isCommon)
     self:Dbg('CreateCommonConfigMenu called.')
 
-    local menuTitle = 'SubQuickSlot Common Config'
+    local menuTitle = 'SubQuickSlot Common Config (' .. index
     local context = ui.CreateContextMenu(
       'CONTEXT_SUBQUICKSLOT_COMMON_CONFIG', menuTitle, 0, 0, string.len(menuTitle) * 12, 100)
 
     SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK = function()
-      g.instance:MarkedCommonConfig()
+      g.instance:MarkedCommon(index)
     end
-    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD = function()
-      g.instance:LoadCommonConfig()
+    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_UNMARK = function()
+      g.instance:DeletedCommon(index)
     end
 
-    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK_PRECHECK = function()
-      ui.MsgBox('It will be MARKED current settings to common config. Are you alrigh?', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK', 'None')
+    SUBQUICKSLOT_ON_MENU_MARK_AS_A_COMMON_PRECHECK = function()
+      ui.MsgBox('It will be MARKED as a common slot.', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK', 'None')
     end
-    SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD_PRECHECK = function()
-      ui.MsgBox('It will be LOADED current settings from common config. Are you alrigh?', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD', 'None')
+    SUBQUICKSLOT_ON_MENU_UNMARK_FROM_COMMON_PRECHECK = function()
+      ui.MsgBox('It will be UNMARKED from common slot.', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_UNMARK', 'None')
     end
 
     -- 画面表示
-    ui.AddContextMenuItem(context, 'Mark as a Common', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_MARK_PRECHECK')
-    ui.AddContextMenuItem(context, 'Load from Common', 'SUBQUICKSLOT_ON_MENU_COMMONCONFIG_LOAD_PRECHECK')
+    if (isCommon) then
+      ui.AddContextMenuItem(context, 'Unmark from Common', 'SUBQUICKSLOT_ON_MENU_UNMARK_FROM_COMMON_PRECHECK')
+    else
+      ui.AddContextMenuItem(context, 'Mark as a Common', 'SUBQUICKSLOT_ON_MENU_MARK_AS_A_COMMON_PRECHECK')
+    end
     ui.AddContextMenuItem(context, 'Cancel', 'None')
     ui.OpenContextMenu(context)
   end
 
-  -- 共通設定保存
-  -- 解除は要らないよね
-  members.MarkedCommonConfig = function(self)
-    self:Dbg('MarkedCommonConfig called.')
+  -- 共通スロット化
+  -- cidに紐づいたものを別ファイルに保存し、紐づけを解除する
+  members.MarkedCommon = function(self, index)
+    self:Dbg('MarkedCommon called.')
 
-    local filePath = string.format('%s/%s', __ADDON_DIR, __COMMON_CONFIG_FILENAME)
-    local f, e = io.open(filePath, 'w')
-    if (e) then
-      self:Err(tostring(e))
+    local config = __config[GetConfigByFrameKey(index)]
+    if (not config) then
+      self:Log('Do not exist frame. index='..index)
       return
     end
-    -- 共通化ってしたもののCIDを別ファイルに控えるだけ...！
-    f:write(string.format("return '%s'", __cid))
-    f:flush()
-    f:close()
-    self:Log('Successfully saved to common config.')
+
+    -- 共通ファイル保存
+    __commmon[GetConfigByFrameKey(index)] = config
+    self:SaveFrameIndex(index, false, true)
+
+    -- cidの呪縛から解放
+    self:DeleteFrame(index)
+    self:SaveFrameIndex(index, true)
+
+    self:Log('Please redraw manually with "Menu > Redraw".')
   end
 
-  -- 共有設定呼び出し
-  members.LoadCommonConfig = function(self)
-    self:Dbg('LoadCommonConfig called.')
+  -- 共通スロットをCIDスロットに戻す
+  members.DeletedCommon = function(self, index)
+    self:Dbg('DeletedCommon called.')
 
-    -- 控えたCIDを取得
-    local markedCID = self:Deserialize(__COMMON_CONFIG_FILENAME)
-    if (not markedCID) then
-      self:Err('Could not load from commonConfig.')
+    local config = __commmon[GetConfigByFrameKey(index)]
+    if (not config) then
+      self:Log('Do not exist frame. index='..index)
       return
     end
-    self:Dbg('markedCID = '..markedCID)
-    -- ファイル読み込み
-    __config = self:Deserialize(markedCID)
-    -- 自分の設定として即時保存
-    self:Serialize(__cid, __config)
-    -- 再描画
-    self:CreateFrames()
+
+    -- 共通ファイルから解放
+    self:DeleteFrame(index, true)
+    self:SaveFrameIndex(index, true, true)
+
+    -- cidの呪縛をかける
+    __config[GetConfigByFrameKey(index)] = config
+    self:SaveFrameIndex(index)
+
+    self:Log('Please redraw manually with "Menu > Redraw".')
   end
 
   -- サブスロットにアイコンをセット
@@ -687,9 +793,16 @@ function g.new(self)
         QUESTION_QUEST_WARP(parent, slot, str, num)
       end
 
-      local configKey = GetFrameKeyByFrameName(parent:GetTopParentFrame():GetName())
+      local frame = parent:GetTopParentFrame()
+
+      local target = __config
+      if (frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON) == '1') then
+        target = __commmon
+      end
+
+      local configKey = GetFrameKeyByFrameName(frame:GetName())
       local directwarp =
-        tonumber(__config[GetConfigByFrameKey(configKey)][__CONFIG_SLOTSET_DIRECT_WARP] or '1')
+        tonumber(target[GetConfigByFrameKey(configKey)][__CONFIG_SLOTSET_DIRECT_WARP] or '1')
       if (directwarp == 1) then
         SUBQUICKSLOT_ON_EXECUTE_WARP(parent, slot, str, num)
         return
@@ -700,11 +813,16 @@ function g.new(self)
   end
 
   -- ディスペラー系スクロールのエフェクトONOFF制御
-  members.UpdateJungtan = function(self, spellName, onoff, itemType)
+  members.UpdateJungtan = function(self, spellName, onoff, itemType, isCommon)
     self:Dbg('UpdateJungtan called.')
     self:Dbg(spellName..' - '..onoff)
 
-    for frameIndex in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+
+    for frameIndex in string.gmatch(target[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
       local frame = ui.GetFrame(addonName..'-'..frameIndex)
       self:Dbg('UpdateJungtan... target='..frame:GetName())
 
@@ -722,12 +840,17 @@ function g.new(self)
   -- ディスペラー系スクロールのエフェクト処理
   -- スロットの上にエフェクトを乗せるので、エフェクト中に移動させるとエフェクトが遅れてついてくる
   -- どうにかならないかな（どうにもならない
-  members.UpdateJungtanEffect = function(self, frame, timerName)
+  members.UpdateJungtanEffect = function(self, frame, timerName, isCommon)
     local itemType = frame:GetUserValue(string.format('%s_%s', string.gsub(timerName:upper(), 'TIMER', ''), 'EFFECT'))
+
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
 
     local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
 
-    for k, v in pairs(__config[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
+    for k, v in pairs(target[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
       local index = string.match(k, 'slot(%d+)')
       if (index and v[__CONFIG_SLOT_CATEGORY] == 'Item' and v[__CONFIG_SLOT_TYPE] == itemType) then
         local x, y = GET_SCREEN_XY(slotset:GetSlotByIndex(index))
@@ -740,7 +863,12 @@ function g.new(self)
   members.UpdateSkillOverHeat = function(self, frame)
     local slotset = GET_CHILD(frame, 'slotset', 'ui::CSlotSet')
 
-    for k, v in pairs(__config[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
+    local target = __config
+    if (frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON) == '1') then
+      target = __commmon
+    end
+
+    for k, v in pairs(target[GetConfigByFrameKey(GetFrameKeyByFrameName(frame:GetName()))]) do
       local index = string.match(k, 'slot(%d+)')
       if (index and v[__CONFIG_SLOT_CATEGORY] == 'Skill') then
         UPDATE_SLOT_OVERHEAT(slotset:GetSlotByIndex(index))
@@ -788,53 +916,96 @@ function g.new(self)
 
     local configKey = GetConfigByFrameKey(frame:GetUserValue(__USERVALUE_FRAME_INDEX))
 
+    local target = __config
+    local isCommon = frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON) == '1'
+    if (isCommon) then
+      target = __commmon
+    end
+
     -- 削除
     if (removeSlotIndex) then
-      __config[configKey]['slot'..removeSlotIndex] = nil
+      target[configKey]['slot'..removeSlotIndex] = nil
     end
 
     -- 追加
     if (slotIndex) then
       local key = 'slot'..slotIndex
-      __config[configKey][key] = __config[configKey][key] or {}
-      __config[configKey][key][__CONFIG_SLOT_CATEGORY] = GetCategoryFromLiftIconInfo(liftIconInfo)
-      __config[configKey][key][__CONFIG_SLOT_TYPE] = liftIconInfo.type
-      __config[configKey][key][__CONFIG_SLOT_IESID] =
+      target[configKey][key] = target[configKey][key] or {}
+      target[configKey][key][__CONFIG_SLOT_CATEGORY] = GetCategoryFromLiftIconInfo(liftIconInfo)
+      target[configKey][key][__CONFIG_SLOT_TYPE] = liftIconInfo.type
+      target[configKey][key][__CONFIG_SLOT_IESID] =
         liftIconInfo.GetIESID and liftIconInfo:GetIESID() or 0
     end
 
-    self:Serialize(__cid, __config)
+    if (isCommon) then
+      __commmon = target
+      self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
+    else
+      __config = target
+      self:Serialize(__cid, __config)
+    end
   end
 
   -- 位置情報を保存
   members.SavePos = function(self, frame)
     self:Dbg('SavePos called. index='..frame:GetName())
 
+    local isCommon = tostring(frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON)) == '1'
+
+    local target = __config
+    if (isCommon) then
+      target = __commmon
+    end
+
     local frameIndex = frame:GetUserValue(__USERVALUE_FRAME_INDEX)
-    __config[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_POS] =
+    target[GetConfigByFrameKey(frameIndex)][__CONFIG_SLOTSET_POS] =
       string.format('%dx%d', frame:GetX(), frame:GetY())
-    self:Serialize(__cid, __config)
+
+    if (isCommon) then
+      self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
+    else
+      self:Serialize(__cid, __config)
+    end
   end
 
-  -- フレームインデックスを保存
-  members.SaveFrameIndex = function(self, frameIndex, delete)
+  -- フレームインデックスを保存または削除
+  members.SaveFrameIndex = function(self, frameIndex, delete, isCommon)
     self:Dbg('SaveFrameIndex called. index='..frameIndex)
 
-    local config = __config[__CONFIG_FRAME_INDEXIES] or '1'
+    local buffer = __config
+    if (isCommon) then
+      buffer = __commmon
+    end
+
+    local config = buffer[__CONFIG_FRAME_INDEXIES] or '1'
     if (delete) then
       config = string.gsub(config, '%s'..frameIndex, '', 1)
     else
       config = config..' '..frameIndex
     end
-    __config[__CONFIG_FRAME_INDEXIES] = config
+    buffer[__CONFIG_FRAME_INDEXIES] = config
 
-    self:Serialize(__cid, __config)
+    if (isCommon) then
+      __commmon = buffer
+      self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
+    else
+      __config = buffer
+      self:Serialize(__cid, __config)
+    end
   end
 
   -- クラスID通知
   members.NofityClassIDInChat = function(self, frame, liftIconInfo)
+    self:Dbg('NofityClassIDInChat called.')
+
+    local target = __config
+    local isCommon = frame:GetUserValue(__USERVALUE_FRAME_IS_COMMON) == '1'
+    if (isCommon) then
+      target = __commmon
+    end
+
     local configKey = GetConfigByFrameKey(frame:GetUserValue(__USERVALUE_FRAME_INDEX))
-    if (tonumber(__config[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID]) ~= 1 or not liftIconInfo) then
+    if (tonumber(target[configKey][__CONFIG_SLOTSET_NOTIFY_CLASSID]) ~= 1 or not liftIconInfo) then
       return
     end
     local targetClass =
@@ -843,6 +1014,27 @@ function g.new(self)
       return
     end
     self:Log(string.format('%s -> %s', targetClass.Name, targetClass.ClassID))
+  end
+
+  members.ShowAll = function(self)
+    -- キャラクターに紐づくスロット用
+    for index in string.gmatch(__config[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+      local configKey = GetConfigByFrameKey(index)
+      if (tonumber(__config[configKey][__CONFIG_SLOTSET_SHOW] or '1') == 0) then
+        __config[configKey][__CONFIG_SLOTSET_SHOW] = '1'
+        self:CreateFrame(index)
+      end
+    end
+    self:Serialize(__cid, __config)
+    -- 共通スロット用
+    for index in string.gmatch(__commmon[__CONFIG_FRAME_INDEXIES] or '1', "%S+") do
+      local configKey = GetConfigByFrameKey(index)
+      if (tonumber(__commmon[configKey][__CONFIG_SLOTSET_SHOW] or '1') == 0) then
+        __commmon[configKey][__CONFIG_SLOTSET_SHOW] = '1'
+        self:CreateFrame(index, true)
+      end
+    end
+    self:Serialize(__CONFIG_COMMON_FRAME_FILENAME, __commmon)
   end
 
   -- デストラクター
@@ -872,8 +1064,8 @@ end
 function SUBQUICKSLOT_ON_SHOWMENU(frame, index, num)
   g.instance:CreateOptionMenu(frame)
 end
-function SUBQUICKSLOT_ON_MENU_SHOWOPTION(index, x, y)
-  g.instance:CreateOptionFrame(index, x, y)
+function SUBQUICKSLOT_ON_MENU_SHOWOPTION(index, x, y, isCommon)
+  g.instance:CreateOptionFrame(index, x, y, tostring(isCommon) == '1')
 end
 function SUBQUICKSLOT_ON_MENU_REDRAW()
   g.instance:CreateFrames()
@@ -883,13 +1075,20 @@ function SUBQUICKSLOT_ON_MENU_CREATENEW(index)
   g.instance:CreateFrame(newIndex)
   g.instance:SaveFrameIndex(newIndex)
 end
-function SUBQUICKSLOT_ON_MENU_COMMONCONFIG()
-  g.instance:CreateCommonConfigMenu()
+function SUBQUICKSLOT_ON_MENU_COMMONCONFIG(index, isCommon)
+  g.instance:CreateCommonConfigMenu(index, isCommon)
 end
-function SUBQUICKSLOT_ON_MENU_DELETE(index)
-  g.instance:DeleteFrame(index)
-  g.instance:SaveFrameIndex(index, true)
+function SUBQUICKSLOT_ON_MENU_SHOWALL()
+  g.instance:ShowAll()
 end
+function SUBQUICKSLOT_ON_MENU_DELETE(index, isCommon)
+  g.instance:DeleteFrame(index, tostring(isCommon) == '1')
+  g.instance:SaveFrameIndex(index, true, tostring(isCommon) == '1')
+end
+function SUBQUICKSLOT_ON_MENU_HIDE(index, isCommon)
+  g.instance:HideFrame(index, tostring(isCommon) == '1')
+end
+
 function SUBQUICKSLOT_ON_LOSTFOCUSOPTION()
   local redraw = g.instance:CloseOptionFrame()
   if (redraw) then
@@ -961,34 +1160,40 @@ function SUBQUICKSLOT_ON_SLOTRUP(parent, slot, str, num)
 end
 function SUBQUICKSLOT_ON_REDRAW_COUNT()
   g.instance:RedrawFrames()
+  g.instance:RedrawFrames(true)
 end
 function SUBQUICKSLOT_ON_JUNGTAN_SLOT_UPDATE(frame, msg, str, itemType)
   local spellName, onoff = string.match(str, '^(.-)%_(.-)$')
   g.instance:UpdateJungtan(spellName, onoff, itemType)
+  g.instance:UpdateJungtan(spellName, onoff, itemType, true)
 end
 function SUBQUICKSLOT_UPDATE_JUNGTAN(frame, ctrl, num, str, time)
   if (frame:IsVisible() == 0) then
     return
   end
   g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName(), true)
 end
 function SUBQUICKSLOT_UPDATE_JUNGTANDEF(frame, ctrl, num, str, time)
   if (frame:IsVisible() == 0) then
     return
   end
   g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName(), true)
 end
 function SUBQUICKSLOT_UPDATE_DISPELDEBUFF(frame, ctrl, num, str, time)
   if (frame:IsVisible() == 0) then
     return
   end
   g.instance:UpdateJungtanEffect(frame, ctrl:GetName())
+  g.instance:UpdateJungtanEffect(frame, ctrl:GetName(), true)
 end
 function SUBQUICKSLOT_ON_UPDATE_OVERHEAT(frame, ctrl, num, str, time)
   g.instance:UpdateSkillOverHeat(frame)
 end
 function SUBQUICKSLOT_ON_RESET_ABILITY_ACTIVE(frame, msg, argStr, argNum)
   g.instance:RedrawSkillAbilityFrames(argStr)
+  g.instance:RedrawSkillAbilityFrames(argStr, true)
 end
 function SUBQUICKSLOT_ON_MENU_ADDEMOTICON(frameIndex, x, y)
   local GetEmoticonImageName = function(className)
