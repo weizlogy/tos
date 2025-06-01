@@ -1,4 +1,4 @@
-see [https://blog.weizlogy.com/pages/tos-addon/#console]([http://www.weizlogy.gq/tos/addon/console/](https://blog.weizlogy.com/pages/tos-addon/#console)) 
+see [https://blog.weizlogy.com/pages/tos-addon/#console](https://blog.weizlogy.com/pages/tos-addon/#console)
 
 ### v1.2.0
 
