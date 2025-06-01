@@ -1,4 +1,4 @@
-## Latest Release Note.
+see [https://blog.weizlogy.com/pages/tos-addon/#pickiteminfo](https://blog.weizlogy.com/pages/tos-addon/#pickiteminfo)
 
 ### v1.0.4
 
@@ -6,4 +6,32 @@
 
 アイテム名が途切れる問題を修正しました。
 
-see [http://www.weizlogy.gq/tos/addon/pickiteminfo/](http://www.weizlogy.gq/tos/addon/pickiteminfo/) 
+### v1.0.3
+
+#### リーク対応
+
+アイテム名を表示しているフレームが破棄されない問題を修正しました。
+
+### v1.0.2
+
+#### 名称表示位置調整
+
+v1.0.1のずれが治ったのに合わせて再調整しました。
+
+### v1.0.1
+
+#### 名称表示位置調整
+
+8/23 UPDATEにより、ALTキーでアイテム名称表示がずれるようになった影響で同じようにずれる問題に対応しました。
+
+名称の動きが若干不穏ですが、ALTキーでアイテム名称表示がずれる問題が解決するまでの暫定対処となります。
+
+
+### v1.0.0
+
+#### 新規作成
+
+アドオンがロードされると、ALTキーを押さなくとも、ドロップアイテムの名称が表示されるようになります。
+
+アイテム名称はレアリティで色が変わります。
+色の変化はColored Item Namesをパク...参考にしています。
