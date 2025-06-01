@@ -1,3 +1,5 @@
+see [https://blog.weizlogy.com/pages/tos-addon/#minigaugetext](https://blog.weizlogy.com/pages/tos-addon/#minigaugetext)
+
 ## Release Note.
 
 ## v1.1.1
@@ -47,5 +49,3 @@ return s
 ないよ！
 
 ###
-
-[http://www.weizlogy.gq/tos/addon/minigaugetext/](http://www.weizlogy.gq/tos/addon/minigaugetext/)
