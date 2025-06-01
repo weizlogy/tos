@@ -1,7 +1,21 @@
-## Latest Release Note.
+see [https://blog.weizlogy.com/pages/tos-addon/#hidename](https://blog.weizlogy.com/pages/tos-addon/#hidename)
 
 ### v1.0.3
 
 ギルドエンブレムも非表示にします。
 
-see [http://www.weizlogy.gq/tos/addon/hidename/](http://www.weizlogy.gq/tos/addon/hidename/) 
+### v1.0.2
+
+ギルド名も非表示にします。
+
+### v1.0.1
+
+ふとした拍子に[自キャラ体力バー下]の名前が見えてしまう問題を修正しました。
+
+### v1.0.0
+
+#### 新規作成
+
+アドオンがロードされると[画面左上]と[自キャラ体力バー下]のチーム名、キャラ名を非表示にします。
+
+動画を撮るときに設定では非表示にできなかったので。。。
