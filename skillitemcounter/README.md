@@ -1,7 +1,25 @@
-## Latest Release Note.
+### v1.1.2
 
-### v1.1.3
+#### 6/27アップデート対応
 
-- Re:Build対応
+### v1.1.1
 
-see [http://www.weizlogy.gq/tos/addon/skillitemcounter/](http://www.weizlogy.gq/tos/addon/skillitemcounter/) 
+#### 使用回数が表示されない問題の修正
+
+詳細は[#19](https://github.com/weizlogy/tos/issues/19)を参照してください。
+
+#### joypad対応
+
+joypadのquickslotに対応しました。（遅
+
+### v1.1.0
+
+#### ポイズンポット使用スキル対応
+
+ポイズンポット消費のあるスキルスロットにも使用回数を表示します。
+
+### v1.0.0
+
+#### 新規作成
+
+アドオンがロードされると、クイックスロットにセットしている、消費アイテムのあるスキルスロット右上に、消費アイテムの個数に応じたスキルの使用回数を追加で表示します。
