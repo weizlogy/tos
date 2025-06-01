@@ -1,7 +1,19 @@
+see [https://blog.weizlogy.com/pages/tos-addon/#previewguildemblem](https://blog.weizlogy.com/pages/tos-addon/#previewguildemblem)
+
 ### v1.1.0
 
 #### キャラ名横エンブレムプレビュー対応
 
 エンブレムの一覧（画像登録）画面でファイル名左にあるエンブレムアイコンをキャラ名横に表示されるサイズに合わせることでプレビュー可能としています。
 
-see [http://www.weizlogy.gq/tos/addon/previewguildemblem/](http://www.weizlogy.gq/tos/addon/previewguildemblem/) 
+プレビュー画面の確認ボタンはギルドマスター以外非表示にしたので、ギルドマスターの人も入れられるよ！
+
+### v1.0.0
+
+#### 新規作成
+
+アドオンがロードされると、ギルドマスター以外でもギルドエンブレムのプレビューができるようになります。
+
+プレビュー画面の確認ボタンは非表示にしているので誤登録の心配はありません。（そもそも登録処理が成功するかどうかは怪しいところですが）
+
+ギルドマスターの人は入れないでね！！！
